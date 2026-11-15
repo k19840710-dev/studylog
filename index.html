@@ -2,8 +2,27 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>StudyLog - 勉強時間管理アプリ</title>
+    <!-- PWA -->
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="theme-color" content="#4f46e5">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="StudyLog">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <link rel="icon" type="image/png" href="icon-192.png">
+    <!-- テーマは描画前に適用してチラつきを防ぐ -->
+    <script>
+        (function () {
+            try {
+                var pref = localStorage.getItem('studylog_theme_v1') || 'system';
+                var dark = pref === 'dark' || (pref === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+                if (dark) document.documentElement.classList.add('dark');
+            } catch (e) {}
+        })();
+    </script>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts: Inter & Noto Sans JP -->
@@ -21,26 +40,90 @@
             font-variant-numeric: tabular-nums;
         }
         /* カスタムスクロールバー */
-        ::-webkit-scrollbar {
-            width: 6px;
-            height: 6px;
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* 週グラフ */
+        .week-col[aria-pressed="true"] .week-col-bg { background-color: #eef2ff; }
+        .week-col:hover .week-col-bg { background-color: #f1f5f9; }
+        .week-seg:last-child { border-top-left-radius: 4px; border-top-right-radius: 4px; }
+
+        kbd {
+            display: inline-block; min-width: 1.6em; padding: 0.1em 0.45em; border-radius: 6px;
+            border: 1px solid #cbd5e1; background: #f8fafc; font-size: 0.75rem; font-family: inherit;
+            text-align: center; box-shadow: 0 1px 0 #cbd5e1;
         }
-        ::-webkit-scrollbar-track {
-            background: #f1f5f9;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #cbd5e1;
-            border-radius: 3px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #94a3b8;
-        }
+
+        /* ===== ダークモード =====
+           Tailwind のユーティリティを上書きして配色を切り替える */
+        html.dark { color-scheme: dark; }
+        html.dark body { background-color: #0b1120; color: #e2e8f0; }
+        html.dark * { --tw-ring-offset-color: #1e293b; }
+        html.dark ::-webkit-scrollbar-track { background: #1e293b; }
+        html.dark ::-webkit-scrollbar-thumb { background: #475569; }
+
+        html.dark .bg-white { background-color: #1e293b; }
+        html.dark .bg-slate-50 { background-color: #0f172a; }
+        html.dark .bg-slate-50\/50 { background-color: rgba(15, 23, 42, 0.5); }
+        html.dark .bg-slate-100 { background-color: #334155; }
+        html.dark .bg-slate-800 { background-color: #334155; }
+        html.dark .hover\:bg-slate-100:hover,
+        html.dark .hover\:bg-slate-100\/80:hover { background-color: #334155; }
+        html.dark .hover\:bg-slate-200:hover { background-color: #475569; }
+        html.dark .disabled\:bg-slate-200:disabled { background-color: #334155; }
+        html.dark .disabled\:text-slate-400:disabled { color: #64748b; }
+
+        html.dark .border-slate-100 { border-color: #334155; }
+        html.dark .border-slate-200 { border-color: #475569; }
+
+        html.dark .text-slate-900 { color: #f1f5f9; }
+        html.dark .text-slate-800 { color: #e2e8f0; }
+        html.dark .text-slate-700 { color: #cbd5e1; }
+        html.dark .text-slate-600 { color: #cbd5e1; }
+        html.dark .text-slate-500 { color: #a3b1c6; }
+        html.dark .text-slate-400 { color: #94a3b8; }
+        html.dark .text-slate-300 { color: #64748b; }
+        html.dark .hover\:text-slate-900:hover,
+        html.dark .hover\:text-slate-600:hover { color: #f1f5f9; }
+
+        html.dark .bg-indigo-50 { background-color: rgba(99, 102, 241, 0.18); }
+        html.dark .bg-indigo-100 { background-color: rgba(99, 102, 241, 0.34); }
+        html.dark .bg-indigo-300 { background-color: rgba(99, 102, 241, 0.6); }
+        html.dark .bg-indigo-600 { background-color: #6366f1; }
+        html.dark .hover\:bg-indigo-50:hover { background-color: rgba(99, 102, 241, 0.18); }
+        html.dark .hover\:bg-indigo-100:hover { background-color: rgba(99, 102, 241, 0.3); }
+        html.dark .hover\:bg-indigo-200:hover { background-color: rgba(99, 102, 241, 0.45); }
+        html.dark .hover\:bg-indigo-400:hover { background-color: rgba(99, 102, 241, 0.75); }
+        html.dark .hover\:bg-indigo-700:hover { background-color: #4f46e5; }
+        html.dark .border-indigo-100 { border-color: rgba(99, 102, 241, 0.35); }
+        html.dark .text-indigo-600 { color: #a5b4fc; }
+        html.dark .text-indigo-700 { color: #c7d2fe; }
+        html.dark .text-indigo-900,
+        html.dark .text-indigo-950 { color: #e0e7ff; }
+        html.dark .text-indigo-100 { color: #eef2ff; }
+        html.dark .hover\:text-indigo-600:hover,
+        html.dark .hover\:text-indigo-800:hover { color: #c7d2fe; }
+        html.dark .bg-indigo-600 .text-indigo-600,
+        html.dark button.bg-indigo-600 { color: #ffffff; }
+
+        html.dark .bg-rose-100 { background-color: rgba(244, 63, 94, 0.2); }
+        html.dark .text-rose-600 { color: #fda4af; }
+        html.dark .bg-emerald-100 { background-color: rgba(16, 185, 129, 0.2); }
+        html.dark .text-emerald-700 { color: #6ee7b7; }
+
+        html.dark input, html.dark select { color: #e2e8f0; }
+        html.dark kbd { background: #0f172a; border-color: #475569; box-shadow: 0 1px 0 #475569; }
+        html.dark .week-col[aria-pressed="true"] .week-col-bg { background-color: rgba(99, 102, 241, 0.16); }
+        html.dark .week-col:hover .week-col-bg { background-color: #334155; }
+        html.dark .grid-line { border-color: #334155; }
     </style>
 </head>
 <body class="text-slate-800 antialiased min-h-screen flex flex-col">
 
     <!-- ヘッダー -->
-    <header class="bg-white border-b border-slate-200 sticky top-0 z-10">
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
             <div class="flex items-center space-x-3">
                 <div class="bg-indigo-600 text-white p-2 rounded-xl shadow-sm">
@@ -48,24 +131,49 @@
                 </div>
                 <h1 class="text-xl font-bold tracking-tight text-slate-900">StudyLog</h1>
             </div>
-            <div class="flex items-center space-x-2 sm:space-x-3">
-                <button id="exportBtn" title="データを書き出す (バックアップ)" class="text-sm font-medium text-slate-600 hover:text-indigo-600 bg-slate-100 hover:bg-indigo-50 px-3 py-2 rounded-lg transition-colors flex items-center gap-2">
-                    <i class="fa-solid fa-download"></i>
-                    <span class="hidden md:inline">書き出し</span>
-                </button>
-                <button id="importBtn" title="データを読み込む (復元)" class="text-sm font-medium text-slate-600 hover:text-indigo-600 bg-slate-100 hover:bg-indigo-50 px-3 py-2 rounded-lg transition-colors flex items-center gap-2">
-                    <i class="fa-solid fa-upload"></i>
-                    <span class="hidden md:inline">読み込み</span>
-                </button>
-                <input type="file" id="importFileInput" accept="application/json,.json" class="hidden">
-                <button id="openGoalModalBtn" class="text-sm font-medium text-slate-600 hover:text-indigo-600 bg-slate-100 hover:bg-indigo-50 px-3 py-2 rounded-lg transition-colors flex items-center gap-2">
+            <div class="flex items-center gap-2 sm:gap-3">
+                <button id="openGoalModalBtn" class="text-sm font-medium text-slate-600 hover:text-indigo-600 bg-slate-100 hover:bg-indigo-50 px-3 py-2 rounded-lg transition-colors flex items-center gap-2" title="目標設定">
                     <i class="fa-solid fa-bullseye text-indigo-500"></i>
                     <span class="hidden sm:inline">目標設定</span>
                 </button>
-                <button id="openManualModalBtn" class="text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 px-3.5 py-2 rounded-lg shadow-sm transition-colors flex items-center gap-2">
+                <button id="openManualModalBtn" class="text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 px-3.5 py-2 rounded-lg shadow-sm transition-colors flex items-center gap-2" title="手動記録 (N)">
                     <i class="fa-solid fa-plus"></i>
                     <span class="hidden sm:inline">手動記録</span>
                 </button>
+                <!-- メニュー -->
+                <div class="relative">
+                    <button id="menuBtn" aria-haspopup="true" aria-expanded="false" title="メニュー" class="text-slate-600 hover:text-indigo-600 bg-slate-100 hover:bg-indigo-50 w-9 h-9 rounded-lg transition-colors flex items-center justify-center">
+                        <i class="fa-solid fa-ellipsis-vertical"></i>
+                    </button>
+                    <div id="menuDropdown" class="hidden absolute right-0 mt-2 w-60 bg-white rounded-xl shadow-xl border border-slate-200 py-2 z-40 text-sm">
+                        <button data-menu="subjects" class="w-full text-left px-4 py-2.5 hover:bg-slate-100 flex items-center gap-3 text-slate-700">
+                            <i class="fa-solid fa-tags w-4 text-slate-400"></i>科目の管理
+                        </button>
+                        <button data-menu="pomodoro" class="w-full text-left px-4 py-2.5 hover:bg-slate-100 flex items-center gap-3 text-slate-700">
+                            <i class="fa-solid fa-clock w-4 text-slate-400"></i>ポモドーロ設定
+                        </button>
+                        <div class="px-4 py-2.5">
+                            <p class="text-xs text-slate-500 mb-2 flex items-center gap-3"><i class="fa-solid fa-circle-half-stroke w-4 text-slate-400"></i>テーマ</p>
+                            <div class="flex bg-slate-100 p-1 rounded-lg text-xs font-semibold" id="themeSwitcher">
+                                <button data-theme-choice="system" class="flex-1 py-1.5 rounded-md">自動</button>
+                                <button data-theme-choice="light" class="flex-1 py-1.5 rounded-md">ライト</button>
+                                <button data-theme-choice="dark" class="flex-1 py-1.5 rounded-md">ダーク</button>
+                            </div>
+                        </div>
+                        <div class="border-t border-slate-100 my-1"></div>
+                        <button data-menu="export" class="w-full text-left px-4 py-2.5 hover:bg-slate-100 flex items-center gap-3 text-slate-700">
+                            <i class="fa-solid fa-download w-4 text-slate-400"></i>データを書き出す
+                        </button>
+                        <button data-menu="import" class="w-full text-left px-4 py-2.5 hover:bg-slate-100 flex items-center gap-3 text-slate-700">
+                            <i class="fa-solid fa-upload w-4 text-slate-400"></i>データを読み込む
+                        </button>
+                        <div class="border-t border-slate-100 my-1"></div>
+                        <button data-menu="shortcuts" class="w-full text-left px-4 py-2.5 hover:bg-slate-100 flex items-center gap-3 text-slate-700">
+                            <i class="fa-regular fa-keyboard w-4 text-slate-400"></i>キーボードショートカット
+                        </button>
+                    </div>
+                    <input type="file" id="importFileInput" accept="application/json,.json" class="hidden">
+                </div>
             </div>
         </div>
     </header>
@@ -74,7 +182,7 @@
     <main class="flex-grow max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
 
         <!-- 通知メッセージボックス (alertの代替) -->
-        <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+        <div id="toastContainer" class="fixed bottom-5 right-5 left-5 sm:left-auto z-50 flex flex-col items-end gap-2 pointer-events-none"></div>
 
         <!-- 上部サマリーカード -->
         <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 sm:mb-8">
@@ -129,18 +237,18 @@
         <!-- メイン2カラムレイアウト -->
         <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8">
 
-            <!-- 左カラム: タイマー & 科目別内訳 (5カラム) -->
+            <!-- 左カラム: タイマー & 週グラフ & 科目別内訳 (5カラム) -->
             <div class="lg:col-span-5 flex flex-col gap-6">
 
                 <!-- タイマーカード -->
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
                     <!-- モード切替タブ -->
                     <div class="flex bg-slate-100 p-1 rounded-xl mb-6">
-                        <button id="modeStopwatchBtn" class="flex-1 py-2 text-sm font-semibold rounded-lg bg-white text-indigo-600 shadow-sm transition-all">
+                        <button id="modeStopwatchBtn" class="flex-1 py-2 text-sm font-semibold rounded-lg transition-all">
                             <i class="fa-solid fa-stopwatch mr-1.5"></i>通常タイマー
                         </button>
-                        <button id="modePomodoroBtn" class="flex-1 py-2 text-sm font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition-all">
-                            <i class="fa-solid fa-clock mr-1.5"></i>ポモドーロ (25分)
+                        <button id="modePomodoroBtn" class="flex-1 py-2 text-sm font-semibold rounded-lg transition-all">
+                            <i class="fa-solid fa-clock mr-1.5"></i><span id="pomodoroTabLabel">ポモドーロ (25分)</span>
                         </button>
                     </div>
 
@@ -148,19 +256,27 @@
                     <div class="mb-5">
                         <label for="subjectSelect" class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">学習する科目・タグ</label>
                         <div class="flex gap-2">
-                            <select id="subjectSelect" class="flex-grow bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl focus:ring-indigo-500 focus:border-indigo-500 block p-2.5 font-medium">
+                            <select id="subjectSelect" class="flex-grow min-w-0 bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl focus:ring-indigo-500 focus:border-indigo-500 block p-2.5 font-medium disabled:opacity-60">
                                 <!-- JSで動的に生成 -->
                             </select>
                             <button id="addSubjectBtn" title="新しい科目を追加" class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-3.5 rounded-xl transition-colors">
                                 <i class="fa-solid fa-plus"></i>
                             </button>
+                            <button id="manageSubjectsBtn" title="科目の管理 (名前・色の変更、削除)" class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-3.5 rounded-xl transition-colors">
+                                <i class="fa-solid fa-pen"></i>
+                            </button>
                         </div>
                     </div>
 
                     <!-- タイマー表示部 -->
-                    <div class="text-center py-6 bg-slate-50 rounded-2xl border border-slate-100 mb-6 relative overflow-hidden">
-                        <div id="pomodoroStatusBadge" class="hidden inline-block px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-600 mb-2">
-                            集中タイム
+                    <div class="text-center py-6 bg-slate-50 rounded-2xl border border-slate-100 mb-4 relative overflow-hidden">
+                        <div class="flex items-center justify-center gap-2 mb-2 min-h-[24px]" id="pomodoroStatusRow">
+                            <span id="pomodoroStatusBadge" class="hidden inline-block px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-600">
+                                集中タイム
+                            </span>
+                            <button id="openPomodoroSettingsBtn" class="hidden text-xs text-slate-400 hover:text-slate-600 px-1" title="ポモドーロ設定">
+                                <i class="fa-solid fa-gear"></i>
+                            </button>
                         </div>
                         <div id="timerDisplay" class="text-5xl sm:text-6xl font-bold text-slate-900 tracking-tight tabular-nums my-1">
                             00:00:00
@@ -184,11 +300,37 @@
                             <span>完了して記録</span>
                         </button>
                     </div>
-                    <div class="mt-3 text-center">
-                        <button id="resetTimerBtn" class="text-xs text-slate-400 hover:text-slate-600 underline py-1">
+                    <div class="mt-3 flex items-center justify-between">
+                        <span class="hidden sm:inline text-xs text-slate-400"><kbd>Space</kbd> で開始 / 停止</span>
+                        <button id="resetTimerBtn" class="text-xs text-slate-400 hover:text-slate-600 underline py-1 ml-auto">
                             タイマーをリセット
                         </button>
                     </div>
+                </div>
+
+                <!-- 直近7日間のグラフ -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                    <div class="flex items-start justify-between mb-4 gap-3">
+                        <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                            <i class="fa-solid fa-chart-column text-indigo-500"></i>
+                            直近7日間
+                        </h3>
+                        <div class="text-right text-xs text-slate-500 leading-5">
+                            <div>合計 <strong id="weekTotal" class="text-slate-800 tabular-nums">0時間 0分</strong></div>
+                            <div>1日平均 <strong id="weekAverage" class="text-slate-800 tabular-nums">0時間 0分</strong></div>
+                        </div>
+                    </div>
+                    <div class="flex">
+                        <!-- Y軸ラベル -->
+                        <div id="weekYAxis" class="relative w-8 flex-shrink-0 text-[10px] text-slate-400 tabular-nums" style="height: 150px"></div>
+                        <!-- 描画エリア -->
+                        <div class="relative flex-grow">
+                            <div id="weekGrid" class="absolute inset-x-0 top-0 pointer-events-none" style="height: 150px"></div>
+                            <div id="weekBars" class="relative flex gap-1"></div>
+                        </div>
+                    </div>
+                    <div id="weekDetail" class="mt-3 pt-3 border-t border-slate-100 text-xs text-slate-500 min-h-[40px]"></div>
+                    <div id="weekLegend" class="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-600"></div>
                 </div>
 
                 <!-- 科目別内訳 (表示中の月) -->
@@ -198,7 +340,6 @@
                         <span id="subjectStatsTitle">今月の科目別バランス</span>
                     </h3>
                     <div id="subjectStatsContainer" class="space-y-3">
-                        <!-- JSで動的に生成 -->
                         <p class="text-sm text-slate-400 text-center py-4">まだ記録がありません</p>
                     </div>
                 </div>
@@ -214,13 +355,13 @@
                     <div class="flex items-center justify-between mb-6">
                         <h3 id="calendarMonthYear" class="text-lg font-bold text-slate-900"></h3>
                         <div class="flex items-center space-x-2">
-                            <button id="prevMonthBtn" class="p-2 rounded-lg hover:bg-slate-100 text-slate-600 transition-colors" title="前月">
+                            <button id="prevMonthBtn" class="p-2 rounded-lg hover:bg-slate-100 text-slate-600 transition-colors" title="前月 (←)">
                                 <i class="fa-solid fa-chevron-left"></i>
                             </button>
-                            <button id="todayBtn" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors">
+                            <button id="todayBtn" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors" title="今日 (T)">
                                 今日
                             </button>
-                            <button id="nextMonthBtn" class="p-2 rounded-lg hover:bg-slate-100 text-slate-600 transition-colors" title="翌月">
+                            <button id="nextMonthBtn" class="p-2 rounded-lg hover:bg-slate-100 text-slate-600 transition-colors" title="翌月 (→)">
                                 <i class="fa-solid fa-chevron-right"></i>
                             </button>
                         </div>
@@ -238,9 +379,7 @@
                     </div>
 
                     <!-- カレンダーグリッド -->
-                    <div id="calendarGrid" class="grid grid-cols-7 gap-1.5 sm:gap-2">
-                        <!-- JSで日付セルを生成 -->
-                    </div>
+                    <div id="calendarGrid" class="grid grid-cols-7 gap-1.5 sm:gap-2"></div>
 
                     <!-- ヒートマップ凡例 (カレンダーのセル色と一致させる) -->
                     <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-end gap-2 text-xs text-slate-400">
@@ -266,20 +405,18 @@
                         </button>
                     </div>
 
-                    <div id="dayLogsList" class="space-y-2.5 max-h-64 overflow-y-auto pr-1">
-                        <!-- JSでログを生成 -->
-                    </div>
+                    <div id="dayLogsList" class="space-y-2.5 max-h-80 overflow-y-auto pr-1"></div>
                 </div>
 
             </div>
         </div>
     </main>
 
-    <!-- モーダル1: 手動時間追加 -->
+    <!-- モーダル1: 手動記録 / 記録の編集 -->
     <div id="manualModal" class="modal fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl transform transition-all">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-bold text-slate-900">勉強時間を手動で記録</h3>
+                <h3 id="manualModalTitle" class="text-lg font-bold text-slate-900">勉強時間を手動で記録</h3>
                 <button class="closeModalBtn text-slate-400 hover:text-slate-600 p-1" title="閉じる">
                     <i class="fa-solid fa-xmark text-lg"></i>
                 </button>
@@ -291,19 +428,17 @@
                 </div>
                 <div>
                     <label for="manualSubjectSelect" class="block text-xs font-semibold text-slate-600 mb-1">科目</label>
-                    <select id="manualSubjectSelect" required class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm focus:ring-indigo-500 focus:border-indigo-500">
-                        <!-- JSで生成 -->
-                    </select>
+                    <select id="manualSubjectSelect" required class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm focus:ring-indigo-500 focus:border-indigo-500"></select>
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 mb-1">勉強時間</label>
                     <div class="grid grid-cols-2 gap-3">
                         <div class="relative">
-                            <input type="number" id="manualHoursInput" min="0" max="24" value="1" required class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 pr-10 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                            <input type="number" id="manualHoursInput" min="0" max="24" value="1" required inputmode="numeric" aria-label="時間" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 pr-10 text-sm focus:ring-indigo-500 focus:border-indigo-500">
                             <span class="absolute right-3 top-2.5 text-sm text-slate-400">時間</span>
                         </div>
                         <div class="relative">
-                            <input type="number" id="manualMinutesInput" min="0" max="59" value="0" required class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 pr-8 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                            <input type="number" id="manualMinutesInput" min="0" max="59" value="0" required inputmode="numeric" aria-label="分" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 pr-8 text-sm focus:ring-indigo-500 focus:border-indigo-500">
                             <span class="absolute right-3 top-2.5 text-sm text-slate-400">分</span>
                         </div>
                     </div>
@@ -314,7 +449,7 @@
                 </div>
                 <div class="pt-2 flex justify-end gap-2">
                     <button type="button" class="closeModalBtn px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-xl">キャンセル</button>
-                    <button type="submit" class="px-5 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-sm">保存する</button>
+                    <button type="submit" id="manualSubmitBtn" class="px-5 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-sm">保存する</button>
                 </div>
             </form>
         </div>
@@ -336,14 +471,7 @@
                 </div>
                 <div>
                     <label class="block text-xs font-semibold text-slate-600 mb-2">カラー選択</label>
-                    <div class="flex gap-2.5" id="colorPickerContainer">
-                        <label class="cursor-pointer"><input type="radio" name="subjectColor" value="#4f46e5" checked class="sr-only peer"><span class="w-7 h-7 rounded-full bg-indigo-600 block peer-checked:ring-2 peer-checked:ring-offset-2 peer-checked:ring-indigo-600"></span></label>
-                        <label class="cursor-pointer"><input type="radio" name="subjectColor" value="#059669" class="sr-only peer"><span class="w-7 h-7 rounded-full bg-emerald-600 block peer-checked:ring-2 peer-checked:ring-offset-2 peer-checked:ring-emerald-600"></span></label>
-                        <label class="cursor-pointer"><input type="radio" name="subjectColor" value="#e11d48" class="sr-only peer"><span class="w-7 h-7 rounded-full bg-rose-600 block peer-checked:ring-2 peer-checked:ring-offset-2 peer-checked:ring-rose-600"></span></label>
-                        <label class="cursor-pointer"><input type="radio" name="subjectColor" value="#d97706" class="sr-only peer"><span class="w-7 h-7 rounded-full bg-amber-600 block peer-checked:ring-2 peer-checked:ring-offset-2 peer-checked:ring-amber-600"></span></label>
-                        <label class="cursor-pointer"><input type="radio" name="subjectColor" value="#0284c7" class="sr-only peer"><span class="w-7 h-7 rounded-full bg-sky-600 block peer-checked:ring-2 peer-checked:ring-offset-2 peer-checked:ring-sky-600"></span></label>
-                        <label class="cursor-pointer"><input type="radio" name="subjectColor" value="#7c3aed" class="sr-only peer"><span class="w-7 h-7 rounded-full bg-violet-600 block peer-checked:ring-2 peer-checked:ring-offset-2 peer-checked:ring-violet-600"></span></label>
-                    </div>
+                    <div class="flex gap-2.5" id="colorPickerContainer"></div>
                 </div>
                 <div class="pt-2 flex justify-end gap-2">
                     <button type="button" class="closeModalBtn px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-xl">キャンセル</button>
@@ -365,11 +493,11 @@
             <form id="goalForm" class="space-y-4">
                 <div class="grid grid-cols-2 gap-3">
                     <div class="relative">
-                        <input type="number" id="goalHoursInput" min="0" max="24" required class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 pr-10 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                        <input type="number" id="goalHoursInput" min="0" max="24" required inputmode="numeric" aria-label="時間" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 pr-10 text-sm focus:ring-indigo-500 focus:border-indigo-500">
                         <span class="absolute right-3 top-2.5 text-sm text-slate-400">時間</span>
                     </div>
                     <div class="relative">
-                        <input type="number" id="goalMinutesInput" min="0" max="59" required class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 pr-8 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                        <input type="number" id="goalMinutesInput" min="0" max="59" required inputmode="numeric" aria-label="分" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 pr-8 text-sm focus:ring-indigo-500 focus:border-indigo-500">
                         <span class="absolute right-3 top-2.5 text-sm text-slate-400">分</span>
                     </div>
                 </div>
@@ -381,24 +509,132 @@
         </div>
     </div>
 
+    <!-- モーダル4: 科目の管理 -->
+    <div id="manageSubjectsModal" class="modal fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center mb-1">
+                <h3 class="text-lg font-bold text-slate-900">科目の管理</h3>
+                <button class="closeModalBtn text-slate-400 hover:text-slate-600 p-1" title="閉じる">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <p class="text-xs text-slate-500 mb-4">名前と色は変更するとすぐ保存されます。記録がある科目を削除しても、過去の記録は残ります。</p>
+            <div id="manageSubjectsList" class="space-y-3 overflow-y-auto pr-1 flex-grow"></div>
+            <div id="archivedSubjectsSection" class="hidden mt-4 pt-3 border-t border-slate-100">
+                <p class="text-xs font-semibold text-slate-500 mb-2">削除した科目</p>
+                <div id="archivedSubjectsList" class="space-y-2"></div>
+            </div>
+            <div class="pt-4 flex justify-between gap-2">
+                <button type="button" id="manageAddSubjectBtn" class="px-4 py-2 text-sm font-medium text-indigo-600 hover:bg-indigo-50 rounded-xl"><i class="fa-solid fa-plus mr-1"></i>科目を追加</button>
+                <button type="button" class="closeModalBtn px-5 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-sm">完了</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- モーダル5: ポモドーロ設定 -->
+    <div id="pomodoroModal" class="modal fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-slate-900">ポモドーロ設定</h3>
+                <button class="closeModalBtn text-slate-400 hover:text-slate-600 p-1" title="閉じる">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <form id="pomodoroForm" class="space-y-4">
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label for="pomoFocusInput" class="block text-xs font-semibold text-slate-600 mb-1">集中する時間</label>
+                        <div class="relative">
+                            <input type="number" id="pomoFocusInput" min="1" max="180" required inputmode="numeric" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 pr-8 text-sm">
+                            <span class="absolute right-3 top-2.5 text-sm text-slate-400">分</span>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="pomoShortInput" class="block text-xs font-semibold text-slate-600 mb-1">短い休憩</label>
+                        <div class="relative">
+                            <input type="number" id="pomoShortInput" min="1" max="60" required inputmode="numeric" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 pr-8 text-sm">
+                            <span class="absolute right-3 top-2.5 text-sm text-slate-400">分</span>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="pomoLongInput" class="block text-xs font-semibold text-slate-600 mb-1">長い休憩</label>
+                        <div class="relative">
+                            <input type="number" id="pomoLongInput" min="1" max="90" required inputmode="numeric" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 pr-8 text-sm">
+                            <span class="absolute right-3 top-2.5 text-sm text-slate-400">分</span>
+                        </div>
+                    </div>
+                    <div>
+                        <label for="pomoEveryInput" class="block text-xs font-semibold text-slate-600 mb-1">長い休憩の間隔</label>
+                        <div class="relative">
+                            <input type="number" id="pomoEveryInput" min="1" max="10" required inputmode="numeric" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 pr-14 text-sm">
+                            <span class="absolute right-3 top-2.5 text-sm text-slate-400">回ごと</span>
+                        </div>
+                    </div>
+                </div>
+                <label class="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                    <input type="checkbox" id="pomoAutoBreakInput" class="w-4 h-4 rounded">
+                    集中が終わったら休憩を自動で始める
+                </label>
+                <p class="text-xs text-slate-500 leading-relaxed">集中タイムが終わると、その時間は自動で記録されます。タブを閉じていなければ、終了時にブラウザの通知でもお知らせします。</p>
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" class="closeModalBtn px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-xl">キャンセル</button>
+                    <button type="submit" class="px-5 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-sm">設定を保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- モーダル6: キーボードショートカット -->
+    <div id="shortcutsModal" class="modal fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-slate-900">キーボードショートカット</h3>
+                <button class="closeModalBtn text-slate-400 hover:text-slate-600 p-1" title="閉じる">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <dl class="text-sm text-slate-700 space-y-2.5">
+                <div class="flex justify-between"><dt>タイマーの開始 / 一時停止</dt><dd><kbd>Space</kbd></dd></div>
+                <div class="flex justify-between"><dt>完了して記録</dt><dd><kbd>S</kbd></dd></div>
+                <div class="flex justify-between"><dt>手動で記録</dt><dd><kbd>N</kbd></dd></div>
+                <div class="flex justify-between"><dt>前の月 / 次の月</dt><dd><kbd>←</kbd> <kbd>→</kbd></dd></div>
+                <div class="flex justify-between"><dt>今日に戻る</dt><dd><kbd>T</kbd></dd></div>
+                <div class="flex justify-between"><dt>この一覧を表示</dt><dd><kbd>?</kbd></dd></div>
+                <div class="flex justify-between"><dt>ダイアログを閉じる</dt><dd><kbd>Esc</kbd></dd></div>
+            </dl>
+        </div>
+    </div>
+
     <script>
         /**
          * StudyLog アプリケーションロジック
-         * 状態管理、タイマー制御、カレンダー描画、LocalStorage永続化を担当
+         * 状態管理、タイマー制御、カレンダー・グラフ描画、LocalStorage永続化を担当
          */
 
-        // --- 初期データと状態管理 ---
+        // --- 定数 ---
         const STORAGE_KEYS = {
             LOGS: 'studylog_records_v1',
             SUBJECTS: 'studylog_subjects_v1',
             GOAL: 'studylog_daily_goal_v1',
-            TIMER: 'studylog_timer_v1'
+            TIMER: 'studylog_timer_v1',
+            POMODORO: 'studylog_pomodoro_v1',
+            THEME: 'studylog_theme_v1'
         };
 
         const APP_TITLE = 'StudyLog - 勉強時間管理アプリ';
         const MAX_DAY_SECONDS = 24 * 3600;
+        const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
 
-        // デフォルト科目
+        // 科目に使える色 (色覚の違いがあっても隣同士を見分けやすい組み合わせ)
+        const SUBJECT_COLORS = [
+            { value: '#4f46e5', name: 'インディゴ' },
+            { value: '#059669', name: 'エメラルド' },
+            { value: '#e11d48', name: 'ローズ' },
+            { value: '#d97706', name: 'アンバー' },
+            { value: '#0284c7', name: 'スカイ' },
+            { value: '#7c3aed', name: 'バイオレット' }
+        ];
+
         const DEFAULT_SUBJECTS = [
             { id: 'sub_1', name: '英語', color: '#4f46e5' },
             { id: 'sub_2', name: '数学', color: '#059669' },
@@ -406,28 +642,44 @@
             { id: 'sub_4', name: '読書・その他', color: '#d97706' }
         ];
 
-        // アプリケーション状態
+        const DEFAULT_POMODORO = {
+            focusMin: 25,
+            shortBreakMin: 5,
+            longBreakMin: 15,
+            longBreakEvery: 4,
+            autoStartBreak: true
+        };
+
+        // --- アプリケーション状態 ---
         let state = {
             logs: [], // { id, date: 'YYYY-MM-DD', subjectId, durationSeconds, memo, timestamp }
-            subjects: [],
-            dailyGoalMinutes: 120, // デフォルト2時間
+            subjects: [], // { id, name, color, archived? }
+            dailyGoalMinutes: 120,
+            pomodoro: { ...DEFAULT_POMODORO },
+            themePref: 'system',
 
             // カレンダー表示状態
             currentYear: new Date().getFullYear(),
             currentMonth: new Date().getMonth(), // 0-indexed
             selectedDateStr: formatDateToISO(new Date()),
+            weekHoverDate: null,
+
+            // 編集中の記録ID (null なら新規追加)
+            editingLogId: null,
 
             // タイマー状態
             // 経過時間は「開始時刻」から毎回計算するので、端数の切り捨てによるズレが起きない
             timer: {
-                mode: 'stopwatch',   // 'stopwatch' | 'pomodoro'
+                mode: 'stopwatch',      // 'stopwatch' | 'pomodoro'
+                phase: 'focus',         // 'focus' | 'break' (ポモドーロのみ)
+                breakKind: 'short',     // 'short' | 'long'
+                completedFocus: 0,      // 完了した集中タイムの数
                 isRunning: false,
-                accumulatedMs: 0,    // 一時停止までに積み上がった時間
-                startedAt: null,     // 現在の計測区間を開始した時刻 (ms)
-                sessionStartedAt: null, // 最初にスタートした時刻 (記録の日付に使う)
+                accumulatedMs: 0,       // 一時停止までに積み上がった時間
+                startedAt: null,        // 現在の計測区間を開始した時刻 (ms)
+                sessionStartedAt: null, // 集中を最初にスタートした時刻 (記録の日付に使う)
                 subjectId: null
             },
-            pomodoroDuration: 25 * 60, // 25分
             timerInterval: null
         };
 
@@ -437,6 +689,11 @@
             const m = String(date.getMonth() + 1).padStart(2, '0');
             const d = String(date.getDate()).padStart(2, '0');
             return `${y}-${m}-${d}`;
+        }
+
+        function parseISODate(str) {
+            const [y, m, d] = str.split('-').map(n => parseInt(n, 10));
+            return new Date(y, m - 1, d);
         }
 
         function formatSecondsToHoursMinutes(totalSeconds) {
@@ -484,8 +741,12 @@
             return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
         }
 
+        function getActiveSubjects() {
+            return state.subjects.filter(s => !s.archived);
+        }
+
         function getSubject(subjectId, fallbackName = '不明な科目') {
-            return state.subjects.find(s => s.id === subjectId) || { name: fallbackName, color: '#94a3b8' };
+            return state.subjects.find(s => s.id === subjectId) || { id: subjectId, name: fallbackName, color: '#94a3b8' };
         }
 
         function getMonthPrefix() {
@@ -497,6 +758,19 @@
             return state.currentYear === now.getFullYear() && state.currentMonth === now.getMonth();
         }
 
+        function getDayTotal(dateStr, excludeLogId = null) {
+            return state.logs
+                .filter(l => l.date === dateStr && l.id !== excludeLogId)
+                .reduce((sum, l) => sum + l.durationSeconds, 0);
+        }
+
+        function selectDate(dateStr) {
+            state.selectedDateStr = dateStr;
+            const d = parseISODate(dateStr);
+            state.currentYear = d.getFullYear();
+            state.currentMonth = d.getMonth();
+        }
+
         // トースト通知表示 (alertの代替)
         // action を渡すと「元に戻す」などのボタンを付けられる
         function showToast(message, type = 'success', action = null) {
@@ -505,7 +779,8 @@
             const bgColor = type === 'success' ? 'bg-slate-800' : (type === 'info' ? 'bg-indigo-600' : 'bg-rose-600');
             const iconClass = type === 'success' ? 'fa-circle-check text-emerald-400' : 'fa-circle-info text-white';
 
-            toast.className = `${bgColor} text-white px-4 py-3 rounded-xl shadow-lg flex items-center gap-3 text-sm font-medium transform transition-all duration-300 translate-y-2 opacity-0 pointer-events-auto`;
+            toast.className = `${bgColor} text-white px-4 py-3 rounded-xl shadow-lg flex items-center gap-3 text-sm font-medium transform transition-all duration-300 translate-y-2 opacity-0 pointer-events-auto max-w-full`;
+            toast.setAttribute('role', 'status');
 
             const icon = document.createElement('i');
             icon.className = `fa-solid ${iconClass}`;
@@ -521,7 +796,7 @@
             if (action) {
                 const btn = document.createElement('button');
                 btn.type = 'button';
-                btn.className = 'ml-2 underline font-bold text-amber-300 hover:text-amber-200';
+                btn.className = 'ml-2 underline font-bold text-amber-300 hover:text-amber-200 whitespace-nowrap';
                 btn.textContent = action.label;
                 btn.addEventListener('click', () => {
                     action.onClick();
@@ -531,16 +806,13 @@
             }
 
             container.appendChild(toast);
-
-            // アニメーションイン
             requestAnimationFrame(() => {
                 toast.classList.remove('translate-y-2', 'opacity-0');
             });
-
             setTimeout(remove, action ? 6000 : 3000);
         }
 
-        // 効果音 (Web Audio API - 外部ファイル不要)
+        // --- 音と通知 ---
         // AudioContext は使い回す。スマホではユーザー操作時に resume しておく必要がある
         let audioCtx = null;
         function ensureAudioContext() {
@@ -577,19 +849,48 @@
             }
         }
 
+        function requestNotificationPermission() {
+            try {
+                if ('Notification' in window && Notification.permission === 'default') {
+                    Notification.requestPermission();
+                }
+            } catch (e) {
+                // 通知に対応していない環境では何もしない
+            }
+        }
+
+        function notify(title, body) {
+            playNotificationSound();
+            try {
+                if ('Notification' in window && Notification.permission === 'granted' && document.hidden) {
+                    new Notification(title, { body, icon: 'icon-192.png', tag: 'studylog-timer' });
+                }
+            } catch (e) {
+                // 一部のブラウザでは new Notification が使えないので無視
+            }
+        }
+
         // --- データ永続化 ---
         function loadData() {
             try {
                 const savedLogs = localStorage.getItem(STORAGE_KEYS.LOGS);
                 const savedSubjects = localStorage.getItem(STORAGE_KEYS.SUBJECTS);
                 const savedGoal = localStorage.getItem(STORAGE_KEYS.GOAL);
+                const savedPomodoro = localStorage.getItem(STORAGE_KEYS.POMODORO);
 
                 state.logs = savedLogs ? JSON.parse(savedLogs) : [];
                 state.subjects = savedSubjects ? JSON.parse(savedSubjects) : [...DEFAULT_SUBJECTS];
+                if (getActiveSubjects().length === 0) {
+                    state.subjects.push({ ...DEFAULT_SUBJECTS[0], id: generateId('sub') });
+                }
                 const goal = savedGoal ? parseInt(savedGoal, 10) : 120;
                 state.dailyGoalMinutes = Number.isFinite(goal) ? goal : 120;
+                if (savedPomodoro) {
+                    state.pomodoro = sanitizePomodoro(JSON.parse(savedPomodoro));
+                }
+                state.themePref = localStorage.getItem(STORAGE_KEYS.THEME) || 'system';
 
-                // 初回起動時（データが空の場合）にサンプルデータを少し入れて使い方を分かりやすくする
+                // 初回起動時にサンプルデータを少し入れて使い方を分かりやすくする
                 if (!savedLogs && state.logs.length === 0) {
                     seedSampleData();
                 }
@@ -609,6 +910,28 @@
             }
         }
 
+        function sanitizePomodoro(p) {
+            const clamp = (v, min, max, def) => {
+                const n = parseInt(v, 10);
+                return Number.isFinite(n) ? Math.min(max, Math.max(min, n)) : def;
+            };
+            return {
+                focusMin: clamp(p.focusMin, 1, 180, DEFAULT_POMODORO.focusMin),
+                shortBreakMin: clamp(p.shortBreakMin, 1, 60, DEFAULT_POMODORO.shortBreakMin),
+                longBreakMin: clamp(p.longBreakMin, 1, 90, DEFAULT_POMODORO.longBreakMin),
+                longBreakEvery: clamp(p.longBreakEvery, 1, 10, DEFAULT_POMODORO.longBreakEvery),
+                autoStartBreak: p.autoStartBreak !== false
+            };
+        }
+
+        function savePomodoroSettings() {
+            try {
+                localStorage.setItem(STORAGE_KEYS.POMODORO, JSON.stringify(state.pomodoro));
+            } catch (e) {
+                showToast('設定の保存に失敗しました', 'error');
+            }
+        }
+
         function saveTimerState() {
             try {
                 localStorage.setItem(STORAGE_KEYS.TIMER, JSON.stringify(state.timer));
@@ -624,6 +947,9 @@
                 const t = JSON.parse(saved);
                 state.timer = {
                     mode: t.mode === 'pomodoro' ? 'pomodoro' : 'stopwatch',
+                    phase: t.mode === 'pomodoro' && t.phase === 'break' ? 'break' : 'focus',
+                    breakKind: t.breakKind === 'long' ? 'long' : 'short',
+                    completedFocus: Math.max(0, parseInt(t.completedFocus, 10) || 0),
                     isRunning: !!t.isRunning && typeof t.startedAt === 'number',
                     accumulatedMs: Number(t.accumulatedMs) || 0,
                     startedAt: typeof t.startedAt === 'number' ? t.startedAt : null,
@@ -644,23 +970,28 @@
             twoDaysAgo.setDate(today.getDate() - 2);
 
             state.logs = [
-                {
-                    id: 'sample_1',
-                    date: formatDateToISO(twoDaysAgo),
-                    subjectId: 'sub_1',
-                    durationSeconds: 3600,
-                    memo: 'リスニング教材 Chapter 1',
-                    timestamp: twoDaysAgo.getTime()
-                },
-                {
-                    id: 'sample_2',
-                    date: formatDateToISO(yesterday),
-                    subjectId: 'sub_3',
-                    durationSeconds: 5400,
-                    memo: 'Webアプリ開発の基礎学習',
-                    timestamp: yesterday.getTime()
-                }
+                { id: 'sample_1', date: formatDateToISO(twoDaysAgo), subjectId: 'sub_1', durationSeconds: 3600, memo: 'リスニング教材 Chapter 1', timestamp: twoDaysAgo.getTime() },
+                { id: 'sample_2', date: formatDateToISO(yesterday), subjectId: 'sub_3', durationSeconds: 5400, memo: 'Webアプリ開発の基礎学習', timestamp: yesterday.getTime() }
             ];
+            saveData();
+        }
+
+        function addLog({ date, subjectId, seconds, memo }) {
+            const log = {
+                id: generateId('log'),
+                date,
+                subjectId,
+                durationSeconds: seconds,
+                memo: memo || '',
+                timestamp: Date.now()
+            };
+            state.logs.unshift(log);
+            saveData();
+            return log;
+        }
+
+        function removeLogById(logId) {
+            state.logs = state.logs.filter(l => l.id !== logId);
             saveData();
         }
 
@@ -668,11 +999,12 @@
         function exportData() {
             const payload = {
                 app: 'StudyLog',
-                version: 1,
+                version: 2,
                 exportedAt: new Date().toISOString(),
                 logs: state.logs,
                 subjects: state.subjects,
-                dailyGoalMinutes: state.dailyGoalMinutes
+                dailyGoalMinutes: state.dailyGoalMinutes,
+                pomodoro: state.pomodoro
             };
             const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
             const url = URL.createObjectURL(blob);
@@ -710,15 +1042,16 @@
                         date: l.date,
                         subjectId: l.subjectId,
                         durationSeconds: Math.floor(l.durationSeconds),
-                        memo: typeof l.memo === 'string' ? l.memo : '',
+                        memo: typeof l.memo === 'string' ? l.memo.slice(0, 200) : '',
                         timestamp: Number(l.timestamp) || Date.now()
                     }));
                     const subjects = data.subjects.filter(isValidSubject).map(s => ({
                         id: s.id,
                         name: s.name.slice(0, 30),
-                        color: safeColor(s.color)
+                        color: safeColor(s.color),
+                        ...(s.archived ? { archived: true } : {})
                     }));
-                    if (subjects.length === 0) {
+                    if (!subjects.some(s => !s.archived)) {
                         throw new Error('no subjects');
                     }
 
@@ -728,8 +1061,12 @@
                     state.logs = logs;
                     state.subjects = subjects;
                     const goal = parseInt(data.dailyGoalMinutes, 10);
-                    if (Number.isFinite(goal) && goal >= 0) {
+                    if (Number.isFinite(goal) && goal >= 0 && goal <= 24 * 60) {
                         state.dailyGoalMinutes = goal;
+                    }
+                    if (data.pomodoro && typeof data.pomodoro === 'object') {
+                        state.pomodoro = sanitizePomodoro(data.pomodoro);
+                        savePomodoroSettings();
                     }
                     saveData();
                     renderAll();
@@ -741,7 +1078,37 @@
             reader.readAsText(file);
         }
 
+        // --- テーマ (ダークモード) ---
+        const darkMedia = window.matchMedia('(prefers-color-scheme: dark)');
+
+        function applyTheme() {
+            const dark = state.themePref === 'dark' || (state.themePref === 'system' && darkMedia.matches);
+            document.documentElement.classList.toggle('dark', dark);
+            document.querySelector('meta[name="theme-color"]').setAttribute('content', dark ? '#1e293b' : '#4f46e5');
+            document.querySelectorAll('[data-theme-choice]').forEach(btn => {
+                const active = btn.dataset.themeChoice === state.themePref;
+                btn.className = `flex-1 py-1.5 rounded-md ${active ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`;
+                btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+            });
+        }
+
+        function setTheme(pref) {
+            state.themePref = pref;
+            try {
+                localStorage.setItem(STORAGE_KEYS.THEME, pref);
+            } catch (e) {}
+            applyTheme();
+        }
+
         // --- タイマーロジック ---
+        function getPhaseDurationSeconds() {
+            const t = state.timer;
+            const p = state.pomodoro;
+            if (t.mode !== 'pomodoro') return Infinity;
+            if (t.phase === 'focus') return p.focusMin * 60;
+            return (t.breakKind === 'long' ? p.longBreakMin : p.shortBreakMin) * 60;
+        }
+
         function getElapsedMs() {
             const t = state.timer;
             const running = t.isRunning && t.startedAt ? Date.now() - t.startedAt : 0;
@@ -752,10 +1119,14 @@
             return Math.floor(getElapsedMs() / 1000);
         }
 
-        // 記録する秒数 (ポモドーロは25分を上限にする)
+        function isBreak() {
+            return state.timer.mode === 'pomodoro' && state.timer.phase === 'break';
+        }
+
+        // 記録する秒数 (ポモドーロは設定時間を上限にする)
         function getRecordableSeconds() {
-            const sec = getElapsedSeconds();
-            return state.timer.mode === 'pomodoro' ? Math.min(sec, state.pomodoroDuration) : sec;
+            if (isBreak()) return 0;
+            return Math.min(getElapsedSeconds(), getPhaseDurationSeconds());
         }
 
         function updateTimerDisplay() {
@@ -767,75 +1138,166 @@
             if (state.timer.mode === 'stopwatch') {
                 clock = formatTimerClock(elapsed);
             } else {
-                clock = formatTimerClock(Math.max(0, state.pomodoroDuration - elapsed));
+                clock = formatTimerClock(Math.max(0, getPhaseDurationSeconds() - elapsed));
             }
             displayEl.textContent = clock;
 
             // 計測中はタブのタイトルにも時間を表示
-            document.title = (state.timer.isRunning || elapsed > 0) ? `${clock} - StudyLog` : APP_TITLE;
+            const active = state.timer.isRunning || elapsed > 0;
+            document.title = active ? `${isBreak() ? '☕ ' : ''}${clock} - StudyLog` : APP_TITLE;
 
-            // 1秒以上経過していれば「完了して記録」ボタンを有効化
-            finishBtn.disabled = elapsed === 0;
+            // 休憩中はいつでもスキップできる。集中中は1秒以上で記録できる
+            finishBtn.disabled = isBreak() ? false : elapsed === 0;
         }
 
         function updateTimerControls() {
+            const t = state.timer;
             const startPauseBtn = document.getElementById('startPauseBtn');
+            const finishBtn = document.getElementById('finishSaveBtn');
             const subtextEl = document.getElementById('timerSubtext');
             const elapsed = getElapsedSeconds();
+            const onBreak = isBreak();
 
             startPauseBtn.classList.remove('bg-amber-500', 'hover:bg-amber-600', 'bg-indigo-600', 'hover:bg-indigo-700');
 
-            if (state.timer.isRunning) {
+            if (t.isRunning) {
                 startPauseBtn.innerHTML = '<i class="fa-solid fa-pause"></i><span>一時停止</span>';
                 startPauseBtn.classList.add('bg-amber-500', 'hover:bg-amber-600');
-                subtextEl.textContent = '集中して計測中...';
+                subtextEl.textContent = onBreak ? 'ひと休みしましょう ☕' : '集中して計測中...';
             } else if (elapsed > 0) {
                 startPauseBtn.innerHTML = '<i class="fa-solid fa-play"></i><span>再開</span>';
                 startPauseBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
                 subtextEl.textContent = '一時停止中';
             } else {
-                startPauseBtn.innerHTML = '<i class="fa-solid fa-play"></i><span>スタート</span>';
+                startPauseBtn.innerHTML = `<i class="fa-solid fa-play"></i><span>${onBreak ? '休憩を開始' : 'スタート'}</span>`;
                 startPauseBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
-                subtextEl.textContent = '計測を開始してください';
+                subtextEl.textContent = onBreak ? '休憩を始めましょう' : '計測を開始してください';
             }
 
-            // 計測中は科目を変えられないようにする (記録される科目と表示を一致させるため)
-            const hasSession = state.timer.isRunning || elapsed > 0;
-            document.getElementById('subjectSelect').disabled = hasSession;
-            document.getElementById('subjectSelect').title = hasSession ? '計測中は科目を変更できません (リセットまたは記録後に変更できます)' : '';
+            finishBtn.innerHTML = onBreak
+                ? '<i class="fa-solid fa-forward"></i><span>休憩をスキップ</span>'
+                : '<i class="fa-solid fa-check"></i><span>完了して記録</span>';
+
+            // 集中の計測中は科目を変えられないようにする (記録される科目と表示を一致させるため)
+            const hasSession = !onBreak && (t.isRunning || elapsed > 0);
+            const select = document.getElementById('subjectSelect');
+            select.disabled = hasSession;
+            select.title = hasSession ? '計測中は科目を変更できません (リセットまたは記録後に変更できます)' : '';
+
+            updatePomodoroBadge();
+        }
+
+        function updatePomodoroBadge() {
+            const t = state.timer;
+            const p = state.pomodoro;
+            const badge = document.getElementById('pomodoroStatusBadge');
+            const gear = document.getElementById('openPomodoroSettingsBtn');
+            document.getElementById('pomodoroTabLabel').textContent = `ポモドーロ (${p.focusMin}分)`;
+
+            if (t.mode !== 'pomodoro') {
+                badge.classList.add('hidden');
+                gear.classList.add('hidden');
+                return;
+            }
+            badge.classList.remove('hidden');
+            gear.classList.remove('hidden');
+            badge.classList.remove('bg-rose-100', 'text-rose-600', 'bg-emerald-100', 'text-emerald-700');
+            if (t.phase === 'focus') {
+                const setNo = (t.completedFocus % p.longBreakEvery) + 1;
+                badge.textContent = `集中タイム ${setNo}/${p.longBreakEvery}`;
+                badge.classList.add('bg-rose-100', 'text-rose-600');
+            } else {
+                badge.textContent = t.breakKind === 'long' ? `長い休憩 (${p.longBreakMin}分)` : `休憩 (${p.shortBreakMin}分)`;
+                badge.classList.add('bg-emerald-100', 'text-emerald-700');
+            }
         }
 
         function updateModeTabs() {
             const swBtn = document.getElementById('modeStopwatchBtn');
             const pomoBtn = document.getElementById('modePomodoroBtn');
-            const badge = document.getElementById('pomodoroStatusBadge');
             const active = 'flex-1 py-2 text-sm font-semibold rounded-lg bg-white text-indigo-600 shadow-sm transition-all';
             const inactive = 'flex-1 py-2 text-sm font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition-all';
+            const isSw = state.timer.mode === 'stopwatch';
+            swBtn.className = isSw ? active : inactive;
+            pomoBtn.className = isSw ? inactive : active;
+            swBtn.setAttribute('aria-pressed', isSw ? 'true' : 'false');
+            pomoBtn.setAttribute('aria-pressed', isSw ? 'false' : 'true');
+            updatePomodoroBadge();
+        }
 
-            if (state.timer.mode === 'stopwatch') {
-                swBtn.className = active;
-                pomoBtn.className = inactive;
-                badge.classList.add('hidden');
+        /**
+         * ポモドーロの区切り (集中 → 休憩 → 集中) を処理する。
+         * タブが裏にあった・リロードしたなどで時間が大きく進んでいても、
+         * 本来の終了時刻を基準に次のフェーズを始めるので時間がズレない。
+         * 区切りを処理したら true を返す。
+         */
+        function handlePomodoroBoundary() {
+            const t = state.timer;
+            if (t.mode !== 'pomodoro' || !t.isRunning) return false;
+            const durationMs = getPhaseDurationSeconds() * 1000;
+            if (getElapsedMs() < durationMs) return false;
+
+            const endTime = t.startedAt + (durationMs - t.accumulatedMs);
+            const p = state.pomodoro;
+
+            if (t.phase === 'focus') {
+                // 集中タイムを自動で記録
+                const memoInput = document.getElementById('timerMemoInput');
+                const log = addLog({
+                    date: formatDateToISO(new Date(t.sessionStartedAt || endTime)),
+                    subjectId: t.subjectId || document.getElementById('subjectSelect').value,
+                    seconds: p.focusMin * 60,
+                    memo: memoInput.value.trim() || 'ポモドーロタイマーで学習'
+                });
+                memoInput.value = '';
+
+                t.completedFocus += 1;
+                t.phase = 'break';
+                t.breakKind = t.completedFocus % p.longBreakEvery === 0 ? 'long' : 'short';
+                t.accumulatedMs = 0;
+                t.sessionStartedAt = null;
+                t.subjectId = null;
+                if (p.autoStartBreak) {
+                    t.isRunning = true;
+                    t.startedAt = endTime;
+                } else {
+                    t.isRunning = false;
+                    t.startedAt = null;
+                }
+
+                const breakMin = t.breakKind === 'long' ? p.longBreakMin : p.shortBreakMin;
+                notify('集中タイム終了 🎉', `${p.focusMin}分を記録しました。${breakMin}分休憩しましょう。`);
+                showToast(`${p.focusMin}分を記録しました！${breakMin}分休憩しましょう`, 'info', {
+                    label: '記録を取り消す',
+                    onClick: () => {
+                        removeLogById(log.id);
+                        renderAll();
+                    }
+                });
+                selectDate(log.date);
             } else {
-                pomoBtn.className = active;
-                swBtn.className = inactive;
-                badge.classList.remove('hidden');
+                t.phase = 'focus';
+                t.accumulatedMs = 0;
+                t.isRunning = false;
+                t.startedAt = null;
+                notify('休憩終了', '次の集中タイムを始めましょう。');
+                showToast('休憩が終わりました。次の集中タイムを始めましょう', 'info');
             }
+            saveTimerState();
+            return true;
         }
 
         function tick() {
-            updateTimerDisplay();
-
-            // ポモドーロ完了チェック
-            if (state.timer.mode === 'pomodoro' && state.timer.isRunning && getElapsedSeconds() >= state.pomodoroDuration) {
-                pauseTimer();
-                // 25分ちょうどで止める
-                state.timer.accumulatedMs = state.pomodoroDuration * 1000;
-                saveTimerState();
-                updateTimerDisplay();
-                playNotificationSound();
-                showToast('25分のポモドーロが完了しました！記録を保存しましょう。', 'info');
+            let changed = false;
+            // 時間が大きく進んでいた場合に備えて、区切りがなくなるまで処理する
+            for (let i = 0; i < 4 && handlePomodoroBoundary(); i++) {
+                changed = true;
             }
+            if (changed) {
+                if (!state.timer.isRunning) clearInterval(state.timerInterval);
+                renderAll();
+            }
+            updateTimerDisplay();
         }
 
         function startInterval() {
@@ -846,12 +1308,9 @@
         function startTimer() {
             ensureAudioContext(); // ユーザー操作のタイミングで音声を有効化しておく
             const t = state.timer;
-            if (t.mode === 'pomodoro' && getElapsedSeconds() >= state.pomodoroDuration) {
-                showToast('ポモドーロは完了しています。記録するかリセットしてください', 'info');
-                return;
-            }
+            if (t.mode === 'pomodoro') requestNotificationPermission();
             const now = Date.now();
-            if (!t.sessionStartedAt) {
+            if (!isBreak() && !t.sessionStartedAt) {
                 t.sessionStartedAt = now;
                 t.subjectId = document.getElementById('subjectSelect').value;
             }
@@ -860,7 +1319,7 @@
             saveTimerState();
             startInterval();
             updateTimerControls();
-            updateTimerDisplay();
+            tick();
         }
 
         function pauseTimer() {
@@ -883,20 +1342,30 @@
             }
         }
 
-        function clearTimer() {
+        // 現在のフェーズの計測だけを消す
+        function clearCurrentPhase() {
             clearInterval(state.timerInterval);
-            state.timer.isRunning = false;
-            state.timer.accumulatedMs = 0;
-            state.timer.startedAt = null;
-            state.timer.sessionStartedAt = null;
-            state.timer.subjectId = null;
+            const t = state.timer;
+            t.isRunning = false;
+            t.accumulatedMs = 0;
+            t.startedAt = null;
+            t.sessionStartedAt = null;
+            t.subjectId = null;
+        }
+
+        // ポモドーロのセット数も含めて全部リセット
+        function clearTimer() {
+            clearCurrentPhase();
+            state.timer.phase = 'focus';
+            state.timer.breakKind = 'short';
+            state.timer.completedFocus = 0;
             saveTimerState();
             updateTimerControls();
             updateTimerDisplay();
         }
 
         function resetTimer() {
-            if (getElapsedSeconds() >= 60 && !confirm('計測中の時間は記録されずに消えます。リセットしますか？')) {
+            if (getRecordableSeconds() >= 60 && !confirm('計測中の時間は記録されずに消えます。リセットしますか？')) {
                 return;
             }
             clearTimer();
@@ -904,7 +1373,7 @@
 
         function switchTimerMode(mode) {
             if (mode === state.timer.mode) return;
-            if (getElapsedSeconds() > 0) {
+            if (getRecordableSeconds() > 0) {
                 if (!confirm('モードを切り替えると、計測中の時間は記録されずに消えます。切り替えますか？')) {
                     return;
                 }
@@ -913,45 +1382,53 @@
             state.timer.mode = mode;
             saveTimerState();
             updateModeTabs();
+            updateTimerControls();
             updateTimerDisplay();
         }
 
+        function skipBreak() {
+            clearCurrentPhase();
+            state.timer.phase = 'focus';
+            saveTimerState();
+            updateTimerControls();
+            updateTimerDisplay();
+            showToast('休憩をスキップしました', 'info');
+        }
+
         function saveTimerRecord() {
+            if (isBreak()) {
+                skipBreak();
+                return;
+            }
             const seconds = getRecordableSeconds();
             if (seconds === 0) return;
 
             const t = state.timer;
-            const subjectId = t.subjectId || document.getElementById('subjectSelect').value;
-            // 記録の日付は「計測を開始した日」(日付をまたいでも開始日に記録)
-            const dateStr = formatDateToISO(new Date(t.sessionStartedAt || Date.now()));
             const memoInput = document.getElementById('timerMemoInput');
-            const memo = memoInput.value.trim() || (t.mode === 'pomodoro' ? 'ポモドーロタイマーで学習' : 'タイマーで学習');
-
-            state.logs.unshift({
-                id: generateId('log'),
-                date: dateStr,
-                subjectId: subjectId,
-                durationSeconds: seconds,
-                memo: memo,
-                timestamp: Date.now()
+            const log = addLog({
+                // 記録の日付は「計測を開始した日」(日付をまたいでも開始日に記録)
+                date: formatDateToISO(new Date(t.sessionStartedAt || Date.now())),
+                subjectId: t.subjectId || document.getElementById('subjectSelect').value,
+                seconds,
+                memo: memoInput.value.trim() || (t.mode === 'pomodoro' ? 'ポモドーロタイマーで学習' : 'タイマーで学習')
             });
-            saveData();
+            memoInput.value = '';
 
             showToast(`${formatSecondsToHoursMinutes(seconds)} の勉強時間を記録しました！`);
 
-            clearTimer();
-            memoInput.value = '';
+            // 途中で記録した場合は、休憩には入らず次の集中タイムに戻る
+            clearCurrentPhase();
+            state.timer.phase = 'focus';
+            saveTimerState();
 
-            // 記録した日を表示
-            state.selectedDateStr = dateStr;
-            const [y, m] = dateStr.split('-');
-            state.currentYear = parseInt(y, 10);
-            state.currentMonth = parseInt(m, 10) - 1;
+            selectDate(log.date);
             renderAll();
+            updateTimerDisplay();
         }
 
         // --- UIレンダリング関数 ---
         function renderSubjectsDropdowns() {
+            const active = getActiveSubjects();
             const selects = [
                 document.getElementById('subjectSelect'),
                 document.getElementById('manualSubjectSelect')
@@ -960,21 +1437,29 @@
             selects.forEach(select => {
                 const currentVal = select.value;
                 select.innerHTML = '';
-                state.subjects.forEach(sub => {
+                active.forEach(sub => {
                     const option = document.createElement('option');
                     option.value = sub.id;
                     option.textContent = sub.name;
                     select.appendChild(option);
                 });
-                if (currentVal && state.subjects.some(s => s.id === currentVal)) {
+                if (currentVal && active.some(s => s.id === currentVal)) {
                     select.value = currentVal;
                 }
             });
 
             // 計測中なら、計測を始めた科目を表示
             const t = state.timer;
-            if (t.subjectId && state.subjects.some(s => s.id === t.subjectId)) {
-                document.getElementById('subjectSelect').value = t.subjectId;
+            if (t.subjectId) {
+                const timerSelect = document.getElementById('subjectSelect');
+                if (!active.some(s => s.id === t.subjectId)) {
+                    const sub = getSubject(t.subjectId);
+                    const option = document.createElement('option');
+                    option.value = sub.id;
+                    option.textContent = `${sub.name} (削除済み)`;
+                    timerSelect.appendChild(option);
+                }
+                timerSelect.value = t.subjectId;
             }
         }
 
@@ -982,8 +1467,7 @@
             const todayStr = formatDateToISO(new Date());
 
             // 1. 今日の合計
-            const todayLogs = state.logs.filter(l => l.date === todayStr);
-            const todaySeconds = todayLogs.reduce((sum, l) => sum + l.durationSeconds, 0);
+            const todaySeconds = getDayTotal(todayStr);
             document.getElementById('todayTotalDisplay').textContent = formatSecondsToHoursMinutes(todaySeconds);
 
             // 目標進捗
@@ -1022,18 +1506,141 @@
 
             let streak = 0;
             const checkDate = new Date();
-            const todayStr = formatDateToISO(checkDate);
-
             // 今日まだ勉強していない場合は昨日からカウント開始
-            if (!datesWithStudy.has(todayStr)) {
+            if (!datesWithStudy.has(formatDateToISO(checkDate))) {
                 checkDate.setDate(checkDate.getDate() - 1);
             }
-
             while (datesWithStudy.has(formatDateToISO(checkDate))) {
                 streak++;
                 checkDate.setDate(checkDate.getDate() - 1);
             }
             return streak;
+        }
+
+        // 直近7日間の科目別積み上げ棒グラフ
+        function getWeekDays() {
+            const days = [];
+            const today = new Date();
+            for (let i = 6; i >= 0; i--) {
+                const d = new Date(today.getFullYear(), today.getMonth(), today.getDate() - i);
+                days.push(formatDateToISO(d));
+            }
+            return days;
+        }
+
+        function getDayBreakdown(dateStr) {
+            const bySubject = {};
+            state.logs.filter(l => l.date === dateStr).forEach(l => {
+                bySubject[l.subjectId] = (bySubject[l.subjectId] || 0) + l.durationSeconds;
+            });
+            // 科目の並び順 (state.subjects の順) で積み上げる。色は科目ごとに固定
+            const order = state.subjects.map(s => s.id);
+            return Object.entries(bySubject)
+                .map(([id, sec]) => ({ subject: getSubject(id), seconds: sec }))
+                .sort((a, b) => {
+                    const ia = order.indexOf(a.subject.id);
+                    const ib = order.indexOf(b.subject.id);
+                    return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+                });
+        }
+
+        function formatDayLabel(dateStr) {
+            const d = parseISODate(dateStr);
+            return `${d.getMonth() + 1}/${d.getDate()}(${WEEKDAYS[d.getDay()]})`;
+        }
+
+        function renderWeeklyChart() {
+            const days = getWeekDays();
+            const todayStr = days[days.length - 1];
+            const data = days.map(date => {
+                const breakdown = getDayBreakdown(date);
+                return { date, breakdown, total: breakdown.reduce((s, b) => s + b.seconds, 0) };
+            });
+
+            const weekTotal = data.reduce((s, d) => s + d.total, 0);
+            document.getElementById('weekTotal').textContent = formatSecondsToHoursMinutes(weekTotal);
+            document.getElementById('weekAverage').textContent = formatSecondsToHoursMinutes(Math.round(weekTotal / 7));
+
+            // 目盛り: 1時間単位で切り上げ (最低1時間)
+            const maxSec = Math.max(...data.map(d => d.total), 0);
+            const scaleHours = Math.max(1, Math.ceil(maxSec / 3600));
+            const scaleSec = scaleHours * 3600;
+            const plotH = 130; // 棒の最大の高さ(px)
+            const labelH = 20;
+
+            // Y軸とグリッド線 (0, 半分, 最大)
+            const ticks = [0, scaleSec / 2, scaleSec];
+            document.getElementById('weekYAxis').innerHTML = ticks.map(sec => {
+                const y = plotH - (sec / scaleSec) * plotH;
+                const label = sec === 0 ? '0' : formatSecondsToShort(sec);
+                return `<span class="absolute right-1.5 -translate-y-1/2" style="top:${y}px">${label}</span>`;
+            }).join('');
+            document.getElementById('weekGrid').innerHTML = ticks.map(sec => {
+                const y = plotH - (sec / scaleSec) * plotH;
+                return `<div class="grid-line absolute inset-x-0 border-t ${sec === 0 ? 'border-slate-200' : 'border-dashed border-slate-100'}" style="top:${y}px"></div>`;
+            }).join('');
+
+            // 棒
+            const barsEl = document.getElementById('weekBars');
+            barsEl.innerHTML = data.map(d => {
+                const isToday = d.date === todayStr;
+                const isSelected = d.date === state.selectedDateStr;
+                const segs = d.breakdown.map(b => {
+                    const h = Math.max(2, (b.seconds / scaleSec) * plotH - 2);
+                    return `<div class="week-seg w-full" style="height:${h}px;background-color:${safeColor(b.subject.color)}"></div>`;
+                }).join('');
+                const aria = `${formatDayLabel(d.date)} 合計 ${formatSecondsToHoursMinutes(d.total)}`
+                    + d.breakdown.map(b => `、${b.subject.name} ${formatSecondsToHoursMinutes(b.seconds)}`).join('');
+                return `
+                    <button type="button" class="week-col flex-1 min-w-0 flex flex-col items-center" data-date="${d.date}" aria-pressed="${isSelected}" aria-label="${escapeHTML(aria)}">
+                        <div class="week-col-bg w-full rounded-lg flex flex-col justify-end items-center transition-colors" style="height:${plotH}px">
+                            <div class="flex flex-col-reverse gap-[2px] w-3/5 max-w-[28px]">${segs}</div>
+                        </div>
+                        <span class="mt-1 text-[10px] sm:text-xs leading-4 tabular-nums ${isToday ? 'font-bold text-indigo-600' : 'text-slate-500'}" style="height:${labelH - 4}px">
+                            ${parseISODate(d.date).getDate()}<span class="hidden sm:inline">(${WEEKDAYS[parseISODate(d.date).getDay()]})</span>
+                        </span>
+                    </button>
+                `;
+            }).join('');
+
+            // 詳細 (ホバー中の日 > 選択中の日 (今週なら) > 今日)
+            renderWeekDetail(data, todayStr);
+
+            // 凡例 (今週出てきた科目のみ、科目の並び順で)
+            const shown = new Map();
+            data.forEach(d => d.breakdown.forEach(b => shown.set(b.subject.id, b.subject)));
+            const order = state.subjects.map(s => s.id);
+            const legendItems = [...shown.values()].sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
+            document.getElementById('weekLegend').innerHTML = legendItems.length === 0
+                ? ''
+                : legendItems.map(s => `
+                    <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm inline-block" style="background-color:${safeColor(s.color)}"></span>${escapeHTML(s.name)}</span>
+                `).join('');
+        }
+
+        function renderWeekDetail(data, todayStr) {
+            const el = document.getElementById('weekDetail');
+            const inWeek = date => data.some(d => d.date === date);
+            const target = (state.weekHoverDate && inWeek(state.weekHoverDate)) ? state.weekHoverDate
+                : inWeek(state.selectedDateStr) ? state.selectedDateStr : todayStr;
+            const d = data.find(x => x.date === target);
+
+            if (data.every(x => x.total === 0)) {
+                el.innerHTML = '<p class="text-center text-slate-400 py-2">この7日間の記録はまだありません</p>';
+                return;
+            }
+            const items = d.breakdown.length === 0
+                ? '<span class="text-slate-400">記録なし</span>'
+                : d.breakdown.map(b => `
+                    <span class="inline-flex items-center gap-1.5 mr-3"><span class="w-2 h-2 rounded-full inline-block" style="background-color:${safeColor(b.subject.color)}"></span><span class="text-slate-700">${escapeHTML(b.subject.name)}</span> <span class="tabular-nums">${formatSecondsToShort(b.seconds)}</span></span>
+                `).join('');
+            el.innerHTML = `
+                <div class="flex items-baseline justify-between gap-2 mb-1">
+                    <span class="font-semibold text-slate-700">${formatDayLabel(d.date)}${d.date === todayStr ? ' 今日' : ''}</span>
+                    <span class="tabular-nums text-slate-700 font-semibold">${formatSecondsToHoursMinutes(d.total)}</span>
+                </div>
+                <div class="leading-6">${items}</div>
+            `;
         }
 
         function renderSubjectStats() {
@@ -1052,17 +1659,12 @@
 
             const totalSeconds = monthLogs.reduce((sum, l) => sum + l.durationSeconds, 0);
             const bySubject = {};
-
             monthLogs.forEach(log => {
                 bySubject[log.subjectId] = (bySubject[log.subjectId] || 0) + log.durationSeconds;
             });
 
-            // 時間順にソート
             const sortedSubjects = Object.entries(bySubject)
-                .map(([subId, sec]) => {
-                    const sub = getSubject(subId);
-                    return { ...sub, seconds: sec, percent: Math.round((sec / totalSeconds) * 100) };
-                })
+                .map(([subId, sec]) => ({ ...getSubject(subId), seconds: sec, percent: Math.round((sec / totalSeconds) * 100) }))
                 .sort((a, b) => b.seconds - a.seconds);
 
             container.innerHTML = sortedSubjects.map(item => `
@@ -1083,32 +1685,26 @@
 
         function renderCalendar() {
             const grid = document.getElementById('calendarGrid');
-            const monthYearLabel = document.getElementById('calendarMonthYear');
-
-            monthYearLabel.textContent = `${state.currentYear}年 ${state.currentMonth + 1}月`;
+            document.getElementById('calendarMonthYear').textContent = `${state.currentYear}年 ${state.currentMonth + 1}月`;
             grid.innerHTML = '';
 
             const firstDay = new Date(state.currentYear, state.currentMonth, 1).getDay();
             const daysInMonth = new Date(state.currentYear, state.currentMonth + 1, 0).getDate();
             const todayStr = formatDateToISO(new Date());
 
-            // 日ごとの合計秒数を事前集計
             const dailyTotals = {};
             state.logs.forEach(log => {
                 dailyTotals[log.date] = (dailyTotals[log.date] || 0) + log.durationSeconds;
             });
 
-            // 空白セル（月初めまで）
             for (let i = 0; i < firstDay; i++) {
                 const emptyCell = document.createElement('div');
                 emptyCell.className = 'h-16 sm:h-20 rounded-xl bg-slate-50/50';
                 grid.appendChild(emptyCell);
             }
 
-            // 日付セル
             for (let day = 1; day <= daysInMonth; day++) {
-                const dateObj = new Date(state.currentYear, state.currentMonth, day);
-                const dateStr = formatDateToISO(dateObj);
+                const dateStr = formatDateToISO(new Date(state.currentYear, state.currentMonth, day));
                 const totalSec = dailyTotals[dateStr] || 0;
                 const isSelected = dateStr === state.selectedDateStr;
                 const isToday = dateStr === todayStr;
@@ -1136,38 +1732,32 @@
                 const cell = document.createElement('button');
                 cell.type = 'button';
                 cell.setAttribute('aria-label', `${state.currentMonth + 1}月${day}日 ${totalSec > 0 ? formatSecondsToHoursMinutes(totalSec) : '記録なし'}`);
+                cell.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
                 cell.className = `h-16 sm:h-20 p-1.5 sm:p-2 rounded-xl flex flex-col justify-between items-start transition-all relative border ${bgClass} ${
                     isSelected ? 'ring-2 ring-indigo-600 ring-offset-1 border-transparent' : 'border-slate-100'
                 }`;
-
                 cell.innerHTML = `
-                    <span class="text-xs sm:text-sm font-semibold ${isToday ? 'bg-rose-500 text-white w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center' : ''}">
-                        ${day}
-                    </span>
+                    <span class="text-xs sm:text-sm font-semibold ${isToday ? 'bg-rose-500 text-white w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center' : ''}">${day}</span>
                     ${totalSec > 0 ? `<span class="text-[10px] sm:text-xs tracking-tighter self-end ${timeTextClass}">${formatSecondsToShort(totalSec)}</span>` : ''}
                 `;
-
                 cell.addEventListener('click', () => {
                     state.selectedDateStr = dateStr;
                     renderCalendar();
                     renderDayLogs();
+                    renderWeeklyChart();
                 });
-
                 grid.appendChild(cell);
             }
         }
 
         function renderDayLogs() {
-            const titleEl = document.getElementById('selectedDateTitle');
-            const totalEl = document.getElementById('selectedDateTotal');
             const listEl = document.getElementById('dayLogsList');
-
             const [y, m, d] = state.selectedDateStr.split('-');
-            titleEl.textContent = `${y}年${parseInt(m, 10)}月${parseInt(d, 10)}日の記録`;
+            document.getElementById('selectedDateTitle').textContent = `${y}年${parseInt(m, 10)}月${parseInt(d, 10)}日の記録`;
 
             const dayLogs = state.logs.filter(l => l.date === state.selectedDateStr);
             const totalSec = dayLogs.reduce((sum, l) => sum + l.durationSeconds, 0);
-            totalEl.textContent = `合計: ${formatSecondsToHoursMinutes(totalSec)}`;
+            document.getElementById('selectedDateTotal').textContent = `合計: ${formatSecondsToHoursMinutes(totalSec)}`;
 
             if (dayLogs.length === 0) {
                 listEl.innerHTML = `
@@ -1181,11 +1771,11 @@
             listEl.innerHTML = dayLogs.map(log => {
                 const sub = getSubject(log.subjectId, 'その他');
                 return `
-                    <div class="flex items-center justify-between p-3 bg-slate-50 hover:bg-slate-100/80 rounded-xl border border-slate-100 transition-colors group">
+                    <div class="flex items-center justify-between p-3 bg-slate-50 hover:bg-slate-100/80 rounded-xl border border-slate-100 transition-colors">
                         <div class="flex items-center gap-3 min-w-0">
                             <span class="w-3 h-3 rounded-full flex-shrink-0" style="background-color: ${safeColor(sub.color)}"></span>
-                            <div class="truncate">
-                                <div class="flex items-center gap-2">
+                            <div class="min-w-0">
+                                <div class="flex items-center gap-2 flex-wrap">
                                     <span class="text-sm font-bold text-slate-800">${escapeHTML(sub.name)}</span>
                                     <span class="text-xs font-semibold px-2 py-0.5 rounded-md bg-white text-slate-600 border border-slate-200 tabular-nums">
                                         ${formatSecondsToHoursMinutes(log.durationSeconds)}
@@ -1194,9 +1784,14 @@
                                 ${log.memo ? `<p class="text-xs text-slate-500 truncate mt-0.5">${escapeHTML(log.memo)}</p>` : ''}
                             </div>
                         </div>
-                        <button type="button" data-delete-id="${escapeHTML(log.id)}" title="記録を削除" class="deleteLogBtn text-slate-300 hover:text-rose-500 p-2 rounded-lg transition-colors">
-                            <i class="fa-solid fa-trash-can text-sm"></i>
-                        </button>
+                        <div class="flex items-center flex-shrink-0">
+                            <button type="button" data-edit-id="${escapeHTML(log.id)}" title="記録を編集" aria-label="記録を編集" class="editLogBtn text-slate-400 hover:text-indigo-600 p-2 rounded-lg transition-colors">
+                                <i class="fa-solid fa-pen text-sm"></i>
+                            </button>
+                            <button type="button" data-delete-id="${escapeHTML(log.id)}" title="記録を削除" aria-label="記録を削除" class="deleteLogBtn text-slate-400 hover:text-rose-500 p-2 rounded-lg transition-colors">
+                                <i class="fa-solid fa-trash-can text-sm"></i>
+                            </button>
+                        </div>
                     </div>
                 `;
             }).join('');
@@ -1220,9 +1815,122 @@
             });
         }
 
+        // --- 科目の管理 ---
+        function colorSwatchesHTML(name, selected, size = 'w-7 h-7') {
+            return SUBJECT_COLORS.map(c => `
+                <label class="cursor-pointer" title="${c.name}">
+                    <input type="radio" name="${name}" value="${c.value}" ${c.value === selected ? 'checked' : ''} class="sr-only peer" aria-label="${c.name}">
+                    <span class="${size} rounded-full block peer-checked:ring-2 peer-checked:ring-offset-2 peer-focus-visible:ring-2 peer-focus-visible:ring-offset-2" style="background-color:${c.value}; --tw-ring-color:${c.value}"></span>
+                </label>
+            `).join('');
+        }
+
+        function renderManageSubjects() {
+            const list = document.getElementById('manageSubjectsList');
+            const active = getActiveSubjects();
+            list.innerHTML = active.map(sub => {
+                const count = state.logs.filter(l => l.subjectId === sub.id).length;
+                return `
+                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100" data-subject-id="${escapeHTML(sub.id)}">
+                        <div class="flex items-center gap-2">
+                            <input type="text" value="${escapeHTML(sub.name)}" maxlength="30" aria-label="科目名" class="subject-name-input flex-grow min-w-0 bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-sm font-medium focus:ring-indigo-500 focus:border-indigo-500">
+                            <button type="button" class="subject-delete-btn text-slate-400 hover:text-rose-500 p-2 rounded-lg" title="科目を削除" aria-label="${escapeHTML(sub.name)}を削除">
+                                <i class="fa-solid fa-trash-can text-sm"></i>
+                            </button>
+                        </div>
+                        <div class="flex items-center justify-between mt-2.5 gap-2">
+                            <div class="flex gap-2">${colorSwatchesHTML(`color_${sub.id}`, sub.color, 'w-5 h-5')}</div>
+                            <span class="text-[11px] text-slate-400 whitespace-nowrap">記録 ${count}件</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            const archived = state.subjects.filter(s => s.archived);
+            document.getElementById('archivedSubjectsSection').classList.toggle('hidden', archived.length === 0);
+            document.getElementById('archivedSubjectsList').innerHTML = archived.map(sub => `
+                <div class="flex items-center justify-between text-sm" data-subject-id="${escapeHTML(sub.id)}">
+                    <span class="flex items-center gap-2 text-slate-500 min-w-0">
+                        <span class="w-2.5 h-2.5 rounded-full inline-block flex-shrink-0" style="background-color:${safeColor(sub.color)}"></span>
+                        <span class="truncate">${escapeHTML(sub.name)}</span>
+                    </span>
+                    <button type="button" class="subject-restore-btn text-xs font-semibold text-indigo-600 hover:bg-indigo-50 px-2.5 py-1 rounded-lg">元に戻す</button>
+                </div>
+            `).join('');
+        }
+
+        function renameSubject(id, rawName) {
+            const sub = state.subjects.find(s => s.id === id);
+            if (!sub) return;
+            const name = rawName.trim().slice(0, 30);
+            if (!name) {
+                showToast('科目名を入力してください', 'error');
+                renderManageSubjects();
+                return;
+            }
+            if (name === sub.name) return;
+            if (getActiveSubjects().some(s => s.id !== id && s.name === name)) {
+                showToast(`科目「${name}」はすでにあります`, 'error');
+                renderManageSubjects();
+                return;
+            }
+            sub.name = name;
+            saveData();
+            renderAll();
+            showToast('科目名を変更しました');
+        }
+
+        function recolorSubject(id, color) {
+            const sub = state.subjects.find(s => s.id === id);
+            if (!sub) return;
+            sub.color = safeColor(color);
+            saveData();
+            renderAll();
+        }
+
+        function deleteSubject(id) {
+            const sub = state.subjects.find(s => s.id === id);
+            if (!sub) return;
+            if (getActiveSubjects().length <= 1) {
+                showToast('科目は最低1つ必要です', 'error');
+                return;
+            }
+            if (state.timer.subjectId === id && !isBreak() && getElapsedSeconds() > 0) {
+                showToast('計測中の科目は削除できません', 'error');
+                return;
+            }
+            const count = state.logs.filter(l => l.subjectId === id).length;
+            if (count > 0) {
+                if (!confirm(`「${sub.name}」を削除しますか？\nこの科目の記録 ${count} 件は残り、履歴やグラフにはそのまま表示されます。`)) return;
+                sub.archived = true; // 記録が残るので、名前と色を覚えておく
+            } else {
+                if (!confirm(`「${sub.name}」を削除しますか？`)) return;
+                state.subjects = state.subjects.filter(s => s.id !== id);
+            }
+            saveData();
+            renderAll();
+            renderManageSubjects();
+            showToast(`科目「${sub.name}」を削除しました`, 'info');
+        }
+
+        function restoreSubject(id) {
+            const sub = state.subjects.find(s => s.id === id);
+            if (!sub) return;
+            if (getActiveSubjects().some(s => s.name === sub.name)) {
+                showToast(`同じ名前の科目「${sub.name}」があるため戻せません。先に名前を変えてください`, 'error');
+                return;
+            }
+            delete sub.archived;
+            saveData();
+            renderAll();
+            renderManageSubjects();
+            showToast(`科目「${sub.name}」を戻しました`);
+        }
+
         function renderAll() {
             renderSubjectsDropdowns();
             renderSummaryCards();
+            renderWeeklyChart();
             renderSubjectStats();
             renderCalendar();
             renderDayLogs();
@@ -1230,12 +1938,20 @@
         }
 
         // --- モーダル ---
+        function isModalOpen() {
+            return [...document.querySelectorAll('.modal')].some(m => !m.classList.contains('hidden'));
+        }
+
         function openModal(id) {
+            closeMenu();
+            closeModals();
             const modal = document.getElementById(id);
             modal.classList.remove('hidden');
             modal.classList.add('flex');
-            const firstInput = modal.querySelector('input:not([type="radio"]):not([type="hidden"]), select');
-            if (firstInput) setTimeout(() => firstInput.focus(), 50);
+            const firstInput = modal.querySelector('input:not([type="radio"]):not([type="checkbox"]):not([type="hidden"]), select');
+            if (firstInput && window.matchMedia('(pointer: fine)').matches) {
+                setTimeout(() => firstInput.focus(), 50);
+            }
         }
 
         function closeModals() {
@@ -1243,6 +1959,76 @@
                 modal.classList.add('hidden');
                 modal.classList.remove('flex');
             });
+            state.editingLogId = null;
+        }
+
+        // 手動記録モーダル (logId を渡すと編集モード)
+        function openManualModal(targetDateStr, logId = null) {
+            renderSubjectsDropdowns();
+            const select = document.getElementById('manualSubjectSelect');
+            const log = logId ? state.logs.find(l => l.id === logId) : null;
+
+            document.getElementById('manualModalTitle').textContent = log ? '記録を編集' : '勉強時間を手動で記録';
+            document.getElementById('manualSubmitBtn').textContent = log ? '変更を保存' : '保存する';
+
+            if (log) {
+                // 削除済みの科目の記録なら、その科目も選択肢に出す
+                if (!getActiveSubjects().some(s => s.id === log.subjectId)) {
+                    const sub = getSubject(log.subjectId);
+                    const option = document.createElement('option');
+                    option.value = log.subjectId;
+                    option.textContent = `${sub.name} (削除済み)`;
+                    select.appendChild(option);
+                }
+                document.getElementById('manualDateInput').value = log.date;
+                select.value = log.subjectId;
+                document.getElementById('manualHoursInput').value = Math.floor(log.durationSeconds / 3600);
+                document.getElementById('manualMinutesInput').value = Math.floor((log.durationSeconds % 3600) / 60);
+                document.getElementById('manualMemoInput').value = log.memo || '';
+            } else {
+                document.getElementById('manualDateInput').value = targetDateStr || formatDateToISO(new Date());
+                document.getElementById('manualHoursInput').value = 1;
+                document.getElementById('manualMinutesInput').value = 0;
+                document.getElementById('manualMemoInput').value = '';
+            }
+            openModal('manualModal');
+            state.editingLogId = log ? log.id : null; // openModal が null に戻すので後で設定
+        }
+
+        function openPomodoroSettings() {
+            const p = state.pomodoro;
+            document.getElementById('pomoFocusInput').value = p.focusMin;
+            document.getElementById('pomoShortInput').value = p.shortBreakMin;
+            document.getElementById('pomoLongInput').value = p.longBreakMin;
+            document.getElementById('pomoEveryInput').value = p.longBreakEvery;
+            document.getElementById('pomoAutoBreakInput').checked = p.autoStartBreak;
+            openModal('pomodoroModal');
+        }
+
+        function openManageSubjects() {
+            renderManageSubjects();
+            openModal('manageSubjectsModal');
+        }
+
+        function openAddSubject() {
+            document.getElementById('newSubjectName').value = '';
+            const used = new Set(getActiveSubjects().map(s => s.color));
+            const next = (SUBJECT_COLORS.find(c => !used.has(c.value)) || SUBJECT_COLORS[0]).value;
+            document.getElementById('colorPickerContainer').innerHTML = colorSwatchesHTML('subjectColor', next);
+            openModal('subjectModal');
+        }
+
+        // --- メニュー ---
+        function closeMenu() {
+            document.getElementById('menuDropdown').classList.add('hidden');
+            document.getElementById('menuBtn').setAttribute('aria-expanded', 'false');
+        }
+
+        function toggleMenu() {
+            const dd = document.getElementById('menuDropdown');
+            const willOpen = dd.classList.contains('hidden');
+            dd.classList.toggle('hidden', !willOpen);
+            document.getElementById('menuBtn').setAttribute('aria-expanded', willOpen ? 'true' : 'false');
         }
 
         // --- イベントリスナー設定 ---
@@ -1253,17 +2039,63 @@
             document.getElementById('finishSaveBtn').addEventListener('click', saveTimerRecord);
             document.getElementById('modeStopwatchBtn').addEventListener('click', () => switchTimerMode('stopwatch'));
             document.getElementById('modePomodoroBtn').addEventListener('click', () => switchTimerMode('pomodoro'));
+            document.getElementById('openPomodoroSettingsBtn').addEventListener('click', openPomodoroSettings);
 
-            // 記録削除 (イベント委譲)
+            // 記録の編集・削除 (イベント委譲)
             document.getElementById('dayLogsList').addEventListener('click', (e) => {
-                const btn = e.target.closest('.deleteLogBtn');
-                if (btn) deleteLog(btn.dataset.deleteId);
+                const del = e.target.closest('.deleteLogBtn');
+                if (del) deleteLog(del.dataset.deleteId);
+                const edit = e.target.closest('.editLogBtn');
+                if (edit) openManualModal(null, edit.dataset.editId);
             });
 
-            // データの書き出し / 読み込み
-            document.getElementById('exportBtn').addEventListener('click', exportData);
-            document.getElementById('importBtn').addEventListener('click', () => {
-                document.getElementById('importFileInput').click();
+            // 週グラフ: ホバーで詳細、タップでその日を選択
+            const weekBars = document.getElementById('weekBars');
+            weekBars.addEventListener('mouseover', (e) => {
+                const col = e.target.closest('.week-col');
+                if (col && state.weekHoverDate !== col.dataset.date) {
+                    state.weekHoverDate = col.dataset.date;
+                    renderWeekDetail(getWeekDays().map(date => {
+                        const breakdown = getDayBreakdown(date);
+                        return { date, breakdown, total: breakdown.reduce((s, b) => s + b.seconds, 0) };
+                    }), getWeekDays()[6]);
+                }
+            });
+            weekBars.addEventListener('mouseleave', () => {
+                state.weekHoverDate = null;
+                renderWeeklyChart();
+            });
+            weekBars.addEventListener('click', (e) => {
+                const col = e.target.closest('.week-col');
+                if (!col) return;
+                selectDate(col.dataset.date);
+                renderAll();
+            });
+
+            // メニュー
+            document.getElementById('menuBtn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                toggleMenu();
+            });
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('#menuDropdown') && !e.target.closest('#menuBtn')) closeMenu();
+            });
+            document.getElementById('menuDropdown').addEventListener('click', (e) => {
+                const themeBtn = e.target.closest('[data-theme-choice]');
+                if (themeBtn) {
+                    setTheme(themeBtn.dataset.themeChoice);
+                    return;
+                }
+                const item = e.target.closest('[data-menu]');
+                if (!item) return;
+                closeMenu();
+                switch (item.dataset.menu) {
+                    case 'subjects': openManageSubjects(); break;
+                    case 'pomodoro': openPomodoroSettings(); break;
+                    case 'export': exportData(); break;
+                    case 'import': document.getElementById('importFileInput').click(); break;
+                    case 'shortcuts': openModal('shortcutsModal'); break;
+                }
             });
             document.getElementById('importFileInput').addEventListener('change', (e) => {
                 const file = e.target.files[0];
@@ -1271,55 +2103,27 @@
                 e.target.value = ''; // 同じファイルをもう一度選べるようにする
             });
 
+            // テーマ: 「自動」のときは OS の設定変更に追従
+            const onSchemeChange = () => {
+                if (state.themePref === 'system') applyTheme();
+            };
+            if (darkMedia.addEventListener) darkMedia.addEventListener('change', onSchemeChange);
+            else if (darkMedia.addListener) darkMedia.addListener(onSchemeChange);
+
             // カレンダー月移動
-            document.getElementById('prevMonthBtn').addEventListener('click', () => {
-                state.currentMonth--;
-                if (state.currentMonth < 0) {
-                    state.currentMonth = 11;
-                    state.currentYear--;
-                }
-                renderAll();
-            });
+            document.getElementById('prevMonthBtn').addEventListener('click', () => changeMonth(-1));
+            document.getElementById('nextMonthBtn').addEventListener('click', () => changeMonth(1));
+            document.getElementById('todayBtn').addEventListener('click', goToday);
 
-            document.getElementById('nextMonthBtn').addEventListener('click', () => {
-                state.currentMonth++;
-                if (state.currentMonth > 11) {
-                    state.currentMonth = 0;
-                    state.currentYear++;
-                }
-                renderAll();
-            });
-
-            document.getElementById('todayBtn').addEventListener('click', () => {
-                const now = new Date();
-                state.currentYear = now.getFullYear();
-                state.currentMonth = now.getMonth();
-                state.selectedDateStr = formatDateToISO(now);
-                renderAll();
-            });
-
-            // モーダル開閉共通 (×ボタン・キャンセル・背景クリック・Escキー)
-            document.querySelectorAll('.closeModalBtn').forEach(btn => {
-                btn.addEventListener('click', closeModals);
-            });
+            // モーダル開閉共通 (×ボタン・キャンセル・背景クリック)
+            document.querySelectorAll('.closeModalBtn').forEach(btn => btn.addEventListener('click', closeModals));
             document.querySelectorAll('.modal').forEach(modal => {
                 modal.addEventListener('click', (e) => {
                     if (e.target === modal) closeModals();
                 });
             });
-            document.addEventListener('keydown', (e) => {
-                if (e.key === 'Escape') closeModals();
-            });
 
-            // 手動記録モーダル
-            const openManualModal = (targetDateStr) => {
-                document.getElementById('manualDateInput').value = targetDateStr || formatDateToISO(new Date());
-                document.getElementById('manualHoursInput').value = 1;
-                document.getElementById('manualMinutesInput').value = 0;
-                document.getElementById('manualMemoInput').value = '';
-                openModal('manualModal');
-            };
-
+            // 手動記録 / 編集
             document.getElementById('openManualModalBtn').addEventListener('click', () => openManualModal());
             document.getElementById('addRecordForSelectedDateBtn').addEventListener('click', () => openManualModal(state.selectedDateStr));
 
@@ -1330,6 +2134,7 @@
                 const hours = parseInt(document.getElementById('manualHoursInput').value, 10) || 0;
                 const mins = parseInt(document.getElementById('manualMinutesInput').value, 10) || 0;
                 const memo = document.getElementById('manualMemoInput').value.trim();
+                const editingId = state.editingLogId;
 
                 if (!/^\d{4}-\d{2}-\d{2}$/.test(dateVal)) {
                     showToast('日付を入力してください', 'error');
@@ -1339,83 +2144,98 @@
                     showToast('時間の入力が正しくありません', 'error');
                     return;
                 }
-
                 const totalSec = (hours * 3600) + (mins * 60);
                 if (totalSec <= 0) {
                     showToast('1分以上の時間を入力してください', 'error');
                     return;
                 }
-
-                // 1日の合計が24時間を超えないようにチェック
-                const dayTotal = state.logs
-                    .filter(l => l.date === dateVal)
-                    .reduce((sum, l) => sum + l.durationSeconds, 0);
+                // 1日の合計が24時間を超えないようにチェック (編集中の記録自身は除く)
+                const dayTotal = getDayTotal(dateVal, editingId);
                 if (dayTotal + totalSec > MAX_DAY_SECONDS) {
                     showToast(`1日の合計が24時間を超えます (この日はあと ${formatSecondsToHoursMinutes(MAX_DAY_SECONDS - dayTotal)} まで)`, 'error');
                     return;
                 }
 
-                state.logs.unshift({
-                    id: generateId('log'),
-                    date: dateVal,
-                    subjectId: subId,
-                    durationSeconds: totalSec,
-                    memo: memo,
-                    timestamp: Date.now()
-                });
+                if (editingId) {
+                    const log = state.logs.find(l => l.id === editingId);
+                    if (log) {
+                        // 秒単位の記録は、時間を変えていなければ秒をそのまま残す
+                        const sameMinutes = Math.floor(log.durationSeconds / 60) === Math.floor(totalSec / 60);
+                        log.date = dateVal;
+                        log.subjectId = subId;
+                        log.durationSeconds = sameMinutes ? log.durationSeconds : totalSec;
+                        log.memo = memo;
+                        saveData();
+                        showToast('記録を更新しました');
+                    }
+                } else {
+                    addLog({ date: dateVal, subjectId: subId, seconds: totalSec, memo });
+                    showToast('勉強時間を記録しました！');
+                }
 
-                saveData();
-                state.selectedDateStr = dateVal;
-
-                // 追加した日付の月にカレンダーを移動
-                const [y, m] = dateVal.split('-');
-                state.currentYear = parseInt(y, 10);
-                state.currentMonth = parseInt(m, 10) - 1;
-
+                selectDate(dateVal);
                 closeModals();
-                showToast('勉強時間を記録しました！');
                 renderAll();
             });
 
-            // 科目追加モーダル
-            document.getElementById('addSubjectBtn').addEventListener('click', () => {
-                document.getElementById('newSubjectName').value = '';
-                openModal('subjectModal');
-            });
-
+            // 科目追加
+            document.getElementById('addSubjectBtn').addEventListener('click', openAddSubject);
+            document.getElementById('manageAddSubjectBtn').addEventListener('click', openAddSubject);
             document.getElementById('addSubjectForm').addEventListener('submit', (e) => {
                 e.preventDefault();
                 const name = document.getElementById('newSubjectName').value.trim();
-                const color = safeColor(document.querySelector('input[name="subjectColor"]:checked').value);
+                const checked = document.querySelector('input[name="subjectColor"]:checked');
+                const color = safeColor(checked ? checked.value : SUBJECT_COLORS[0].value);
 
                 if (!name) return;
-                if (state.subjects.some(s => s.name === name)) {
+                if (getActiveSubjects().some(s => s.name === name)) {
                     showToast(`科目「${name}」はすでにあります`, 'error');
                     return;
                 }
 
-                const newSub = {
-                    id: generateId('sub'),
-                    name: name,
-                    color: color
-                };
+                const newSub = { id: generateId('sub'), name, color };
                 state.subjects.push(newSub);
                 saveData();
-                renderSubjectsDropdowns();
-                if (!document.getElementById('subjectSelect').disabled) {
-                    document.getElementById('subjectSelect').value = newSub.id;
-                }
+                renderAll();
+                const timerSelect = document.getElementById('subjectSelect');
+                if (!timerSelect.disabled) timerSelect.value = newSub.id;
                 closeModals();
                 showToast(`科目「${name}」を追加しました`);
             });
 
-            // 目標設定モーダル
+            // 科目の管理
+            document.getElementById('manageSubjectsBtn').addEventListener('click', openManageSubjects);
+            const manageList = document.getElementById('manageSubjectsList');
+            manageList.addEventListener('change', (e) => {
+                const row = e.target.closest('[data-subject-id]');
+                if (!row) return;
+                if (e.target.classList.contains('subject-name-input')) {
+                    renameSubject(row.dataset.subjectId, e.target.value);
+                } else if (e.target.type === 'radio') {
+                    recolorSubject(row.dataset.subjectId, e.target.value);
+                }
+            });
+            manageList.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && e.target.classList.contains('subject-name-input')) {
+                    e.preventDefault();
+                    e.target.blur(); // change イベントで保存される
+                }
+            });
+            manageList.addEventListener('click', (e) => {
+                const btn = e.target.closest('.subject-delete-btn');
+                if (btn) deleteSubject(btn.closest('[data-subject-id]').dataset.subjectId);
+            });
+            document.getElementById('archivedSubjectsList').addEventListener('click', (e) => {
+                const btn = e.target.closest('.subject-restore-btn');
+                if (btn) restoreSubject(btn.closest('[data-subject-id]').dataset.subjectId);
+            });
+
+            // 目標設定
             document.getElementById('openGoalModalBtn').addEventListener('click', () => {
                 document.getElementById('goalHoursInput').value = Math.floor(state.dailyGoalMinutes / 60);
                 document.getElementById('goalMinutesInput').value = state.dailyGoalMinutes % 60;
                 openModal('goalModal');
             });
-
             document.getElementById('goalForm').addEventListener('submit', (e) => {
                 e.preventDefault();
                 const h = parseInt(document.getElementById('goalHoursInput').value, 10) || 0;
@@ -1432,20 +2252,96 @@
                 renderSummaryCards();
             });
 
+            // ポモドーロ設定
+            document.getElementById('pomodoroForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                state.pomodoro = sanitizePomodoro({
+                    focusMin: document.getElementById('pomoFocusInput').value,
+                    shortBreakMin: document.getElementById('pomoShortInput').value,
+                    longBreakMin: document.getElementById('pomoLongInput').value,
+                    longBreakEvery: document.getElementById('pomoEveryInput').value,
+                    autoStartBreak: document.getElementById('pomoAutoBreakInput').checked
+                });
+                savePomodoroSettings();
+                closeModals();
+                updateTimerControls();
+                tick();
+                showToast('ポモドーロの設定を保存しました');
+            });
+
+            // キーボードショートカット
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    closeModals();
+                    closeMenu();
+                    return;
+                }
+                if (e.metaKey || e.ctrlKey || e.altKey || e.isComposing) return;
+                const tag = (e.target.tagName || '').toLowerCase();
+                if (['input', 'textarea', 'select'].includes(tag) || e.target.isContentEditable) return;
+                if (isModalOpen()) return;
+
+                switch (e.key) {
+                    case ' ':
+                        // ボタンにフォーカスがあるときは、ボタンのクリックと二重にならないようにする
+                        if (tag === 'button') return;
+                        e.preventDefault();
+                        toggleTimer();
+                        break;
+                    case 's': case 'S':
+                        if (!document.getElementById('finishSaveBtn').disabled) saveTimerRecord();
+                        break;
+                    case 'n': case 'N':
+                        e.preventDefault();
+                        openManualModal();
+                        break;
+                    case 'ArrowLeft': changeMonth(-1); break;
+                    case 'ArrowRight': changeMonth(1); break;
+                    case 't': case 'T': goToday(); break;
+                    case '?': openModal('shortcutsModal'); break;
+                }
+            });
+
             // 計測中にページを閉じようとしたら確認する
             window.addEventListener('beforeunload', (e) => {
-                if (state.timer.isRunning) {
+                if (state.timer.isRunning && !isBreak()) {
                     e.preventDefault();
                     e.returnValue = '';
                 }
             });
 
-            // タブに戻ってきたときに表示を最新にする
+            // タブに戻ってきたときに表示を最新にする (日付が変わっている場合も)
             document.addEventListener('visibilitychange', () => {
                 if (!document.hidden) {
                     tick();
-                    renderSummaryCards();
+                    renderAll();
                 }
+            });
+        }
+
+        function changeMonth(delta) {
+            state.currentMonth += delta;
+            if (state.currentMonth < 0) {
+                state.currentMonth = 11;
+                state.currentYear--;
+            } else if (state.currentMonth > 11) {
+                state.currentMonth = 0;
+                state.currentYear++;
+            }
+            renderAll();
+        }
+
+        function goToday() {
+            selectDate(formatDateToISO(new Date()));
+            renderAll();
+        }
+
+        // --- PWA (オフライン対応・ホーム画面に追加) ---
+        function registerServiceWorker() {
+            if (!('serviceWorker' in navigator)) return;
+            if (location.protocol !== 'https:' && location.hostname !== 'localhost') return;
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js').catch(() => {});
             });
         }
 
@@ -1453,6 +2349,7 @@
         window.addEventListener('DOMContentLoaded', () => {
             loadData();
             loadTimerState();
+            applyTheme();
             setupEventListeners();
             updateModeTabs();
             renderAll();
@@ -1467,6 +2364,8 @@
                 showToast('一時停止中のタイマーを復元しました', 'info');
             }
         });
+
+        registerServiceWorker();
     </script>
 </body>
 </html>
