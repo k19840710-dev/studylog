@@ -1,0 +1,1472 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyLog - 勉強時間管理アプリ</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter & Noto Sans JP -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans JP', sans-serif;
+            background-color: #f8fafc;
+        }
+        .tabular-nums {
+            font-variant-numeric: tabular-nums;
+        }
+        /* カスタムスクロールバー */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+    </style>
+</head>
+<body class="text-slate-800 antialiased min-h-screen flex flex-col">
+
+    <!-- ヘッダー -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-10">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="bg-indigo-600 text-white p-2 rounded-xl shadow-sm">
+                    <i class="fa-solid fa-book-open text-lg"></i>
+                </div>
+                <h1 class="text-xl font-bold tracking-tight text-slate-900">StudyLog</h1>
+            </div>
+            <div class="flex items-center space-x-2 sm:space-x-3">
+                <button id="exportBtn" title="データを書き出す (バックアップ)" class="text-sm font-medium text-slate-600 hover:text-indigo-600 bg-slate-100 hover:bg-indigo-50 px-3 py-2 rounded-lg transition-colors flex items-center gap-2">
+                    <i class="fa-solid fa-download"></i>
+                    <span class="hidden md:inline">書き出し</span>
+                </button>
+                <button id="importBtn" title="データを読み込む (復元)" class="text-sm font-medium text-slate-600 hover:text-indigo-600 bg-slate-100 hover:bg-indigo-50 px-3 py-2 rounded-lg transition-colors flex items-center gap-2">
+                    <i class="fa-solid fa-upload"></i>
+                    <span class="hidden md:inline">読み込み</span>
+                </button>
+                <input type="file" id="importFileInput" accept="application/json,.json" class="hidden">
+                <button id="openGoalModalBtn" class="text-sm font-medium text-slate-600 hover:text-indigo-600 bg-slate-100 hover:bg-indigo-50 px-3 py-2 rounded-lg transition-colors flex items-center gap-2">
+                    <i class="fa-solid fa-bullseye text-indigo-500"></i>
+                    <span class="hidden sm:inline">目標設定</span>
+                </button>
+                <button id="openManualModalBtn" class="text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 px-3.5 py-2 rounded-lg shadow-sm transition-colors flex items-center gap-2">
+                    <i class="fa-solid fa-plus"></i>
+                    <span class="hidden sm:inline">手動記録</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- メインコンテンツ -->
+    <main class="flex-grow max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+
+        <!-- 通知メッセージボックス (alertの代替) -->
+        <div id="toastContainer" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 pointer-events-none"></div>
+
+        <!-- 上部サマリーカード -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 sm:mb-8">
+            <!-- 今日の勉強時間 & 目標達成率 -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between">
+                <div class="flex justify-between items-start mb-2">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">今日の勉強時間</p>
+                        <h2 id="todayTotalDisplay" class="text-2xl sm:text-3xl font-bold text-slate-900 mt-1 tabular-nums">0時間 0分</h2>
+                    </div>
+                    <span id="goalPercentageBadge" class="text-xs font-bold px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-600">0%</span>
+                </div>
+                <div class="mt-3">
+                    <div class="flex justify-between text-xs text-slate-500 mb-1">
+                        <span>目標: <span id="dailyGoalText">2時間 0分</span></span>
+                        <span id="remainingGoalText">残り 2時間 0分</span>
+                    </div>
+                    <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
+                        <div id="goalProgressBar" class="bg-indigo-600 h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 表示中の月の累計時間 -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between">
+                <div>
+                    <p id="monthTotalLabel" class="text-xs font-semibold uppercase tracking-wider text-slate-400">今月の累計時間</p>
+                    <h2 id="monthTotalDisplay" class="text-2xl sm:text-3xl font-bold text-slate-900 mt-1 tabular-nums">0時間 0分</h2>
+                </div>
+                <div class="mt-4 flex items-center text-xs text-slate-500">
+                    <i class="fa-regular fa-calendar-check text-emerald-500 mr-1.5 text-sm"></i>
+                    <span>学習日数: <strong id="monthStudyDays" class="text-slate-700">0</strong> 日</span>
+                </div>
+            </div>
+
+            <!-- 連続学習記録 (ストリーク) -->
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between">
+                <div>
+                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">連続学習記録</p>
+                    <div class="flex items-baseline gap-2 mt-1">
+                        <h2 id="streakDisplay" class="text-2xl sm:text-3xl font-bold text-slate-900 tabular-nums">0</h2>
+                        <span class="text-sm font-medium text-slate-600">日連続</span>
+                    </div>
+                </div>
+                <div class="mt-4 flex items-center text-xs text-slate-500">
+                    <i class="fa-solid fa-fire text-orange-500 mr-1.5 text-sm"></i>
+                    <span id="streakMessage">今日も学習して記録を伸ばそう！</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- メイン2カラムレイアウト -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8">
+
+            <!-- 左カラム: タイマー & 科目別内訳 (5カラム) -->
+            <div class="lg:col-span-5 flex flex-col gap-6">
+
+                <!-- タイマーカード -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                    <!-- モード切替タブ -->
+                    <div class="flex bg-slate-100 p-1 rounded-xl mb-6">
+                        <button id="modeStopwatchBtn" class="flex-1 py-2 text-sm font-semibold rounded-lg bg-white text-indigo-600 shadow-sm transition-all">
+                            <i class="fa-solid fa-stopwatch mr-1.5"></i>通常タイマー
+                        </button>
+                        <button id="modePomodoroBtn" class="flex-1 py-2 text-sm font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition-all">
+                            <i class="fa-solid fa-clock mr-1.5"></i>ポモドーロ (25分)
+                        </button>
+                    </div>
+
+                    <!-- 科目選択 -->
+                    <div class="mb-5">
+                        <label for="subjectSelect" class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">学習する科目・タグ</label>
+                        <div class="flex gap-2">
+                            <select id="subjectSelect" class="flex-grow bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl focus:ring-indigo-500 focus:border-indigo-500 block p-2.5 font-medium">
+                                <!-- JSで動的に生成 -->
+                            </select>
+                            <button id="addSubjectBtn" title="新しい科目を追加" class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-3.5 rounded-xl transition-colors">
+                                <i class="fa-solid fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- タイマー表示部 -->
+                    <div class="text-center py-6 bg-slate-50 rounded-2xl border border-slate-100 mb-6 relative overflow-hidden">
+                        <div id="pomodoroStatusBadge" class="hidden inline-block px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-600 mb-2">
+                            集中タイム
+                        </div>
+                        <div id="timerDisplay" class="text-5xl sm:text-6xl font-bold text-slate-900 tracking-tight tabular-nums my-1">
+                            00:00:00
+                        </div>
+                        <p id="timerSubtext" class="text-xs text-slate-400 mt-2">計測を開始してください</p>
+                    </div>
+
+                    <!-- タイマー記録用メモ -->
+                    <div class="mb-4">
+                        <input type="text" id="timerMemoInput" maxlength="100" placeholder="メモ (任意) 例: 英単語帳 P.10〜30" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                    </div>
+
+                    <!-- コントロールボタン -->
+                    <div class="grid grid-cols-2 gap-3">
+                        <button id="startPauseBtn" class="col-span-2 sm:col-span-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3.5 px-4 rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 text-base">
+                            <i class="fa-solid fa-play"></i>
+                            <span>スタート</span>
+                        </button>
+                        <button id="finishSaveBtn" disabled class="col-span-2 sm:col-span-1 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed text-white font-semibold py-3.5 px-4 rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 text-base">
+                            <i class="fa-solid fa-check"></i>
+                            <span>完了して記録</span>
+                        </button>
+                    </div>
+                    <div class="mt-3 text-center">
+                        <button id="resetTimerBtn" class="text-xs text-slate-400 hover:text-slate-600 underline py-1">
+                            タイマーをリセット
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 科目別内訳 (表示中の月) -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                    <h3 class="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-pie text-indigo-500"></i>
+                        <span id="subjectStatsTitle">今月の科目別バランス</span>
+                    </h3>
+                    <div id="subjectStatsContainer" class="space-y-3">
+                        <!-- JSで動的に生成 -->
+                        <p class="text-sm text-slate-400 text-center py-4">まだ記録がありません</p>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- 右カラム: カレンダー & 選択日の詳細 (7カラム) -->
+            <div class="lg:col-span-7 flex flex-col gap-6">
+
+                <!-- カレンダーカード -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                    <!-- カレンダーヘッダー -->
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 id="calendarMonthYear" class="text-lg font-bold text-slate-900"></h3>
+                        <div class="flex items-center space-x-2">
+                            <button id="prevMonthBtn" class="p-2 rounded-lg hover:bg-slate-100 text-slate-600 transition-colors" title="前月">
+                                <i class="fa-solid fa-chevron-left"></i>
+                            </button>
+                            <button id="todayBtn" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors">
+                                今日
+                            </button>
+                            <button id="nextMonthBtn" class="p-2 rounded-lg hover:bg-slate-100 text-slate-600 transition-colors" title="翌月">
+                                <i class="fa-solid fa-chevron-right"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 曜日ヘッダー -->
+                    <div class="grid grid-cols-7 gap-1 text-center mb-2">
+                        <div class="text-xs font-semibold text-rose-500 py-1">日</div>
+                        <div class="text-xs font-semibold text-slate-500 py-1">月</div>
+                        <div class="text-xs font-semibold text-slate-500 py-1">火</div>
+                        <div class="text-xs font-semibold text-slate-500 py-1">水</div>
+                        <div class="text-xs font-semibold text-slate-500 py-1">木</div>
+                        <div class="text-xs font-semibold text-slate-500 py-1">金</div>
+                        <div class="text-xs font-semibold text-indigo-500 py-1">土</div>
+                    </div>
+
+                    <!-- カレンダーグリッド -->
+                    <div id="calendarGrid" class="grid grid-cols-7 gap-1.5 sm:gap-2">
+                        <!-- JSで日付セルを生成 -->
+                    </div>
+
+                    <!-- ヒートマップ凡例 (カレンダーのセル色と一致させる) -->
+                    <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-end gap-2 text-xs text-slate-400">
+                        <span>少ない</span>
+                        <span class="w-3 h-3 rounded-sm bg-slate-50 border border-slate-200 inline-block" title="記録なし"></span>
+                        <span class="w-3 h-3 rounded-sm bg-indigo-50 border border-indigo-100 inline-block" title="30分未満"></span>
+                        <span class="w-3 h-3 rounded-sm bg-indigo-100 inline-block" title="30分〜1時間30分"></span>
+                        <span class="w-3 h-3 rounded-sm bg-indigo-300 inline-block" title="1時間30分〜3時間"></span>
+                        <span class="w-3 h-3 rounded-sm bg-indigo-600 inline-block" title="3時間以上"></span>
+                        <span>多い</span>
+                    </div>
+                </div>
+
+                <!-- 選択された日の学習ログ一覧 -->
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex-grow">
+                    <div class="flex items-center justify-between mb-4">
+                        <div>
+                            <h3 id="selectedDateTitle" class="text-base font-bold text-slate-800"></h3>
+                            <p id="selectedDateTotal" class="text-xs text-slate-500 mt-0.5">合計: 0時間 0分</p>
+                        </div>
+                        <button id="addRecordForSelectedDateBtn" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition-colors">
+                            + この日に追加
+                        </button>
+                    </div>
+
+                    <div id="dayLogsList" class="space-y-2.5 max-h-64 overflow-y-auto pr-1">
+                        <!-- JSでログを生成 -->
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- モーダル1: 手動時間追加 -->
+    <div id="manualModal" class="modal fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl transform transition-all">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-slate-900">勉強時間を手動で記録</h3>
+                <button class="closeModalBtn text-slate-400 hover:text-slate-600 p-1" title="閉じる">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <form id="manualRecordForm" class="space-y-4">
+                <div>
+                    <label for="manualDateInput" class="block text-xs font-semibold text-slate-600 mb-1">日付</label>
+                    <input type="date" id="manualDateInput" required class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div>
+                    <label for="manualSubjectSelect" class="block text-xs font-semibold text-slate-600 mb-1">科目</label>
+                    <select id="manualSubjectSelect" required class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                        <!-- JSで生成 -->
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">勉強時間</label>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div class="relative">
+                            <input type="number" id="manualHoursInput" min="0" max="24" value="1" required class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 pr-10 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                            <span class="absolute right-3 top-2.5 text-sm text-slate-400">時間</span>
+                        </div>
+                        <div class="relative">
+                            <input type="number" id="manualMinutesInput" min="0" max="59" value="0" required class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 pr-8 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                            <span class="absolute right-3 top-2.5 text-sm text-slate-400">分</span>
+                        </div>
+                    </div>
+                </div>
+                <div>
+                    <label for="manualMemoInput" class="block text-xs font-semibold text-slate-600 mb-1">メモ (任意)</label>
+                    <input type="text" id="manualMemoInput" maxlength="100" placeholder="例: 英単語帳 P.10〜30" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" class="closeModalBtn px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-xl">キャンセル</button>
+                    <button type="submit" class="px-5 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-sm">保存する</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- モーダル2: 科目追加 -->
+    <div id="subjectModal" class="modal fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-slate-900">新しい科目を追加</h3>
+                <button class="closeModalBtn text-slate-400 hover:text-slate-600 p-1" title="閉じる">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <form id="addSubjectForm" class="space-y-4">
+                <div>
+                    <label for="newSubjectName" class="block text-xs font-semibold text-slate-600 mb-1">科目名</label>
+                    <input type="text" id="newSubjectName" required maxlength="30" placeholder="例: プログラミング、資格勉強" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-2">カラー選択</label>
+                    <div class="flex gap-2.5" id="colorPickerContainer">
+                        <label class="cursor-pointer"><input type="radio" name="subjectColor" value="#4f46e5" checked class="sr-only peer"><span class="w-7 h-7 rounded-full bg-indigo-600 block peer-checked:ring-2 peer-checked:ring-offset-2 peer-checked:ring-indigo-600"></span></label>
+                        <label class="cursor-pointer"><input type="radio" name="subjectColor" value="#059669" class="sr-only peer"><span class="w-7 h-7 rounded-full bg-emerald-600 block peer-checked:ring-2 peer-checked:ring-offset-2 peer-checked:ring-emerald-600"></span></label>
+                        <label class="cursor-pointer"><input type="radio" name="subjectColor" value="#e11d48" class="sr-only peer"><span class="w-7 h-7 rounded-full bg-rose-600 block peer-checked:ring-2 peer-checked:ring-offset-2 peer-checked:ring-rose-600"></span></label>
+                        <label class="cursor-pointer"><input type="radio" name="subjectColor" value="#d97706" class="sr-only peer"><span class="w-7 h-7 rounded-full bg-amber-600 block peer-checked:ring-2 peer-checked:ring-offset-2 peer-checked:ring-amber-600"></span></label>
+                        <label class="cursor-pointer"><input type="radio" name="subjectColor" value="#0284c7" class="sr-only peer"><span class="w-7 h-7 rounded-full bg-sky-600 block peer-checked:ring-2 peer-checked:ring-offset-2 peer-checked:ring-sky-600"></span></label>
+                        <label class="cursor-pointer"><input type="radio" name="subjectColor" value="#7c3aed" class="sr-only peer"><span class="w-7 h-7 rounded-full bg-violet-600 block peer-checked:ring-2 peer-checked:ring-offset-2 peer-checked:ring-violet-600"></span></label>
+                    </div>
+                </div>
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" class="closeModalBtn px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-xl">キャンセル</button>
+                    <button type="submit" class="px-5 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-sm">追加する</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- モーダル3: 目標設定 -->
+    <div id="goalModal" class="modal fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-lg font-bold text-slate-900">1日の目標勉強時間</h3>
+                <button class="closeModalBtn text-slate-400 hover:text-slate-600 p-1" title="閉じる">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+            <form id="goalForm" class="space-y-4">
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="relative">
+                        <input type="number" id="goalHoursInput" min="0" max="24" required class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 pr-10 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                        <span class="absolute right-3 top-2.5 text-sm text-slate-400">時間</span>
+                    </div>
+                    <div class="relative">
+                        <input type="number" id="goalMinutesInput" min="0" max="59" required class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 pr-8 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                        <span class="absolute right-3 top-2.5 text-sm text-slate-400">分</span>
+                    </div>
+                </div>
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" class="closeModalBtn px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-xl">キャンセル</button>
+                    <button type="submit" class="px-5 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-sm">設定を保存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * StudyLog アプリケーションロジック
+         * 状態管理、タイマー制御、カレンダー描画、LocalStorage永続化を担当
+         */
+
+        // --- 初期データと状態管理 ---
+        const STORAGE_KEYS = {
+            LOGS: 'studylog_records_v1',
+            SUBJECTS: 'studylog_subjects_v1',
+            GOAL: 'studylog_daily_goal_v1',
+            TIMER: 'studylog_timer_v1'
+        };
+
+        const APP_TITLE = 'StudyLog - 勉強時間管理アプリ';
+        const MAX_DAY_SECONDS = 24 * 3600;
+
+        // デフォルト科目
+        const DEFAULT_SUBJECTS = [
+            { id: 'sub_1', name: '英語', color: '#4f46e5' },
+            { id: 'sub_2', name: '数学', color: '#059669' },
+            { id: 'sub_3', name: 'プログラミング', color: '#0284c7' },
+            { id: 'sub_4', name: '読書・その他', color: '#d97706' }
+        ];
+
+        // アプリケーション状態
+        let state = {
+            logs: [], // { id, date: 'YYYY-MM-DD', subjectId, durationSeconds, memo, timestamp }
+            subjects: [],
+            dailyGoalMinutes: 120, // デフォルト2時間
+
+            // カレンダー表示状態
+            currentYear: new Date().getFullYear(),
+            currentMonth: new Date().getMonth(), // 0-indexed
+            selectedDateStr: formatDateToISO(new Date()),
+
+            // タイマー状態
+            // 経過時間は「開始時刻」から毎回計算するので、端数の切り捨てによるズレが起きない
+            timer: {
+                mode: 'stopwatch',   // 'stopwatch' | 'pomodoro'
+                isRunning: false,
+                accumulatedMs: 0,    // 一時停止までに積み上がった時間
+                startedAt: null,     // 現在の計測区間を開始した時刻 (ms)
+                sessionStartedAt: null, // 最初にスタートした時刻 (記録の日付に使う)
+                subjectId: null
+            },
+            pomodoroDuration: 25 * 60, // 25分
+            timerInterval: null
+        };
+
+        // --- ユーティリティ関数 ---
+        function formatDateToISO(date) {
+            const y = date.getFullYear();
+            const m = String(date.getMonth() + 1).padStart(2, '0');
+            const d = String(date.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        function formatSecondsToHoursMinutes(totalSeconds) {
+            const totalMinutes = Math.floor(totalSeconds / 60);
+            const h = Math.floor(totalMinutes / 60);
+            const m = totalMinutes % 60;
+            if (h === 0 && m === 0 && totalSeconds > 0) {
+                return `1分未満 (${totalSeconds}秒)`;
+            }
+            return `${h}時間 ${m}分`;
+        }
+
+        function formatSecondsToShort(totalSeconds) {
+            const totalMinutes = Math.floor(totalSeconds / 60);
+            const h = Math.floor(totalMinutes / 60);
+            const m = totalMinutes % 60;
+            if (h > 0) {
+                return m > 0 ? `${h}h${m}m` : `${h}h`;
+            }
+            return `${m}m`;
+        }
+
+        function formatTimerClock(seconds) {
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = seconds % 60;
+            return [h, m, s].map(v => String(v).padStart(2, '0')).join(':');
+        }
+
+        function escapeHTML(str) {
+            return String(str).replace(/[&<>'"]/g, tag => ({
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
+            }[tag]));
+        }
+
+        // 色は #rrggbb 形式のみ許可 (インポートデータ経由の不正な値を防ぐ)
+        function safeColor(color) {
+            return /^#[0-9a-fA-F]{6}$/.test(color) ? color : '#94a3b8';
+        }
+
+        function generateId(prefix) {
+            if (window.crypto && typeof window.crypto.randomUUID === 'function') {
+                return `${prefix}_${window.crypto.randomUUID()}`;
+            }
+            return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+        }
+
+        function getSubject(subjectId, fallbackName = '不明な科目') {
+            return state.subjects.find(s => s.id === subjectId) || { name: fallbackName, color: '#94a3b8' };
+        }
+
+        function getMonthPrefix() {
+            return `${state.currentYear}-${String(state.currentMonth + 1).padStart(2, '0')}`;
+        }
+
+        function isViewingCurrentMonth() {
+            const now = new Date();
+            return state.currentYear === now.getFullYear() && state.currentMonth === now.getMonth();
+        }
+
+        // トースト通知表示 (alertの代替)
+        // action を渡すと「元に戻す」などのボタンを付けられる
+        function showToast(message, type = 'success', action = null) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            const bgColor = type === 'success' ? 'bg-slate-800' : (type === 'info' ? 'bg-indigo-600' : 'bg-rose-600');
+            const iconClass = type === 'success' ? 'fa-circle-check text-emerald-400' : 'fa-circle-info text-white';
+
+            toast.className = `${bgColor} text-white px-4 py-3 rounded-xl shadow-lg flex items-center gap-3 text-sm font-medium transform transition-all duration-300 translate-y-2 opacity-0 pointer-events-auto`;
+
+            const icon = document.createElement('i');
+            icon.className = `fa-solid ${iconClass}`;
+            const text = document.createElement('span');
+            text.textContent = message; // textContent なので HTML として解釈されない
+            toast.append(icon, text);
+
+            const remove = () => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            };
+
+            if (action) {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'ml-2 underline font-bold text-amber-300 hover:text-amber-200';
+                btn.textContent = action.label;
+                btn.addEventListener('click', () => {
+                    action.onClick();
+                    remove();
+                });
+                toast.appendChild(btn);
+            }
+
+            container.appendChild(toast);
+
+            // アニメーションイン
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+            });
+
+            setTimeout(remove, action ? 6000 : 3000);
+        }
+
+        // 効果音 (Web Audio API - 外部ファイル不要)
+        // AudioContext は使い回す。スマホではユーザー操作時に resume しておく必要がある
+        let audioCtx = null;
+        function ensureAudioContext() {
+            try {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+                if (audioCtx.state === 'suspended') {
+                    audioCtx.resume();
+                }
+            } catch (e) {
+                audioCtx = null;
+            }
+        }
+
+        function playNotificationSound() {
+            try {
+                ensureAudioContext();
+                if (!audioCtx) return;
+                const ctx = audioCtx;
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
+                osc.frequency.setValueAtTime(880, ctx.currentTime + 0.15); // A5
+                gain.gain.setValueAtTime(0.1, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start();
+                osc.stop(ctx.currentTime + 0.5);
+            } catch (e) {
+                // 音声再生ブロック時は無視
+            }
+        }
+
+        // --- データ永続化 ---
+        function loadData() {
+            try {
+                const savedLogs = localStorage.getItem(STORAGE_KEYS.LOGS);
+                const savedSubjects = localStorage.getItem(STORAGE_KEYS.SUBJECTS);
+                const savedGoal = localStorage.getItem(STORAGE_KEYS.GOAL);
+
+                state.logs = savedLogs ? JSON.parse(savedLogs) : [];
+                state.subjects = savedSubjects ? JSON.parse(savedSubjects) : [...DEFAULT_SUBJECTS];
+                const goal = savedGoal ? parseInt(savedGoal, 10) : 120;
+                state.dailyGoalMinutes = Number.isFinite(goal) ? goal : 120;
+
+                // 初回起動時（データが空の場合）にサンプルデータを少し入れて使い方を分かりやすくする
+                if (!savedLogs && state.logs.length === 0) {
+                    seedSampleData();
+                }
+            } catch (e) {
+                console.error('データの読み込みに失敗しました', e);
+                state.subjects = [...DEFAULT_SUBJECTS];
+            }
+        }
+
+        function saveData() {
+            try {
+                localStorage.setItem(STORAGE_KEYS.LOGS, JSON.stringify(state.logs));
+                localStorage.setItem(STORAGE_KEYS.SUBJECTS, JSON.stringify(state.subjects));
+                localStorage.setItem(STORAGE_KEYS.GOAL, state.dailyGoalMinutes.toString());
+            } catch (e) {
+                showToast('データの保存に失敗しました', 'error');
+            }
+        }
+
+        function saveTimerState() {
+            try {
+                localStorage.setItem(STORAGE_KEYS.TIMER, JSON.stringify(state.timer));
+            } catch (e) {
+                // 保存できなくても計測自体は続ける
+            }
+        }
+
+        function loadTimerState() {
+            try {
+                const saved = localStorage.getItem(STORAGE_KEYS.TIMER);
+                if (!saved) return;
+                const t = JSON.parse(saved);
+                state.timer = {
+                    mode: t.mode === 'pomodoro' ? 'pomodoro' : 'stopwatch',
+                    isRunning: !!t.isRunning && typeof t.startedAt === 'number',
+                    accumulatedMs: Number(t.accumulatedMs) || 0,
+                    startedAt: typeof t.startedAt === 'number' ? t.startedAt : null,
+                    sessionStartedAt: typeof t.sessionStartedAt === 'number' ? t.sessionStartedAt : null,
+                    subjectId: t.subjectId || null
+                };
+            } catch (e) {
+                // 壊れたデータは無視して初期状態から
+            }
+        }
+
+        // 初回デモ用データ生成
+        function seedSampleData() {
+            const today = new Date();
+            const yesterday = new Date(today);
+            yesterday.setDate(today.getDate() - 1);
+            const twoDaysAgo = new Date(today);
+            twoDaysAgo.setDate(today.getDate() - 2);
+
+            state.logs = [
+                {
+                    id: 'sample_1',
+                    date: formatDateToISO(twoDaysAgo),
+                    subjectId: 'sub_1',
+                    durationSeconds: 3600,
+                    memo: 'リスニング教材 Chapter 1',
+                    timestamp: twoDaysAgo.getTime()
+                },
+                {
+                    id: 'sample_2',
+                    date: formatDateToISO(yesterday),
+                    subjectId: 'sub_3',
+                    durationSeconds: 5400,
+                    memo: 'Webアプリ開発の基礎学習',
+                    timestamp: yesterday.getTime()
+                }
+            ];
+            saveData();
+        }
+
+        // --- データの書き出し / 読み込み (バックアップ) ---
+        function exportData() {
+            const payload = {
+                app: 'StudyLog',
+                version: 1,
+                exportedAt: new Date().toISOString(),
+                logs: state.logs,
+                subjects: state.subjects,
+                dailyGoalMinutes: state.dailyGoalMinutes
+            };
+            const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `studylog_${formatDateToISO(new Date())}.json`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+            showToast('データを書き出しました');
+        }
+
+        function isValidLog(l) {
+            return l && typeof l.id === 'string'
+                && typeof l.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(l.date)
+                && typeof l.subjectId === 'string'
+                && Number.isFinite(l.durationSeconds) && l.durationSeconds > 0;
+        }
+
+        function isValidSubject(s) {
+            return s && typeof s.id === 'string' && typeof s.name === 'string';
+        }
+
+        function importData(file) {
+            const reader = new FileReader();
+            reader.onload = () => {
+                try {
+                    const data = JSON.parse(reader.result);
+                    if (!Array.isArray(data.logs) || !Array.isArray(data.subjects)) {
+                        throw new Error('invalid format');
+                    }
+                    const logs = data.logs.filter(isValidLog).map(l => ({
+                        id: l.id,
+                        date: l.date,
+                        subjectId: l.subjectId,
+                        durationSeconds: Math.floor(l.durationSeconds),
+                        memo: typeof l.memo === 'string' ? l.memo : '',
+                        timestamp: Number(l.timestamp) || Date.now()
+                    }));
+                    const subjects = data.subjects.filter(isValidSubject).map(s => ({
+                        id: s.id,
+                        name: s.name.slice(0, 30),
+                        color: safeColor(s.color)
+                    }));
+                    if (subjects.length === 0) {
+                        throw new Error('no subjects');
+                    }
+
+                    const ok = confirm(`記録 ${logs.length} 件・科目 ${subjects.length} 件を読み込みます。\n今のデータは上書きされます。よろしいですか？`);
+                    if (!ok) return;
+
+                    state.logs = logs;
+                    state.subjects = subjects;
+                    const goal = parseInt(data.dailyGoalMinutes, 10);
+                    if (Number.isFinite(goal) && goal >= 0) {
+                        state.dailyGoalMinutes = goal;
+                    }
+                    saveData();
+                    renderAll();
+                    showToast('データを読み込みました');
+                } catch (e) {
+                    showToast('ファイルを読み込めませんでした。StudyLog で書き出した JSON を選んでください', 'error');
+                }
+            };
+            reader.readAsText(file);
+        }
+
+        // --- タイマーロジック ---
+        function getElapsedMs() {
+            const t = state.timer;
+            const running = t.isRunning && t.startedAt ? Date.now() - t.startedAt : 0;
+            return t.accumulatedMs + running;
+        }
+
+        function getElapsedSeconds() {
+            return Math.floor(getElapsedMs() / 1000);
+        }
+
+        // 記録する秒数 (ポモドーロは25分を上限にする)
+        function getRecordableSeconds() {
+            const sec = getElapsedSeconds();
+            return state.timer.mode === 'pomodoro' ? Math.min(sec, state.pomodoroDuration) : sec;
+        }
+
+        function updateTimerDisplay() {
+            const displayEl = document.getElementById('timerDisplay');
+            const finishBtn = document.getElementById('finishSaveBtn');
+            const elapsed = getElapsedSeconds();
+
+            let clock;
+            if (state.timer.mode === 'stopwatch') {
+                clock = formatTimerClock(elapsed);
+            } else {
+                clock = formatTimerClock(Math.max(0, state.pomodoroDuration - elapsed));
+            }
+            displayEl.textContent = clock;
+
+            // 計測中はタブのタイトルにも時間を表示
+            document.title = (state.timer.isRunning || elapsed > 0) ? `${clock} - StudyLog` : APP_TITLE;
+
+            // 1秒以上経過していれば「完了して記録」ボタンを有効化
+            finishBtn.disabled = elapsed === 0;
+        }
+
+        function updateTimerControls() {
+            const startPauseBtn = document.getElementById('startPauseBtn');
+            const subtextEl = document.getElementById('timerSubtext');
+            const elapsed = getElapsedSeconds();
+
+            startPauseBtn.classList.remove('bg-amber-500', 'hover:bg-amber-600', 'bg-indigo-600', 'hover:bg-indigo-700');
+
+            if (state.timer.isRunning) {
+                startPauseBtn.innerHTML = '<i class="fa-solid fa-pause"></i><span>一時停止</span>';
+                startPauseBtn.classList.add('bg-amber-500', 'hover:bg-amber-600');
+                subtextEl.textContent = '集中して計測中...';
+            } else if (elapsed > 0) {
+                startPauseBtn.innerHTML = '<i class="fa-solid fa-play"></i><span>再開</span>';
+                startPauseBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
+                subtextEl.textContent = '一時停止中';
+            } else {
+                startPauseBtn.innerHTML = '<i class="fa-solid fa-play"></i><span>スタート</span>';
+                startPauseBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
+                subtextEl.textContent = '計測を開始してください';
+            }
+
+            // 計測中は科目を変えられないようにする (記録される科目と表示を一致させるため)
+            const hasSession = state.timer.isRunning || elapsed > 0;
+            document.getElementById('subjectSelect').disabled = hasSession;
+            document.getElementById('subjectSelect').title = hasSession ? '計測中は科目を変更できません (リセットまたは記録後に変更できます)' : '';
+        }
+
+        function updateModeTabs() {
+            const swBtn = document.getElementById('modeStopwatchBtn');
+            const pomoBtn = document.getElementById('modePomodoroBtn');
+            const badge = document.getElementById('pomodoroStatusBadge');
+            const active = 'flex-1 py-2 text-sm font-semibold rounded-lg bg-white text-indigo-600 shadow-sm transition-all';
+            const inactive = 'flex-1 py-2 text-sm font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition-all';
+
+            if (state.timer.mode === 'stopwatch') {
+                swBtn.className = active;
+                pomoBtn.className = inactive;
+                badge.classList.add('hidden');
+            } else {
+                pomoBtn.className = active;
+                swBtn.className = inactive;
+                badge.classList.remove('hidden');
+            }
+        }
+
+        function tick() {
+            updateTimerDisplay();
+
+            // ポモドーロ完了チェック
+            if (state.timer.mode === 'pomodoro' && state.timer.isRunning && getElapsedSeconds() >= state.pomodoroDuration) {
+                pauseTimer();
+                // 25分ちょうどで止める
+                state.timer.accumulatedMs = state.pomodoroDuration * 1000;
+                saveTimerState();
+                updateTimerDisplay();
+                playNotificationSound();
+                showToast('25分のポモドーロが完了しました！記録を保存しましょう。', 'info');
+            }
+        }
+
+        function startInterval() {
+            clearInterval(state.timerInterval);
+            state.timerInterval = setInterval(tick, 250);
+        }
+
+        function startTimer() {
+            ensureAudioContext(); // ユーザー操作のタイミングで音声を有効化しておく
+            const t = state.timer;
+            if (t.mode === 'pomodoro' && getElapsedSeconds() >= state.pomodoroDuration) {
+                showToast('ポモドーロは完了しています。記録するかリセットしてください', 'info');
+                return;
+            }
+            const now = Date.now();
+            if (!t.sessionStartedAt) {
+                t.sessionStartedAt = now;
+                t.subjectId = document.getElementById('subjectSelect').value;
+            }
+            t.isRunning = true;
+            t.startedAt = now;
+            saveTimerState();
+            startInterval();
+            updateTimerControls();
+            updateTimerDisplay();
+        }
+
+        function pauseTimer() {
+            const t = state.timer;
+            if (!t.isRunning) return;
+            t.accumulatedMs += Date.now() - t.startedAt;
+            t.isRunning = false;
+            t.startedAt = null;
+            clearInterval(state.timerInterval);
+            saveTimerState();
+            updateTimerControls();
+            updateTimerDisplay();
+        }
+
+        function toggleTimer() {
+            if (state.timer.isRunning) {
+                pauseTimer();
+            } else {
+                startTimer();
+            }
+        }
+
+        function clearTimer() {
+            clearInterval(state.timerInterval);
+            state.timer.isRunning = false;
+            state.timer.accumulatedMs = 0;
+            state.timer.startedAt = null;
+            state.timer.sessionStartedAt = null;
+            state.timer.subjectId = null;
+            saveTimerState();
+            updateTimerControls();
+            updateTimerDisplay();
+        }
+
+        function resetTimer() {
+            if (getElapsedSeconds() >= 60 && !confirm('計測中の時間は記録されずに消えます。リセットしますか？')) {
+                return;
+            }
+            clearTimer();
+        }
+
+        function switchTimerMode(mode) {
+            if (mode === state.timer.mode) return;
+            if (getElapsedSeconds() > 0) {
+                if (!confirm('モードを切り替えると、計測中の時間は記録されずに消えます。切り替えますか？')) {
+                    return;
+                }
+            }
+            clearTimer();
+            state.timer.mode = mode;
+            saveTimerState();
+            updateModeTabs();
+            updateTimerDisplay();
+        }
+
+        function saveTimerRecord() {
+            const seconds = getRecordableSeconds();
+            if (seconds === 0) return;
+
+            const t = state.timer;
+            const subjectId = t.subjectId || document.getElementById('subjectSelect').value;
+            // 記録の日付は「計測を開始した日」(日付をまたいでも開始日に記録)
+            const dateStr = formatDateToISO(new Date(t.sessionStartedAt || Date.now()));
+            const memoInput = document.getElementById('timerMemoInput');
+            const memo = memoInput.value.trim() || (t.mode === 'pomodoro' ? 'ポモドーロタイマーで学習' : 'タイマーで学習');
+
+            state.logs.unshift({
+                id: generateId('log'),
+                date: dateStr,
+                subjectId: subjectId,
+                durationSeconds: seconds,
+                memo: memo,
+                timestamp: Date.now()
+            });
+            saveData();
+
+            showToast(`${formatSecondsToHoursMinutes(seconds)} の勉強時間を記録しました！`);
+
+            clearTimer();
+            memoInput.value = '';
+
+            // 記録した日を表示
+            state.selectedDateStr = dateStr;
+            const [y, m] = dateStr.split('-');
+            state.currentYear = parseInt(y, 10);
+            state.currentMonth = parseInt(m, 10) - 1;
+            renderAll();
+        }
+
+        // --- UIレンダリング関数 ---
+        function renderSubjectsDropdowns() {
+            const selects = [
+                document.getElementById('subjectSelect'),
+                document.getElementById('manualSubjectSelect')
+            ];
+
+            selects.forEach(select => {
+                const currentVal = select.value;
+                select.innerHTML = '';
+                state.subjects.forEach(sub => {
+                    const option = document.createElement('option');
+                    option.value = sub.id;
+                    option.textContent = sub.name;
+                    select.appendChild(option);
+                });
+                if (currentVal && state.subjects.some(s => s.id === currentVal)) {
+                    select.value = currentVal;
+                }
+            });
+
+            // 計測中なら、計測を始めた科目を表示
+            const t = state.timer;
+            if (t.subjectId && state.subjects.some(s => s.id === t.subjectId)) {
+                document.getElementById('subjectSelect').value = t.subjectId;
+            }
+        }
+
+        function renderSummaryCards() {
+            const todayStr = formatDateToISO(new Date());
+
+            // 1. 今日の合計
+            const todayLogs = state.logs.filter(l => l.date === todayStr);
+            const todaySeconds = todayLogs.reduce((sum, l) => sum + l.durationSeconds, 0);
+            document.getElementById('todayTotalDisplay').textContent = formatSecondsToHoursMinutes(todaySeconds);
+
+            // 目標進捗
+            const goalSeconds = state.dailyGoalMinutes * 60;
+            const percentage = goalSeconds > 0 ? Math.min(100, Math.round((todaySeconds / goalSeconds) * 100)) : 100;
+            document.getElementById('goalPercentageBadge').textContent = `${percentage}%`;
+            document.getElementById('goalProgressBar').style.width = `${percentage}%`;
+            document.getElementById('dailyGoalText').textContent = formatSecondsToHoursMinutes(goalSeconds);
+
+            const remainingSeconds = Math.max(0, goalSeconds - todaySeconds);
+            document.getElementById('remainingGoalText').textContent = remainingSeconds === 0 ? '目標達成！🎉' : `残り ${formatSecondsToHoursMinutes(remainingSeconds)}`;
+
+            // 2. 表示中の月の累計時間 & 学習日数
+            const monthPrefix = getMonthPrefix();
+            const monthLogs = state.logs.filter(l => l.date.startsWith(monthPrefix));
+            const monthSeconds = monthLogs.reduce((sum, l) => sum + l.durationSeconds, 0);
+            const uniqueDays = new Set(monthLogs.map(l => l.date)).size;
+
+            document.getElementById('monthTotalLabel').textContent = isViewingCurrentMonth()
+                ? '今月の累計時間'
+                : `${state.currentYear}年${state.currentMonth + 1}月の累計時間`;
+            document.getElementById('monthTotalDisplay').textContent = formatSecondsToHoursMinutes(monthSeconds);
+            document.getElementById('monthStudyDays').textContent = uniqueDays;
+
+            // 3. 連続学習記録 (ストリーク)
+            const streak = calculateStreak();
+            document.getElementById('streakDisplay').textContent = streak;
+            document.getElementById('streakMessage').textContent = streak > 0
+                ? `素晴らしい継続力です！(${streak}日連続)`
+                : '今日から連続記録をスタートしよう！';
+        }
+
+        function calculateStreak() {
+            const datesWithStudy = new Set(state.logs.filter(l => l.durationSeconds > 0).map(l => l.date));
+            if (datesWithStudy.size === 0) return 0;
+
+            let streak = 0;
+            const checkDate = new Date();
+            const todayStr = formatDateToISO(checkDate);
+
+            // 今日まだ勉強していない場合は昨日からカウント開始
+            if (!datesWithStudy.has(todayStr)) {
+                checkDate.setDate(checkDate.getDate() - 1);
+            }
+
+            while (datesWithStudy.has(formatDateToISO(checkDate))) {
+                streak++;
+                checkDate.setDate(checkDate.getDate() - 1);
+            }
+            return streak;
+        }
+
+        function renderSubjectStats() {
+            const container = document.getElementById('subjectStatsContainer');
+            const monthPrefix = getMonthPrefix();
+            const monthLogs = state.logs.filter(l => l.date.startsWith(monthPrefix));
+
+            document.getElementById('subjectStatsTitle').textContent = isViewingCurrentMonth()
+                ? '今月の科目別バランス'
+                : `${state.currentYear}年${state.currentMonth + 1}月の科目別バランス`;
+
+            if (monthLogs.length === 0) {
+                container.innerHTML = '<p class="text-sm text-slate-400 text-center py-4">この月の学習記録はまだありません</p>';
+                return;
+            }
+
+            const totalSeconds = monthLogs.reduce((sum, l) => sum + l.durationSeconds, 0);
+            const bySubject = {};
+
+            monthLogs.forEach(log => {
+                bySubject[log.subjectId] = (bySubject[log.subjectId] || 0) + log.durationSeconds;
+            });
+
+            // 時間順にソート
+            const sortedSubjects = Object.entries(bySubject)
+                .map(([subId, sec]) => {
+                    const sub = getSubject(subId);
+                    return { ...sub, seconds: sec, percent: Math.round((sec / totalSeconds) * 100) };
+                })
+                .sort((a, b) => b.seconds - a.seconds);
+
+            container.innerHTML = sortedSubjects.map(item => `
+                <div>
+                    <div class="flex justify-between text-xs font-medium mb-1">
+                        <span class="flex items-center gap-1.5 text-slate-700">
+                            <span class="w-2.5 h-2.5 rounded-full inline-block" style="background-color: ${safeColor(item.color)}"></span>
+                            ${escapeHTML(item.name)}
+                        </span>
+                        <span class="text-slate-500 tabular-nums">${formatSecondsToHoursMinutes(item.seconds)} (${item.percent}%)</span>
+                    </div>
+                    <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                        <div class="h-2 rounded-full" style="width: ${item.percent}%; background-color: ${safeColor(item.color)}"></div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderCalendar() {
+            const grid = document.getElementById('calendarGrid');
+            const monthYearLabel = document.getElementById('calendarMonthYear');
+
+            monthYearLabel.textContent = `${state.currentYear}年 ${state.currentMonth + 1}月`;
+            grid.innerHTML = '';
+
+            const firstDay = new Date(state.currentYear, state.currentMonth, 1).getDay();
+            const daysInMonth = new Date(state.currentYear, state.currentMonth + 1, 0).getDate();
+            const todayStr = formatDateToISO(new Date());
+
+            // 日ごとの合計秒数を事前集計
+            const dailyTotals = {};
+            state.logs.forEach(log => {
+                dailyTotals[log.date] = (dailyTotals[log.date] || 0) + log.durationSeconds;
+            });
+
+            // 空白セル（月初めまで）
+            for (let i = 0; i < firstDay; i++) {
+                const emptyCell = document.createElement('div');
+                emptyCell.className = 'h-16 sm:h-20 rounded-xl bg-slate-50/50';
+                grid.appendChild(emptyCell);
+            }
+
+            // 日付セル
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dateObj = new Date(state.currentYear, state.currentMonth, day);
+                const dateStr = formatDateToISO(dateObj);
+                const totalSec = dailyTotals[dateStr] || 0;
+                const isSelected = dateStr === state.selectedDateStr;
+                const isToday = dateStr === todayStr;
+
+                // ヒートマップ背景色の決定 (凡例と同じ5段階)
+                let bgClass = 'bg-slate-50 hover:bg-slate-100 text-slate-700';
+                let timeTextClass = 'text-slate-400';
+                if (totalSec > 0) {
+                    const mins = totalSec / 60;
+                    if (mins < 30) {
+                        bgClass = 'bg-indigo-50 hover:bg-indigo-100 text-indigo-900';
+                        timeTextClass = 'text-indigo-600 font-semibold';
+                    } else if (mins < 90) {
+                        bgClass = 'bg-indigo-100 hover:bg-indigo-200 text-indigo-950';
+                        timeTextClass = 'text-indigo-700 font-semibold';
+                    } else if (mins < 180) {
+                        bgClass = 'bg-indigo-300 hover:bg-indigo-400 text-indigo-950';
+                        timeTextClass = 'text-indigo-950 font-bold';
+                    } else {
+                        bgClass = 'bg-indigo-600 hover:bg-indigo-700 text-white';
+                        timeTextClass = 'text-indigo-100 font-bold';
+                    }
+                }
+
+                const cell = document.createElement('button');
+                cell.type = 'button';
+                cell.setAttribute('aria-label', `${state.currentMonth + 1}月${day}日 ${totalSec > 0 ? formatSecondsToHoursMinutes(totalSec) : '記録なし'}`);
+                cell.className = `h-16 sm:h-20 p-1.5 sm:p-2 rounded-xl flex flex-col justify-between items-start transition-all relative border ${bgClass} ${
+                    isSelected ? 'ring-2 ring-indigo-600 ring-offset-1 border-transparent' : 'border-slate-100'
+                }`;
+
+                cell.innerHTML = `
+                    <span class="text-xs sm:text-sm font-semibold ${isToday ? 'bg-rose-500 text-white w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center' : ''}">
+                        ${day}
+                    </span>
+                    ${totalSec > 0 ? `<span class="text-[10px] sm:text-xs tracking-tighter self-end ${timeTextClass}">${formatSecondsToShort(totalSec)}</span>` : ''}
+                `;
+
+                cell.addEventListener('click', () => {
+                    state.selectedDateStr = dateStr;
+                    renderCalendar();
+                    renderDayLogs();
+                });
+
+                grid.appendChild(cell);
+            }
+        }
+
+        function renderDayLogs() {
+            const titleEl = document.getElementById('selectedDateTitle');
+            const totalEl = document.getElementById('selectedDateTotal');
+            const listEl = document.getElementById('dayLogsList');
+
+            const [y, m, d] = state.selectedDateStr.split('-');
+            titleEl.textContent = `${y}年${parseInt(m, 10)}月${parseInt(d, 10)}日の記録`;
+
+            const dayLogs = state.logs.filter(l => l.date === state.selectedDateStr);
+            const totalSec = dayLogs.reduce((sum, l) => sum + l.durationSeconds, 0);
+            totalEl.textContent = `合計: ${formatSecondsToHoursMinutes(totalSec)}`;
+
+            if (dayLogs.length === 0) {
+                listEl.innerHTML = `
+                    <div class="text-center py-8 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+                        <p class="text-sm text-slate-400">この日の勉強記録はありません</p>
+                    </div>
+                `;
+                return;
+            }
+
+            listEl.innerHTML = dayLogs.map(log => {
+                const sub = getSubject(log.subjectId, 'その他');
+                return `
+                    <div class="flex items-center justify-between p-3 bg-slate-50 hover:bg-slate-100/80 rounded-xl border border-slate-100 transition-colors group">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <span class="w-3 h-3 rounded-full flex-shrink-0" style="background-color: ${safeColor(sub.color)}"></span>
+                            <div class="truncate">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-sm font-bold text-slate-800">${escapeHTML(sub.name)}</span>
+                                    <span class="text-xs font-semibold px-2 py-0.5 rounded-md bg-white text-slate-600 border border-slate-200 tabular-nums">
+                                        ${formatSecondsToHoursMinutes(log.durationSeconds)}
+                                    </span>
+                                </div>
+                                ${log.memo ? `<p class="text-xs text-slate-500 truncate mt-0.5">${escapeHTML(log.memo)}</p>` : ''}
+                            </div>
+                        </div>
+                        <button type="button" data-delete-id="${escapeHTML(log.id)}" title="記録を削除" class="deleteLogBtn text-slate-300 hover:text-rose-500 p-2 rounded-lg transition-colors">
+                            <i class="fa-solid fa-trash-can text-sm"></i>
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 記録削除 (6秒以内なら「元に戻す」で復元できる)
+        function deleteLog(logId) {
+            const index = state.logs.findIndex(l => l.id === logId);
+            if (index === -1) return;
+            const [removed] = state.logs.splice(index, 1);
+            saveData();
+            renderAll();
+            showToast('記録を削除しました', 'info', {
+                label: '元に戻す',
+                onClick: () => {
+                    state.logs.splice(Math.min(index, state.logs.length), 0, removed);
+                    saveData();
+                    renderAll();
+                    showToast('記録を元に戻しました');
+                }
+            });
+        }
+
+        function renderAll() {
+            renderSubjectsDropdowns();
+            renderSummaryCards();
+            renderSubjectStats();
+            renderCalendar();
+            renderDayLogs();
+            updateTimerControls();
+        }
+
+        // --- モーダル ---
+        function openModal(id) {
+            const modal = document.getElementById(id);
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            const firstInput = modal.querySelector('input:not([type="radio"]):not([type="hidden"]), select');
+            if (firstInput) setTimeout(() => firstInput.focus(), 50);
+        }
+
+        function closeModals() {
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.classList.add('hidden');
+                modal.classList.remove('flex');
+            });
+        }
+
+        // --- イベントリスナー設定 ---
+        function setupEventListeners() {
+            // タイマー操作
+            document.getElementById('startPauseBtn').addEventListener('click', toggleTimer);
+            document.getElementById('resetTimerBtn').addEventListener('click', resetTimer);
+            document.getElementById('finishSaveBtn').addEventListener('click', saveTimerRecord);
+            document.getElementById('modeStopwatchBtn').addEventListener('click', () => switchTimerMode('stopwatch'));
+            document.getElementById('modePomodoroBtn').addEventListener('click', () => switchTimerMode('pomodoro'));
+
+            // 記録削除 (イベント委譲)
+            document.getElementById('dayLogsList').addEventListener('click', (e) => {
+                const btn = e.target.closest('.deleteLogBtn');
+                if (btn) deleteLog(btn.dataset.deleteId);
+            });
+
+            // データの書き出し / 読み込み
+            document.getElementById('exportBtn').addEventListener('click', exportData);
+            document.getElementById('importBtn').addEventListener('click', () => {
+                document.getElementById('importFileInput').click();
+            });
+            document.getElementById('importFileInput').addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) importData(file);
+                e.target.value = ''; // 同じファイルをもう一度選べるようにする
+            });
+
+            // カレンダー月移動
+            document.getElementById('prevMonthBtn').addEventListener('click', () => {
+                state.currentMonth--;
+                if (state.currentMonth < 0) {
+                    state.currentMonth = 11;
+                    state.currentYear--;
+                }
+                renderAll();
+            });
+
+            document.getElementById('nextMonthBtn').addEventListener('click', () => {
+                state.currentMonth++;
+                if (state.currentMonth > 11) {
+                    state.currentMonth = 0;
+                    state.currentYear++;
+                }
+                renderAll();
+            });
+
+            document.getElementById('todayBtn').addEventListener('click', () => {
+                const now = new Date();
+                state.currentYear = now.getFullYear();
+                state.currentMonth = now.getMonth();
+                state.selectedDateStr = formatDateToISO(now);
+                renderAll();
+            });
+
+            // モーダル開閉共通 (×ボタン・キャンセル・背景クリック・Escキー)
+            document.querySelectorAll('.closeModalBtn').forEach(btn => {
+                btn.addEventListener('click', closeModals);
+            });
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) closeModals();
+                });
+            });
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') closeModals();
+            });
+
+            // 手動記録モーダル
+            const openManualModal = (targetDateStr) => {
+                document.getElementById('manualDateInput').value = targetDateStr || formatDateToISO(new Date());
+                document.getElementById('manualHoursInput').value = 1;
+                document.getElementById('manualMinutesInput').value = 0;
+                document.getElementById('manualMemoInput').value = '';
+                openModal('manualModal');
+            };
+
+            document.getElementById('openManualModalBtn').addEventListener('click', () => openManualModal());
+            document.getElementById('addRecordForSelectedDateBtn').addEventListener('click', () => openManualModal(state.selectedDateStr));
+
+            document.getElementById('manualRecordForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const dateVal = document.getElementById('manualDateInput').value;
+                const subId = document.getElementById('manualSubjectSelect').value;
+                const hours = parseInt(document.getElementById('manualHoursInput').value, 10) || 0;
+                const mins = parseInt(document.getElementById('manualMinutesInput').value, 10) || 0;
+                const memo = document.getElementById('manualMemoInput').value.trim();
+
+                if (!/^\d{4}-\d{2}-\d{2}$/.test(dateVal)) {
+                    showToast('日付を入力してください', 'error');
+                    return;
+                }
+                if (hours < 0 || mins < 0 || mins > 59) {
+                    showToast('時間の入力が正しくありません', 'error');
+                    return;
+                }
+
+                const totalSec = (hours * 3600) + (mins * 60);
+                if (totalSec <= 0) {
+                    showToast('1分以上の時間を入力してください', 'error');
+                    return;
+                }
+
+                // 1日の合計が24時間を超えないようにチェック
+                const dayTotal = state.logs
+                    .filter(l => l.date === dateVal)
+                    .reduce((sum, l) => sum + l.durationSeconds, 0);
+                if (dayTotal + totalSec > MAX_DAY_SECONDS) {
+                    showToast(`1日の合計が24時間を超えます (この日はあと ${formatSecondsToHoursMinutes(MAX_DAY_SECONDS - dayTotal)} まで)`, 'error');
+                    return;
+                }
+
+                state.logs.unshift({
+                    id: generateId('log'),
+                    date: dateVal,
+                    subjectId: subId,
+                    durationSeconds: totalSec,
+                    memo: memo,
+                    timestamp: Date.now()
+                });
+
+                saveData();
+                state.selectedDateStr = dateVal;
+
+                // 追加した日付の月にカレンダーを移動
+                const [y, m] = dateVal.split('-');
+                state.currentYear = parseInt(y, 10);
+                state.currentMonth = parseInt(m, 10) - 1;
+
+                closeModals();
+                showToast('勉強時間を記録しました！');
+                renderAll();
+            });
+
+            // 科目追加モーダル
+            document.getElementById('addSubjectBtn').addEventListener('click', () => {
+                document.getElementById('newSubjectName').value = '';
+                openModal('subjectModal');
+            });
+
+            document.getElementById('addSubjectForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const name = document.getElementById('newSubjectName').value.trim();
+                const color = safeColor(document.querySelector('input[name="subjectColor"]:checked').value);
+
+                if (!name) return;
+                if (state.subjects.some(s => s.name === name)) {
+                    showToast(`科目「${name}」はすでにあります`, 'error');
+                    return;
+                }
+
+                const newSub = {
+                    id: generateId('sub'),
+                    name: name,
+                    color: color
+                };
+                state.subjects.push(newSub);
+                saveData();
+                renderSubjectsDropdowns();
+                if (!document.getElementById('subjectSelect').disabled) {
+                    document.getElementById('subjectSelect').value = newSub.id;
+                }
+                closeModals();
+                showToast(`科目「${name}」を追加しました`);
+            });
+
+            // 目標設定モーダル
+            document.getElementById('openGoalModalBtn').addEventListener('click', () => {
+                document.getElementById('goalHoursInput').value = Math.floor(state.dailyGoalMinutes / 60);
+                document.getElementById('goalMinutesInput').value = state.dailyGoalMinutes % 60;
+                openModal('goalModal');
+            });
+
+            document.getElementById('goalForm').addEventListener('submit', (e) => {
+                e.preventDefault();
+                const h = parseInt(document.getElementById('goalHoursInput').value, 10) || 0;
+                const m = parseInt(document.getElementById('goalMinutesInput').value, 10) || 0;
+                const total = (h * 60) + m;
+                if (h < 0 || m < 0 || m > 59 || total > 24 * 60) {
+                    showToast('目標時間の入力が正しくありません', 'error');
+                    return;
+                }
+                state.dailyGoalMinutes = total;
+                saveData();
+                closeModals();
+                showToast('1日の目標時間を更新しました');
+                renderSummaryCards();
+            });
+
+            // 計測中にページを閉じようとしたら確認する
+            window.addEventListener('beforeunload', (e) => {
+                if (state.timer.isRunning) {
+                    e.preventDefault();
+                    e.returnValue = '';
+                }
+            });
+
+            // タブに戻ってきたときに表示を最新にする
+            document.addEventListener('visibilitychange', () => {
+                if (!document.hidden) {
+                    tick();
+                    renderSummaryCards();
+                }
+            });
+        }
+
+        // --- アプリケーション初期化 ---
+        window.addEventListener('DOMContentLoaded', () => {
+            loadData();
+            loadTimerState();
+            setupEventListeners();
+            updateModeTabs();
+            renderAll();
+            updateTimerDisplay();
+
+            // リロード前に計測中だった場合は再開する
+            if (state.timer.isRunning) {
+                startInterval();
+                tick();
+                showToast('計測中のタイマーを復元しました', 'info');
+            } else if (getElapsedSeconds() > 0) {
+                showToast('一時停止中のタイマーを復元しました', 'info');
+            }
+        });
+    </script>
+</body>
+</html>
