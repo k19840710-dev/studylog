@@ -56,6 +56,16 @@
             text-align: center; box-shadow: 0 1px 0 #cbd5e1;
         }
 
+        /* タブ: hidden 属性で確実に非表示にする (grid などの指定より優先) */
+        [hidden] { display: none !important; }
+        .tab-btn { color: #94a3b8; }
+        .tab-btn:hover { color: #475569; }
+        .tab-btn[aria-current="page"] { color: #4f46e5; }
+        html.dark .tab-btn { color: #64748b; }
+        html.dark .tab-btn:hover { color: #cbd5e1; }
+        html.dark .tab-btn[aria-current="page"] { color: #a5b4fc; }
+        html.dark .divide-slate-100 > :not([hidden]) ~ :not([hidden]) { border-color: #334155; }
+
         /* ===== ダークモード =====
            Tailwind のユーティリティを上書きして配色を切り替える */
         html.dark { color-scheme: dark; }
@@ -123,71 +133,32 @@
 <body class="text-slate-800 antialiased min-h-screen flex flex-col">
 
     <!-- ヘッダー -->
-    <header class="bg-white border-b border-slate-200 sticky top-0 z-30">
-        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-                <div class="bg-indigo-600 text-white p-2 rounded-xl shadow-sm">
-                    <i class="fa-solid fa-book-open text-lg"></i>
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-30" style="padding-top: env(safe-area-inset-top)">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+                <div class="bg-indigo-600 text-white w-9 h-9 rounded-xl shadow-sm flex items-center justify-center">
+                    <i class="fa-solid fa-book-open"></i>
                 </div>
-                <h1 class="text-xl font-bold tracking-tight text-slate-900">StudyLog</h1>
+                <h1 class="text-lg font-bold tracking-tight text-slate-900">StudyLog</h1>
             </div>
-            <div class="flex items-center gap-2 sm:gap-3">
-                <button id="openGoalModalBtn" class="text-sm font-medium text-slate-600 hover:text-indigo-600 bg-slate-100 hover:bg-indigo-50 px-3 py-2 rounded-lg transition-colors flex items-center gap-2" title="目標設定">
-                    <i class="fa-solid fa-bullseye text-indigo-500"></i>
-                    <span class="hidden sm:inline">目標設定</span>
-                </button>
-                <button id="openManualModalBtn" class="text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 px-3.5 py-2 rounded-lg shadow-sm transition-colors flex items-center gap-2" title="手動記録 (N)">
-                    <i class="fa-solid fa-plus"></i>
-                    <span class="hidden sm:inline">手動記録</span>
-                </button>
-                <!-- メニュー -->
-                <div class="relative">
-                    <button id="menuBtn" aria-haspopup="true" aria-expanded="false" title="メニュー" class="text-slate-600 hover:text-indigo-600 bg-slate-100 hover:bg-indigo-50 w-9 h-9 rounded-lg transition-colors flex items-center justify-center">
-                        <i class="fa-solid fa-ellipsis-vertical"></i>
-                    </button>
-                    <div id="menuDropdown" class="hidden absolute right-0 mt-2 w-60 bg-white rounded-xl shadow-xl border border-slate-200 py-2 z-40 text-sm">
-                        <button data-menu="subjects" class="w-full text-left px-4 py-2.5 hover:bg-slate-100 flex items-center gap-3 text-slate-700">
-                            <i class="fa-solid fa-tags w-4 text-slate-400"></i>科目の管理
-                        </button>
-                        <button data-menu="pomodoro" class="w-full text-left px-4 py-2.5 hover:bg-slate-100 flex items-center gap-3 text-slate-700">
-                            <i class="fa-solid fa-clock w-4 text-slate-400"></i>ポモドーロ設定
-                        </button>
-                        <div class="px-4 py-2.5">
-                            <p class="text-xs text-slate-500 mb-2 flex items-center gap-3"><i class="fa-solid fa-circle-half-stroke w-4 text-slate-400"></i>テーマ</p>
-                            <div class="flex bg-slate-100 p-1 rounded-lg text-xs font-semibold" id="themeSwitcher">
-                                <button data-theme-choice="system" class="flex-1 py-1.5 rounded-md">自動</button>
-                                <button data-theme-choice="light" class="flex-1 py-1.5 rounded-md">ライト</button>
-                                <button data-theme-choice="dark" class="flex-1 py-1.5 rounded-md">ダーク</button>
-                            </div>
-                        </div>
-                        <div class="border-t border-slate-100 my-1"></div>
-                        <button data-menu="export" class="w-full text-left px-4 py-2.5 hover:bg-slate-100 flex items-center gap-3 text-slate-700">
-                            <i class="fa-solid fa-download w-4 text-slate-400"></i>データを書き出す
-                        </button>
-                        <button data-menu="import" class="w-full text-left px-4 py-2.5 hover:bg-slate-100 flex items-center gap-3 text-slate-700">
-                            <i class="fa-solid fa-upload w-4 text-slate-400"></i>データを読み込む
-                        </button>
-                        <div class="border-t border-slate-100 my-1"></div>
-                        <button data-menu="shortcuts" class="w-full text-left px-4 py-2.5 hover:bg-slate-100 flex items-center gap-3 text-slate-700">
-                            <i class="fa-regular fa-keyboard w-4 text-slate-400"></i>キーボードショートカット
-                        </button>
-                    </div>
-                    <input type="file" id="importFileInput" accept="application/json,.json" class="hidden">
-                </div>
-            </div>
+            <button id="openManualModalBtn" class="text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 px-3.5 py-2 rounded-lg shadow-sm transition-colors flex items-center gap-2" title="手動記録 (N)">
+                <i class="fa-solid fa-plus"></i>
+                <span>手動記録</span>
+            </button>
         </div>
     </header>
 
-    <!-- メインコンテンツ -->
-    <main class="flex-grow max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+    <!-- メインコンテンツ (下部タブで切り替え) -->
+    <main class="flex-grow max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-5 sm:pt-8" style="padding-bottom: calc(6rem + env(safe-area-inset-bottom))">
 
-        <!-- 通知メッセージボックス (alertの代替) -->
-        <div id="toastContainer" class="fixed bottom-5 right-5 left-5 sm:left-auto z-50 flex flex-col items-end gap-2 pointer-events-none"></div>
+        <!-- 通知メッセージボックス (タブバーの上に表示) -->
+        <div id="toastContainer" class="fixed right-5 left-5 sm:left-auto z-50 flex flex-col items-end gap-2 pointer-events-none" style="bottom: calc(5.5rem + env(safe-area-inset-bottom))"></div>
 
-        <!-- 上部サマリーカード -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6 sm:mb-8">
+        <!-- ===== タブ1: タイマー ===== -->
+        <section data-tab-panel="timer" class="tab-panel max-w-xl mx-auto flex flex-col gap-5" aria-label="タイマー">
+
             <!-- 今日の勉強時間 & 目標達成率 -->
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between">
+            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
                 <div class="flex justify-between items-start mb-2">
                     <div>
                         <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">今日の勉強時間</p>
@@ -197,7 +168,7 @@
                 </div>
                 <div class="mt-3">
                     <div class="flex justify-between text-xs text-slate-500 mb-1">
-                        <span>目標: <span id="dailyGoalText">2時間 0分</span></span>
+                        <button id="openGoalModalBtn" class="hover:text-indigo-600 underline decoration-dotted underline-offset-2" title="目標を変更">目標: <span id="dailyGoalText">2時間 0分</span></button>
                         <span id="remainingGoalText">残り 2時間 0分</span>
                     </div>
                     <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
@@ -206,183 +177,105 @@
                 </div>
             </div>
 
-            <!-- 表示中の月の累計時間 -->
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between">
-                <div>
-                    <p id="monthTotalLabel" class="text-xs font-semibold uppercase tracking-wider text-slate-400">今月の累計時間</p>
-                    <h2 id="monthTotalDisplay" class="text-2xl sm:text-3xl font-bold text-slate-900 mt-1 tabular-nums">0時間 0分</h2>
+            <!-- タイマーカード -->
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+                <!-- モード切替タブ -->
+                <div class="flex bg-slate-100 p-1 rounded-xl mb-6">
+                    <button id="modeStopwatchBtn" class="flex-1 py-2 text-sm font-semibold rounded-lg transition-all">
+                        <i class="fa-solid fa-stopwatch mr-1.5"></i>通常タイマー
+                    </button>
+                    <button id="modePomodoroBtn" class="flex-1 py-2 text-sm font-semibold rounded-lg transition-all">
+                        <i class="fa-solid fa-clock mr-1.5"></i><span id="pomodoroTabLabel">ポモドーロ (25分)</span>
+                    </button>
                 </div>
-                <div class="mt-4 flex items-center text-xs text-slate-500">
-                    <i class="fa-regular fa-calendar-check text-emerald-500 mr-1.5 text-sm"></i>
-                    <span>学習日数: <strong id="monthStudyDays" class="text-slate-700">0</strong> 日</span>
+
+                <!-- 科目選択 -->
+                <div class="mb-5">
+                    <label for="subjectSelect" class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">学習する科目・タグ</label>
+                    <div class="flex gap-2">
+                        <select id="subjectSelect" class="flex-grow min-w-0 bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl focus:ring-indigo-500 focus:border-indigo-500 block p-2.5 font-medium disabled:opacity-60"></select>
+                        <button id="addSubjectBtn" title="新しい科目を追加" class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-3.5 rounded-xl transition-colors">
+                            <i class="fa-solid fa-plus"></i>
+                        </button>
+                        <button id="manageSubjectsBtn" title="科目の管理 (名前・色の変更、削除)" class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-3.5 rounded-xl transition-colors">
+                            <i class="fa-solid fa-pen"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- タイマー表示部 -->
+                <div class="text-center py-6 bg-slate-50 rounded-2xl border border-slate-100 mb-4 relative overflow-hidden">
+                    <div class="flex items-center justify-center gap-2 mb-2 min-h-[24px]">
+                        <span id="pomodoroStatusBadge" class="hidden inline-block px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-600">集中タイム</span>
+                        <button id="openPomodoroSettingsBtn" class="hidden text-xs text-slate-400 hover:text-slate-600 px-1" title="ポモドーロ設定">
+                            <i class="fa-solid fa-gear"></i>
+                        </button>
+                    </div>
+                    <div id="timerDisplay" class="text-5xl sm:text-6xl font-bold text-slate-900 tracking-tight tabular-nums my-1">00:00:00</div>
+                    <p id="timerSubtext" class="text-xs text-slate-400 mt-2">計測を開始してください</p>
+                </div>
+
+                <!-- タイマー記録用メモ -->
+                <div class="mb-4">
+                    <input type="text" id="timerMemoInput" maxlength="100" placeholder="メモ (任意) 例: 英単語帳 P.10〜30" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+
+                <!-- コントロールボタン -->
+                <div class="grid grid-cols-2 gap-3">
+                    <button id="startPauseBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3.5 px-3 rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 text-sm sm:text-base whitespace-nowrap">
+                        <i class="fa-solid fa-play"></i>
+                        <span>スタート</span>
+                    </button>
+                    <button id="finishSaveBtn" disabled class="bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed text-white font-semibold py-3.5 px-3 rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 text-sm sm:text-base whitespace-nowrap">
+                        <i class="fa-solid fa-check"></i>
+                        <span>完了して記録</span>
+                    </button>
+                </div>
+                <div class="mt-3 flex items-center justify-between">
+                    <span class="hidden sm:inline text-xs text-slate-400"><kbd>Space</kbd> で開始 / 停止</span>
+                    <button id="resetTimerBtn" class="text-xs text-slate-400 hover:text-slate-600 underline py-1 ml-auto">タイマーをリセット</button>
                 </div>
             </div>
 
-            <!-- 連続学習記録 (ストリーク) -->
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between">
-                <div>
-                    <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">連続学習記録</p>
-                    <div class="flex items-baseline gap-2 mt-1">
-                        <h2 id="streakDisplay" class="text-2xl sm:text-3xl font-bold text-slate-900 tabular-nums">0</h2>
-                        <span class="text-sm font-medium text-slate-600">日連続</span>
-                    </div>
-                </div>
-                <div class="mt-4 flex items-center text-xs text-slate-500">
-                    <i class="fa-solid fa-fire text-orange-500 mr-1.5 text-sm"></i>
-                    <span id="streakMessage">今日も学習して記録を伸ばそう！</span>
-                </div>
-            </div>
-        </div>
+            <button type="button" data-goto="records" data-goto-today="1" class="self-center text-sm font-medium text-indigo-600 hover:text-indigo-800 px-3 py-2 rounded-lg hover:bg-indigo-50 transition-colors">
+                今日の記録を見る <i class="fa-solid fa-arrow-right ml-1 text-xs"></i>
+            </button>
+        </section>
 
-        <!-- メイン2カラムレイアウト -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 sm:gap-8">
+        <!-- ===== タブ2: 記録 ===== -->
+        <section data-tab-panel="records" hidden class="tab-panel grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-start" aria-label="記録">
 
-            <!-- 左カラム: タイマー & 週グラフ & 科目別内訳 (5カラム) -->
-            <div class="lg:col-span-5 flex flex-col gap-6">
-
-                <!-- タイマーカード -->
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                    <!-- モード切替タブ -->
-                    <div class="flex bg-slate-100 p-1 rounded-xl mb-6">
-                        <button id="modeStopwatchBtn" class="flex-1 py-2 text-sm font-semibold rounded-lg transition-all">
-                            <i class="fa-solid fa-stopwatch mr-1.5"></i>通常タイマー
+            <!-- カレンダーカード -->
+            <div class="lg:col-span-7 bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-100">
+                <div class="flex items-center justify-between mb-5">
+                    <h3 id="calendarMonthYear" class="text-lg font-bold text-slate-900"></h3>
+                    <div class="flex items-center space-x-2">
+                        <button id="prevMonthBtn" class="p-2 rounded-lg hover:bg-slate-100 text-slate-600 transition-colors" title="前月 (←)">
+                            <i class="fa-solid fa-chevron-left"></i>
                         </button>
-                        <button id="modePomodoroBtn" class="flex-1 py-2 text-sm font-semibold rounded-lg transition-all">
-                            <i class="fa-solid fa-clock mr-1.5"></i><span id="pomodoroTabLabel">ポモドーロ (25分)</span>
-                        </button>
-                    </div>
-
-                    <!-- 科目選択 -->
-                    <div class="mb-5">
-                        <label for="subjectSelect" class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">学習する科目・タグ</label>
-                        <div class="flex gap-2">
-                            <select id="subjectSelect" class="flex-grow min-w-0 bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl focus:ring-indigo-500 focus:border-indigo-500 block p-2.5 font-medium disabled:opacity-60">
-                                <!-- JSで動的に生成 -->
-                            </select>
-                            <button id="addSubjectBtn" title="新しい科目を追加" class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-3.5 rounded-xl transition-colors">
-                                <i class="fa-solid fa-plus"></i>
-                            </button>
-                            <button id="manageSubjectsBtn" title="科目の管理 (名前・色の変更、削除)" class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-3.5 rounded-xl transition-colors">
-                                <i class="fa-solid fa-pen"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- タイマー表示部 -->
-                    <div class="text-center py-6 bg-slate-50 rounded-2xl border border-slate-100 mb-4 relative overflow-hidden">
-                        <div class="flex items-center justify-center gap-2 mb-2 min-h-[24px]" id="pomodoroStatusRow">
-                            <span id="pomodoroStatusBadge" class="hidden inline-block px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-600">
-                                集中タイム
-                            </span>
-                            <button id="openPomodoroSettingsBtn" class="hidden text-xs text-slate-400 hover:text-slate-600 px-1" title="ポモドーロ設定">
-                                <i class="fa-solid fa-gear"></i>
-                            </button>
-                        </div>
-                        <div id="timerDisplay" class="text-5xl sm:text-6xl font-bold text-slate-900 tracking-tight tabular-nums my-1">
-                            00:00:00
-                        </div>
-                        <p id="timerSubtext" class="text-xs text-slate-400 mt-2">計測を開始してください</p>
-                    </div>
-
-                    <!-- タイマー記録用メモ -->
-                    <div class="mb-4">
-                        <input type="text" id="timerMemoInput" maxlength="100" placeholder="メモ (任意) 例: 英単語帳 P.10〜30" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm focus:ring-indigo-500 focus:border-indigo-500">
-                    </div>
-
-                    <!-- コントロールボタン -->
-                    <div class="grid grid-cols-2 gap-3">
-                        <button id="startPauseBtn" class="col-span-2 sm:col-span-1 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3.5 px-4 rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 text-base">
-                            <i class="fa-solid fa-play"></i>
-                            <span>スタート</span>
-                        </button>
-                        <button id="finishSaveBtn" disabled class="col-span-2 sm:col-span-1 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed text-white font-semibold py-3.5 px-4 rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 text-base">
-                            <i class="fa-solid fa-check"></i>
-                            <span>完了して記録</span>
-                        </button>
-                    </div>
-                    <div class="mt-3 flex items-center justify-between">
-                        <span class="hidden sm:inline text-xs text-slate-400"><kbd>Space</kbd> で開始 / 停止</span>
-                        <button id="resetTimerBtn" class="text-xs text-slate-400 hover:text-slate-600 underline py-1 ml-auto">
-                            タイマーをリセット
+                        <button id="todayBtn" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors" title="今日 (T)">今日</button>
+                        <button id="nextMonthBtn" class="p-2 rounded-lg hover:bg-slate-100 text-slate-600 transition-colors" title="翌月 (→)">
+                            <i class="fa-solid fa-chevron-right"></i>
                         </button>
                     </div>
                 </div>
 
-                <!-- 直近7日間のグラフ -->
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                    <div class="flex items-start justify-between mb-4 gap-3">
-                        <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
-                            <i class="fa-solid fa-chart-column text-indigo-500"></i>
-                            直近7日間
-                        </h3>
-                        <div class="text-right text-xs text-slate-500 leading-5">
-                            <div>合計 <strong id="weekTotal" class="text-slate-800 tabular-nums">0時間 0分</strong></div>
-                            <div>1日平均 <strong id="weekAverage" class="text-slate-800 tabular-nums">0時間 0分</strong></div>
-                        </div>
-                    </div>
-                    <div class="flex">
-                        <!-- Y軸ラベル -->
-                        <div id="weekYAxis" class="relative w-8 flex-shrink-0 text-[10px] text-slate-400 tabular-nums" style="height: 150px"></div>
-                        <!-- 描画エリア -->
-                        <div class="relative flex-grow">
-                            <div id="weekGrid" class="absolute inset-x-0 top-0 pointer-events-none" style="height: 150px"></div>
-                            <div id="weekBars" class="relative flex gap-1"></div>
-                        </div>
-                    </div>
-                    <div id="weekDetail" class="mt-3 pt-3 border-t border-slate-100 text-xs text-slate-500 min-h-[40px]"></div>
-                    <div id="weekLegend" class="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-600"></div>
+                <div class="grid grid-cols-7 gap-1 text-center mb-2">
+                    <div class="text-xs font-semibold text-rose-500 py-1">日</div>
+                    <div class="text-xs font-semibold text-slate-500 py-1">月</div>
+                    <div class="text-xs font-semibold text-slate-500 py-1">火</div>
+                    <div class="text-xs font-semibold text-slate-500 py-1">水</div>
+                    <div class="text-xs font-semibold text-slate-500 py-1">木</div>
+                    <div class="text-xs font-semibold text-slate-500 py-1">金</div>
+                    <div class="text-xs font-semibold text-indigo-500 py-1">土</div>
                 </div>
 
-                <!-- 科目別内訳 (表示中の月) -->
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                    <h3 class="text-base font-bold text-slate-800 mb-4 flex items-center gap-2">
-                        <i class="fa-solid fa-chart-pie text-indigo-500"></i>
-                        <span id="subjectStatsTitle">今月の科目別バランス</span>
-                    </h3>
-                    <div id="subjectStatsContainer" class="space-y-3">
-                        <p class="text-sm text-slate-400 text-center py-4">まだ記録がありません</p>
-                    </div>
-                </div>
+                <div id="calendarGrid" class="grid grid-cols-7 gap-1.5 sm:gap-2"></div>
 
-            </div>
-
-            <!-- 右カラム: カレンダー & 選択日の詳細 (7カラム) -->
-            <div class="lg:col-span-7 flex flex-col gap-6">
-
-                <!-- カレンダーカード -->
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
-                    <!-- カレンダーヘッダー -->
-                    <div class="flex items-center justify-between mb-6">
-                        <h3 id="calendarMonthYear" class="text-lg font-bold text-slate-900"></h3>
-                        <div class="flex items-center space-x-2">
-                            <button id="prevMonthBtn" class="p-2 rounded-lg hover:bg-slate-100 text-slate-600 transition-colors" title="前月 (←)">
-                                <i class="fa-solid fa-chevron-left"></i>
-                            </button>
-                            <button id="todayBtn" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors" title="今日 (T)">
-                                今日
-                            </button>
-                            <button id="nextMonthBtn" class="p-2 rounded-lg hover:bg-slate-100 text-slate-600 transition-colors" title="翌月 (→)">
-                                <i class="fa-solid fa-chevron-right"></i>
-                            </button>
-                        </div>
-                    </div>
-
-                    <!-- 曜日ヘッダー -->
-                    <div class="grid grid-cols-7 gap-1 text-center mb-2">
-                        <div class="text-xs font-semibold text-rose-500 py-1">日</div>
-                        <div class="text-xs font-semibold text-slate-500 py-1">月</div>
-                        <div class="text-xs font-semibold text-slate-500 py-1">火</div>
-                        <div class="text-xs font-semibold text-slate-500 py-1">水</div>
-                        <div class="text-xs font-semibold text-slate-500 py-1">木</div>
-                        <div class="text-xs font-semibold text-slate-500 py-1">金</div>
-                        <div class="text-xs font-semibold text-indigo-500 py-1">土</div>
-                    </div>
-
-                    <!-- カレンダーグリッド -->
-                    <div id="calendarGrid" class="grid grid-cols-7 gap-1.5 sm:gap-2"></div>
-
-                    <!-- ヒートマップ凡例 (カレンダーのセル色と一致させる) -->
-                    <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-end gap-2 text-xs text-slate-400">
+                <!-- ヒートマップ凡例 (カレンダーのセル色と一致させる) -->
+                <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2 text-xs text-slate-400">
+                    <span>月合計 <strong id="calendarMonthTotal" class="text-slate-700 tabular-nums">0時間 0分</strong></span>
+                    <span class="flex items-center gap-2">
                         <span>少ない</span>
                         <span class="w-3 h-3 rounded-sm bg-slate-50 border border-slate-200 inline-block" title="記録なし"></span>
                         <span class="w-3 h-3 rounded-sm bg-indigo-50 border border-indigo-100 inline-block" title="30分未満"></span>
@@ -390,27 +283,183 @@
                         <span class="w-3 h-3 rounded-sm bg-indigo-300 inline-block" title="1時間30分〜3時間"></span>
                         <span class="w-3 h-3 rounded-sm bg-indigo-600 inline-block" title="3時間以上"></span>
                         <span>多い</span>
-                    </div>
+                    </span>
                 </div>
-
-                <!-- 選択された日の学習ログ一覧 -->
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex-grow">
-                    <div class="flex items-center justify-between mb-4">
-                        <div>
-                            <h3 id="selectedDateTitle" class="text-base font-bold text-slate-800"></h3>
-                            <p id="selectedDateTotal" class="text-xs text-slate-500 mt-0.5">合計: 0時間 0分</p>
-                        </div>
-                        <button id="addRecordForSelectedDateBtn" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition-colors">
-                            + この日に追加
-                        </button>
-                    </div>
-
-                    <div id="dayLogsList" class="space-y-2.5 max-h-80 overflow-y-auto pr-1"></div>
-                </div>
-
             </div>
-        </div>
+
+            <!-- 選択された日の学習ログ一覧 -->
+            <div class="lg:col-span-5 bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-100">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h3 id="selectedDateTitle" class="text-base font-bold text-slate-800"></h3>
+                        <p id="selectedDateTotal" class="text-xs text-slate-500 mt-0.5">合計: 0時間 0分</p>
+                    </div>
+                    <button id="addRecordForSelectedDateBtn" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition-colors">+ この日に追加</button>
+                </div>
+                <div id="dayLogsList" class="space-y-2.5"></div>
+            </div>
+        </section>
+
+        <!-- ===== タブ3: 分析 ===== -->
+        <section data-tab-panel="stats" hidden class="tab-panel grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6 items-start" aria-label="分析">
+
+            <div class="lg:col-span-2 grid grid-cols-2 gap-4">
+                <!-- 表示中の月の累計時間 -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between">
+                    <div>
+                        <p id="monthTotalLabel" class="text-xs font-semibold uppercase tracking-wider text-slate-400">今月の累計時間</p>
+                        <h2 id="monthTotalDisplay" class="text-xl sm:text-3xl font-bold text-slate-900 mt-1 tabular-nums">0時間 0分</h2>
+                    </div>
+                    <div class="mt-3 flex items-center text-xs text-slate-500">
+                        <i class="fa-regular fa-calendar-check text-emerald-500 mr-1.5 text-sm"></i>
+                        <span>学習日数: <strong id="monthStudyDays" class="text-slate-700">0</strong> 日</span>
+                    </div>
+                </div>
+
+                <!-- 連続学習記録 (ストリーク) -->
+                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between">
+                    <div>
+                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">連続学習記録</p>
+                        <div class="flex items-baseline gap-2 mt-1">
+                            <h2 id="streakDisplay" class="text-xl sm:text-3xl font-bold text-slate-900 tabular-nums">0</h2>
+                            <span class="text-sm font-medium text-slate-600">日連続</span>
+                        </div>
+                    </div>
+                    <div class="mt-3 flex items-start text-xs text-slate-500">
+                        <i class="fa-solid fa-fire text-orange-500 mr-1.5 text-sm"></i>
+                        <span id="streakMessage">今日も学習して記録を伸ばそう！</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 直近7日間のグラフ -->
+            <div class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-100">
+                <div class="flex items-start justify-between mb-4 gap-3">
+                    <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-column text-indigo-500"></i>
+                        直近7日間
+                    </h3>
+                    <div class="text-right text-xs text-slate-500 leading-5">
+                        <div>合計 <strong id="weekTotal" class="text-slate-800 tabular-nums">0時間 0分</strong></div>
+                        <div>1日平均 <strong id="weekAverage" class="text-slate-800 tabular-nums">0時間 0分</strong></div>
+                    </div>
+                </div>
+                <div class="flex">
+                    <div id="weekYAxis" class="relative w-8 flex-shrink-0 text-[10px] text-slate-400 tabular-nums" style="height: 150px"></div>
+                    <div class="relative flex-grow">
+                        <div id="weekGrid" class="absolute inset-x-0 top-0 pointer-events-none" style="height: 150px"></div>
+                        <div id="weekBars" class="relative flex gap-1"></div>
+                    </div>
+                </div>
+                <div id="weekDetail" class="mt-3 pt-3 border-t border-slate-100 text-xs text-slate-500 min-h-[40px]"></div>
+                <div id="weekLegend" class="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-600"></div>
+            </div>
+
+            <!-- 科目別内訳 (表示中の月) -->
+            <div class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-100">
+                <div class="flex items-center justify-between mb-4 gap-2">
+                    <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-pie text-indigo-500"></i>
+                        <span id="subjectStatsTitle">今月の科目別バランス</span>
+                    </h3>
+                    <div class="flex items-center">
+                        <button id="statsPrevMonthBtn" class="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 text-xs" title="前月"><i class="fa-solid fa-chevron-left"></i></button>
+                        <button id="statsNextMonthBtn" class="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 text-xs" title="翌月"><i class="fa-solid fa-chevron-right"></i></button>
+                    </div>
+                </div>
+                <div id="subjectStatsContainer" class="space-y-3">
+                    <p class="text-sm text-slate-400 text-center py-4">まだ記録がありません</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===== タブ4: 設定 ===== -->
+        <section data-tab-panel="settings" hidden class="tab-panel max-w-xl mx-auto flex flex-col gap-5" aria-label="設定">
+
+            <div>
+                <h3 class="px-1 mb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">学習</h3>
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden divide-y divide-slate-100">
+                    <button data-action="goal" class="settings-row w-full flex items-center justify-between gap-3 px-4 py-3.5 hover:bg-slate-100 text-left transition-colors">
+                        <span class="flex items-center gap-3 text-sm font-medium text-slate-800"><i class="fa-solid fa-bullseye w-5 text-center text-indigo-500"></i>1日の目標</span>
+                        <span class="flex items-center gap-2 text-sm text-slate-500"><span id="settingsGoalValue">2時間 0分</span><i class="fa-solid fa-chevron-right text-xs text-slate-400"></i></span>
+                    </button>
+                    <button data-action="subjects" class="settings-row w-full flex items-center justify-between gap-3 px-4 py-3.5 hover:bg-slate-100 text-left transition-colors">
+                        <span class="flex items-center gap-3 text-sm font-medium text-slate-800"><i class="fa-solid fa-tags w-5 text-center text-indigo-500"></i>科目の管理</span>
+                        <span class="flex items-center gap-2 text-sm text-slate-500"><span id="settingsSubjectsValue">4科目</span><i class="fa-solid fa-chevron-right text-xs text-slate-400"></i></span>
+                    </button>
+                    <button data-action="pomodoro" class="settings-row w-full flex items-center justify-between gap-3 px-4 py-3.5 hover:bg-slate-100 text-left transition-colors">
+                        <span class="flex items-center gap-3 text-sm font-medium text-slate-800"><i class="fa-solid fa-clock w-5 text-center text-indigo-500"></i>ポモドーロ設定</span>
+                        <span class="flex items-center gap-2 text-sm text-slate-500"><span id="settingsPomodoroValue">25分 / 5分</span><i class="fa-solid fa-chevron-right text-xs text-slate-400"></i></span>
+                    </button>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="px-1 mb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">表示</h3>
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 px-4 py-3.5">
+                    <div class="flex items-center justify-between gap-3">
+                        <span class="flex items-center gap-3 text-sm font-medium text-slate-800"><i class="fa-solid fa-circle-half-stroke w-5 text-center text-indigo-500"></i>テーマ</span>
+                        <div class="flex bg-slate-100 p-1 rounded-lg text-xs font-semibold w-48" id="themeSwitcher">
+                            <button data-theme-choice="system" class="flex-1 py-1.5 rounded-md">自動</button>
+                            <button data-theme-choice="light" class="flex-1 py-1.5 rounded-md">ライト</button>
+                            <button data-theme-choice="dark" class="flex-1 py-1.5 rounded-md">ダーク</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <h3 class="px-1 mb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">データ</h3>
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden divide-y divide-slate-100">
+                    <button data-action="export" class="settings-row w-full flex items-center justify-between gap-3 px-4 py-3.5 hover:bg-slate-100 text-left transition-colors">
+                        <span class="flex items-center gap-3 text-sm font-medium text-slate-800"><i class="fa-solid fa-download w-5 text-center text-indigo-500"></i>データを書き出す (バックアップ)</span>
+                        <i class="fa-solid fa-chevron-right text-xs text-slate-400"></i>
+                    </button>
+                    <button data-action="import" class="settings-row w-full flex items-center justify-between gap-3 px-4 py-3.5 hover:bg-slate-100 text-left transition-colors">
+                        <span class="flex items-center gap-3 text-sm font-medium text-slate-800"><i class="fa-solid fa-upload w-5 text-center text-indigo-500"></i>データを読み込む (復元)</span>
+                        <i class="fa-solid fa-chevron-right text-xs text-slate-400"></i>
+                    </button>
+                </div>
+                <p class="px-1 mt-2 text-xs text-slate-500 leading-relaxed">記録はこの端末のブラウザ内だけに保存されています。機種変更やブラウザのデータ削除に備えて、ときどき書き出しておくと安心です。</p>
+                <input type="file" id="importFileInput" accept="application/json,.json" class="hidden">
+            </div>
+
+            <div>
+                <h3 class="px-1 mb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">その他</h3>
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden divide-y divide-slate-100">
+                    <button data-action="shortcuts" class="settings-row w-full flex items-center justify-between gap-3 px-4 py-3.5 hover:bg-slate-100 text-left transition-colors">
+                        <span class="flex items-center gap-3 text-sm font-medium text-slate-800"><i class="fa-regular fa-keyboard w-5 text-center text-indigo-500"></i>キーボードショートカット</span>
+                        <i class="fa-solid fa-chevron-right text-xs text-slate-400"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
     </main>
+
+    <!-- 下部タブバー -->
+    <nav id="tabBar" class="fixed bottom-0 inset-x-0 bg-white border-t border-slate-200 z-30" style="padding-bottom: env(safe-area-inset-bottom)" aria-label="画面の切り替え">
+        <div class="max-w-xl mx-auto grid grid-cols-4">
+            <button type="button" data-tab="timer" class="tab-btn h-16 flex flex-col items-center justify-center gap-1">
+                <span class="relative">
+                    <i class="fa-solid fa-stopwatch text-lg"></i>
+                    <span id="tabTimerDot" class="hidden absolute -top-0.5 -right-1.5 w-2 h-2 rounded-full bg-rose-500"></span>
+                </span>
+                <span id="tabTimerLabel" class="text-[11px] font-semibold tabular-nums">タイマー</span>
+            </button>
+            <button type="button" data-tab="records" class="tab-btn h-16 flex flex-col items-center justify-center gap-1">
+                <i class="fa-solid fa-calendar-days text-lg"></i>
+                <span class="text-[11px] font-semibold">記録</span>
+            </button>
+            <button type="button" data-tab="stats" class="tab-btn h-16 flex flex-col items-center justify-center gap-1">
+                <i class="fa-solid fa-chart-column text-lg"></i>
+                <span class="text-[11px] font-semibold">分析</span>
+            </button>
+            <button type="button" data-tab="settings" class="tab-btn h-16 flex flex-col items-center justify-center gap-1">
+                <i class="fa-solid fa-gear text-lg"></i>
+                <span class="text-[11px] font-semibold">設定</span>
+            </button>
+        </div>
+    </nav>
 
     <!-- モーダル1: 手動記録 / 記録の編集 -->
     <div id="manualModal" class="modal fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
@@ -598,7 +647,8 @@
                 <div class="flex justify-between"><dt>完了して記録</dt><dd><kbd>S</kbd></dd></div>
                 <div class="flex justify-between"><dt>手動で記録</dt><dd><kbd>N</kbd></dd></div>
                 <div class="flex justify-between"><dt>前の月 / 次の月</dt><dd><kbd>←</kbd> <kbd>→</kbd></dd></div>
-                <div class="flex justify-between"><dt>今日に戻る</dt><dd><kbd>T</kbd></dd></div>
+                <div class="flex justify-between"><dt>今日の記録を表示</dt><dd><kbd>T</kbd></dd></div>
+                <div class="flex justify-between"><dt>タブの切り替え</dt><dd><kbd>1</kbd>〜<kbd>4</kbd></dd></div>
                 <div class="flex justify-between"><dt>この一覧を表示</dt><dd><kbd>?</kbd></dd></div>
                 <div class="flex justify-between"><dt>ダイアログを閉じる</dt><dd><kbd>Esc</kbd></dd></div>
             </dl>
@@ -618,7 +668,8 @@
             GOAL: 'studylog_daily_goal_v1',
             TIMER: 'studylog_timer_v1',
             POMODORO: 'studylog_pomodoro_v1',
-            THEME: 'studylog_theme_v1'
+            THEME: 'studylog_theme_v1',
+            TAB: 'studylog_tab_v1'
         };
 
         const APP_TITLE = 'StudyLog - 勉強時間管理アプリ';
@@ -657,6 +708,7 @@
             dailyGoalMinutes: 120,
             pomodoro: { ...DEFAULT_POMODORO },
             themePref: 'system',
+            activeTab: 'timer',
 
             // カレンダー表示状態
             currentYear: new Date().getFullYear(),
@@ -1148,6 +1200,15 @@
 
             // 休憩中はいつでもスキップできる。集中中は1秒以上で記録できる
             finishBtn.disabled = isBreak() ? false : elapsed === 0;
+
+            // 他のタブを見ている間も、タブバーに計測中であることと時間を表示
+            const showOnTab = active && state.activeTab !== 'timer';
+            const dot = document.getElementById('tabTimerDot');
+            dot.classList.toggle('hidden', !showOnTab || !state.timer.isRunning);
+            dot.classList.toggle('bg-emerald-500', isBreak());
+            dot.classList.toggle('bg-rose-500', !isBreak());
+            const seconds = state.timer.mode === 'stopwatch' ? elapsed : Math.max(0, getPhaseDurationSeconds() - elapsed);
+            document.getElementById('tabTimerLabel').textContent = showOnTab ? formatShortClock(seconds) : 'タイマー';
         }
 
         function updateTimerControls() {
@@ -1215,8 +1276,8 @@
         function updateModeTabs() {
             const swBtn = document.getElementById('modeStopwatchBtn');
             const pomoBtn = document.getElementById('modePomodoroBtn');
-            const active = 'flex-1 py-2 text-sm font-semibold rounded-lg bg-white text-indigo-600 shadow-sm transition-all';
-            const inactive = 'flex-1 py-2 text-sm font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition-all';
+            const active = 'flex-1 py-2 px-1 text-[13px] sm:text-sm whitespace-nowrap font-semibold rounded-lg bg-white text-indigo-600 shadow-sm transition-all';
+            const inactive = 'flex-1 py-2 px-1 text-[13px] sm:text-sm whitespace-nowrap font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition-all';
             const isSw = state.timer.mode === 'stopwatch';
             swBtn.className = isSw ? active : inactive;
             pomoBtn.className = isSw ? inactive : active;
@@ -1414,7 +1475,7 @@
             });
             memoInput.value = '';
 
-            showToast(`${formatSecondsToHoursMinutes(seconds)} の勉強時間を記録しました！`);
+            showToast(`${formatSecondsToHoursMinutes(seconds)} の勉強時間を記録しました！`, 'success', viewRecordsAction(log.date));
 
             // 途中で記録した場合は、休憩には入らず次の集中タイムに戻る
             clearCurrentPhase();
@@ -1640,6 +1701,7 @@
                     <span class="tabular-nums text-slate-700 font-semibold">${formatSecondsToHoursMinutes(d.total)}</span>
                 </div>
                 <div class="leading-6">${items}</div>
+                ${d.breakdown.length > 0 ? `<button type="button" data-goto="records" class="mt-1 text-indigo-600 hover:text-indigo-800 font-semibold">この日の記録を見る <i class="fa-solid fa-arrow-right text-[10px]"></i></button>` : ''}
             `;
         }
 
@@ -1686,6 +1748,10 @@
         function renderCalendar() {
             const grid = document.getElementById('calendarGrid');
             document.getElementById('calendarMonthYear').textContent = `${state.currentYear}年 ${state.currentMonth + 1}月`;
+            const monthPrefix = getMonthPrefix();
+            document.getElementById('calendarMonthTotal').textContent = formatSecondsToHoursMinutes(
+                state.logs.filter(l => l.date.startsWith(monthPrefix)).reduce((sum, l) => sum + l.durationSeconds, 0)
+            );
             grid.innerHTML = '';
 
             const firstDay = new Date(state.currentYear, state.currentMonth, 1).getDay();
@@ -1934,6 +2000,7 @@
             renderSubjectStats();
             renderCalendar();
             renderDayLogs();
+            renderSettings();
             updateTimerControls();
         }
 
@@ -1943,7 +2010,6 @@
         }
 
         function openModal(id) {
-            closeMenu();
             closeModals();
             const modal = document.getElementById(id);
             modal.classList.remove('hidden');
@@ -2018,17 +2084,59 @@
             openModal('subjectModal');
         }
 
-        // --- メニュー ---
-        function closeMenu() {
-            document.getElementById('menuDropdown').classList.add('hidden');
-            document.getElementById('menuBtn').setAttribute('aria-expanded', 'false');
+        // --- 下部タブ ---
+        const TABS = ['timer', 'records', 'stats', 'settings'];
+
+        function switchTab(tab) {
+            if (!TABS.includes(tab)) tab = 'timer';
+            const changed = state.activeTab !== tab;
+            state.activeTab = tab;
+            document.querySelectorAll('[data-tab-panel]').forEach(panel => {
+                panel.hidden = panel.dataset.tabPanel !== tab;
+            });
+            document.querySelectorAll('#tabBar [data-tab]').forEach(btn => {
+                if (btn.dataset.tab === tab) btn.setAttribute('aria-current', 'page');
+                else btn.removeAttribute('aria-current');
+            });
+            try {
+                localStorage.setItem(STORAGE_KEYS.TAB, tab);
+            } catch (e) {}
+            if (changed) window.scrollTo(0, 0);
+            updateTimerDisplay(); // タブの計測中表示を更新
         }
 
-        function toggleMenu() {
-            const dd = document.getElementById('menuDropdown');
-            const willOpen = dd.classList.contains('hidden');
-            dd.classList.toggle('hidden', !willOpen);
-            document.getElementById('menuBtn').setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+        // タブバー用の短い時計表示 (1時間未満は MM:SS)
+        function formatShortClock(seconds) {
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = seconds % 60;
+            const mmss = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+            return h > 0 ? `${h}:${mmss}` : mmss;
+        }
+
+        function renderSettings() {
+            document.getElementById('settingsGoalValue').textContent = formatSecondsToHoursMinutes(state.dailyGoalMinutes * 60);
+            document.getElementById('settingsSubjectsValue').textContent = `${getActiveSubjects().length}科目`;
+            const p = state.pomodoro;
+            document.getElementById('settingsPomodoroValue').textContent = `${p.focusMin}分 / ${p.shortBreakMin}分`;
+        }
+
+        function openGoalModal() {
+            document.getElementById('goalHoursInput').value = Math.floor(state.dailyGoalMinutes / 60);
+            document.getElementById('goalMinutesInput').value = state.dailyGoalMinutes % 60;
+            openModal('goalModal');
+        }
+
+        // 「記録を見る」トーストのボタン
+        function viewRecordsAction(dateStr) {
+            return {
+                label: '記録を見る',
+                onClick: () => {
+                    selectDate(dateStr);
+                    renderAll();
+                    switchTab('records');
+                }
+            };
         }
 
         // --- イベントリスナー設定 ---
@@ -2072,24 +2180,33 @@
                 renderAll();
             });
 
-            // メニュー
-            document.getElementById('menuBtn').addEventListener('click', (e) => {
-                e.stopPropagation();
-                toggleMenu();
+            // 下部タブ
+            document.getElementById('tabBar').addEventListener('click', (e) => {
+                const btn = e.target.closest('[data-tab]');
+                if (btn) switchTab(btn.dataset.tab);
             });
+            // 他のタブへ移動するリンク
             document.addEventListener('click', (e) => {
-                if (!e.target.closest('#menuDropdown') && !e.target.closest('#menuBtn')) closeMenu();
+                const link = e.target.closest('[data-goto]');
+                if (!link) return;
+                if (link.dataset.gotoToday) {
+                    selectDate(formatDateToISO(new Date()));
+                    renderAll();
+                }
+                switchTab(link.dataset.goto);
             });
-            document.getElementById('menuDropdown').addEventListener('click', (e) => {
+
+            // 設定タブ
+            document.querySelector('[data-tab-panel="settings"]').addEventListener('click', (e) => {
                 const themeBtn = e.target.closest('[data-theme-choice]');
                 if (themeBtn) {
                     setTheme(themeBtn.dataset.themeChoice);
                     return;
                 }
-                const item = e.target.closest('[data-menu]');
-                if (!item) return;
-                closeMenu();
-                switch (item.dataset.menu) {
+                const row = e.target.closest('[data-action]');
+                if (!row) return;
+                switch (row.dataset.action) {
+                    case 'goal': openGoalModal(); break;
                     case 'subjects': openManageSubjects(); break;
                     case 'pomodoro': openPomodoroSettings(); break;
                     case 'export': exportData(); break;
@@ -2113,6 +2230,8 @@
             // カレンダー月移動
             document.getElementById('prevMonthBtn').addEventListener('click', () => changeMonth(-1));
             document.getElementById('nextMonthBtn').addEventListener('click', () => changeMonth(1));
+            document.getElementById('statsPrevMonthBtn').addEventListener('click', () => changeMonth(-1));
+            document.getElementById('statsNextMonthBtn').addEventListener('click', () => changeMonth(1));
             document.getElementById('todayBtn').addEventListener('click', goToday);
 
             // モーダル開閉共通 (×ボタン・キャンセル・背景クリック)
@@ -2170,7 +2289,7 @@
                     }
                 } else {
                     addLog({ date: dateVal, subjectId: subId, seconds: totalSec, memo });
-                    showToast('勉強時間を記録しました！');
+                    showToast('勉強時間を記録しました！', 'success', state.activeTab === 'records' ? null : viewRecordsAction(dateVal));
                 }
 
                 selectDate(dateVal);
@@ -2231,11 +2350,7 @@
             });
 
             // 目標設定
-            document.getElementById('openGoalModalBtn').addEventListener('click', () => {
-                document.getElementById('goalHoursInput').value = Math.floor(state.dailyGoalMinutes / 60);
-                document.getElementById('goalMinutesInput').value = state.dailyGoalMinutes % 60;
-                openModal('goalModal');
-            });
+            document.getElementById('openGoalModalBtn').addEventListener('click', openGoalModal);
             document.getElementById('goalForm').addEventListener('submit', (e) => {
                 e.preventDefault();
                 const h = parseInt(document.getElementById('goalHoursInput').value, 10) || 0;
@@ -2250,6 +2365,7 @@
                 closeModals();
                 showToast('1日の目標時間を更新しました');
                 renderSummaryCards();
+                renderSettings();
             });
 
             // ポモドーロ設定
@@ -2265,6 +2381,7 @@
                 savePomodoroSettings();
                 closeModals();
                 updateTimerControls();
+                renderSettings();
                 tick();
                 showToast('ポモドーロの設定を保存しました');
             });
@@ -2273,7 +2390,6 @@
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape') {
                     closeModals();
-                    closeMenu();
                     return;
                 }
                 if (e.metaKey || e.ctrlKey || e.altKey || e.isComposing) return;
@@ -2295,9 +2411,10 @@
                         e.preventDefault();
                         openManualModal();
                         break;
-                    case 'ArrowLeft': changeMonth(-1); break;
-                    case 'ArrowRight': changeMonth(1); break;
-                    case 't': case 'T': goToday(); break;
+                    case 'ArrowLeft': if (state.activeTab === 'records' || state.activeTab === 'stats') changeMonth(-1); break;
+                    case 'ArrowRight': if (state.activeTab === 'records' || state.activeTab === 'stats') changeMonth(1); break;
+                    case 't': case 'T': goToday(); switchTab('records'); break;
+                    case '1': case '2': case '3': case '4': switchTab(TABS[Number(e.key) - 1]); break;
                     case '?': openModal('shortcutsModal'); break;
                 }
             });
@@ -2351,6 +2468,11 @@
             loadTimerState();
             applyTheme();
             setupEventListeners();
+            let savedTab = 'timer';
+            try {
+                savedTab = localStorage.getItem(STORAGE_KEYS.TAB) || 'timer';
+            } catch (e) {}
+            switchTab(savedTab);
             updateModeTabs();
             renderAll();
             updateTimerDisplay();
