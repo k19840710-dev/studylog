@@ -371,6 +371,41 @@
             50% { opacity: 0.55; box-shadow: 0 0 0 5px transparent; }
         }
 
+        /* 円形ゲージ (タイマーの進み具合) */
+        .timer-ring { position: relative; width: 256px; height: 256px; margin: 6px auto 0; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        @media (max-width: 360px) { .timer-ring { width: 232px; height: 232px; } }
+        .timer-ring svg { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
+        .ring-track { fill: none; stroke: var(--surface-3); stroke-width: 10; }
+        .ring-fill { fill: none; stroke: url(#ringGradFocus); stroke-width: 10; stroke-linecap: round; transition: stroke-dashoffset 0.4s linear, opacity 0.3s ease; }
+        .timer-stage.is-break .ring-fill { stroke: url(#ringGradBreak); }
+        .ring-fill.is-done { stroke: url(#ringGradBreak); }
+        .timer-ring .timer-digits { font-size: clamp(40px, 12vw, 48px); margin: 0; position: relative; }
+        .ring-caption { position: relative; margin-top: 8px; font-size: 12.5px; font-weight: 500; color: var(--text-3); font-variant-numeric: tabular-nums; }
+        .ring-caption.is-done { color: var(--success); font-weight: 600; }
+        .timer-ring + .timer-sub { margin-top: 6px; }
+
+        /* 目標達成 */
+        .card.is-done {
+            border-color: rgba(16, 185, 129, 0.35);
+            background: linear-gradient(180deg, rgba(16, 185, 129, 0.07), transparent 60%), var(--surface);
+            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.10), var(--shadow-card);
+            transition: border-color 0.5s ease, box-shadow 0.5s ease;
+        }
+        .card.is-done .progress-fill { background: linear-gradient(90deg, #10b981, #34d399); }
+        .chip-done { background: var(--success-soft); color: var(--success); }
+        .goal-done-text { color: var(--success); font-weight: 600; }
+        .confetti-layer { position: fixed; inset: 0; pointer-events: none; z-index: 70; overflow: hidden; }
+        .confetti-piece {
+            position: absolute; top: -16px; border-radius: 2px;
+            animation: confetti-fall var(--dur) cubic-bezier(0.25, 0.6, 0.45, 1) var(--delay) forwards;
+        }
+        @keyframes confetti-fall {
+            0% { transform: translate(0, 0) rotate(0deg); opacity: 1; }
+            80% { opacity: 1; }
+            100% { transform: translate(var(--dx), 105vh) rotate(var(--rot)); opacity: 0; }
+        }
+        .toast-goal i { color: #fbbf24; }
+
         /* =========================================================
            カレンダー
            ========================================================= */
@@ -574,7 +609,7 @@
         <section data-tab-panel="timer" class="tab-panel max-w-xl mx-auto flex flex-col gap-4" aria-label="タイマー">
 
             <!-- 今日の勉強時間 & 目標達成率 -->
-            <div class="card p-5">
+            <div id="todayCard" class="card p-5">
                 <div class="flex justify-between items-start">
                     <div>
                         <p class="eyebrow">今日の勉強時間</p>
@@ -629,7 +664,23 @@
                             <i class="fa-solid fa-sliders text-[12px]"></i>
                         </button>
                     </div>
-                    <div id="timerDisplay" class="timer-digits">00:00:00</div>
+                    <!-- 円形ゲージ: 通常タイマーは今日の目標、ポモドーロは現在のフェーズの進み具合 -->
+                    <div class="timer-ring">
+                        <svg viewBox="0 0 256 256" aria-hidden="true">
+                            <defs>
+                                <linearGradient id="ringGradFocus" x1="0" y1="0" x2="1" y2="1">
+                                    <stop offset="0" stop-color="#5850ec" /><stop offset="1" stop-color="#8b5cf6" />
+                                </linearGradient>
+                                <linearGradient id="ringGradBreak" x1="0" y1="0" x2="1" y2="1">
+                                    <stop offset="0" stop-color="#10b981" /><stop offset="1" stop-color="#34d399" />
+                                </linearGradient>
+                            </defs>
+                            <circle class="ring-track" cx="128" cy="128" r="112" />
+                            <circle id="timerRingFill" class="ring-fill" cx="128" cy="128" r="112" stroke-dasharray="703.72" stroke-dashoffset="703.72" />
+                        </svg>
+                        <div id="timerDisplay" class="timer-digits">00:00:00</div>
+                        <div id="timerRingCaption" class="ring-caption"></div>
+                    </div>
                     <p id="timerSubtext" class="timer-sub">計測を開始してください</p>
                 </div>
 
@@ -1084,7 +1135,8 @@
             TIMER: 'studylog_timer_v1',
             POMODORO: 'studylog_pomodoro_v1',
             THEME: 'studylog_theme_v1',
-            TAB: 'studylog_tab_v1'
+            TAB: 'studylog_tab_v1',
+            GOAL_CELEBRATED: 'studylog_goal_celebrated_v1'
         };
 
         const APP_TITLE = 'StudyLog - 勉強時間管理アプリ';
@@ -1124,6 +1176,7 @@
             pomodoro: { ...DEFAULT_POMODORO },
             themePref: 'system',
             activeTab: 'timer',
+            appReady: false, // 起動処理が終わったら true (起動直後のお祝いを防ぐ)
 
             // カレンダー表示状態
             currentYear: new Date().getFullYear(),
@@ -1252,8 +1305,8 @@
         function showToast(message, type = 'success', action = null) {
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
-            const toastType = ['success', 'info', 'error'].includes(type) ? type : 'error';
-            const iconClass = { success: 'fa-circle-check', info: 'fa-circle-info', error: 'fa-circle-exclamation' }[toastType];
+            const toastType = ['success', 'info', 'error', 'goal'].includes(type) ? type : 'error';
+            const iconClass = { success: 'fa-circle-check', info: 'fa-circle-info', error: 'fa-circle-exclamation', goal: 'fa-trophy' }[toastType];
 
             toast.className = `toast toast-${toastType} transform transition-all duration-300 translate-y-2 opacity-0 pointer-events-auto max-w-full`;
             toast.setAttribute('role', 'status');
@@ -1633,6 +1686,41 @@
             dot.classList.toggle('bg-rose-500', !isBreak());
             const seconds = state.timer.mode === 'stopwatch' ? elapsed : Math.max(0, getPhaseDurationSeconds() - elapsed);
             document.getElementById('tabTimerLabel').textContent = showOnTab ? formatShortClock(seconds) : 'タイマー';
+
+            updateTimerRing(elapsed);
+        }
+
+        // 円形ゲージ: 通常タイマー = 今日の目標に対する進み具合 (今日の記録 + 計測中の時間)
+        //            ポモドーロ   = 現在の集中 / 休憩時間のうち経過した割合
+        const RING_CIRCUMFERENCE = 2 * Math.PI * 112;
+        function updateTimerRing(elapsed) {
+            const fill = document.getElementById('timerRingFill');
+            const caption = document.getElementById('timerRingCaption');
+            let ratio = 0;
+            let text = '';
+            let done = false;
+
+            if (state.timer.mode === 'pomodoro') {
+                const duration = getPhaseDurationSeconds();
+                ratio = Math.min(1, elapsed / duration);
+                const remainingMin = Math.ceil(Math.max(0, duration - elapsed) / 60);
+                text = `残り ${remainingMin}分 / ${Math.round(duration / 60)}分`;
+            } else {
+                const goalSeconds = state.dailyGoalMinutes * 60;
+                if (goalSeconds > 0) {
+                    const total = getDayTotal(formatDateToISO(new Date())) + getRecordableSeconds();
+                    ratio = Math.min(1, total / goalSeconds);
+                    done = ratio >= 1;
+                    text = done ? '今日の目標を達成' : `今日の目標まで ${Math.floor(ratio * 100)}%`;
+                } else {
+                    text = '目標が設定されていません';
+                }
+            }
+            fill.style.strokeDashoffset = String(RING_CIRCUMFERENCE * (1 - ratio));
+            fill.style.opacity = ratio > 0 ? '1' : '0';
+            caption.textContent = text;
+            caption.classList.toggle('is-done', done);
+            fill.classList.toggle('is-done', done);
         }
 
         function updateTimerControls() {
@@ -1948,6 +2036,32 @@
             }
         }
 
+        // 目標達成のお祝い: 少なめの紙吹雪 + お知らせ
+        function celebrateGoal() {
+            showToast('今日の目標を達成しました！', 'goal');
+            if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+            const colors = ['#6366f1', '#8b5cf6', '#f59e0b', '#10b981', '#f43f5e', '#38bdf8'];
+            const layer = document.createElement('div');
+            layer.className = 'confetti-layer';
+            for (let i = 0; i < 44; i++) {
+                const piece = document.createElement('div');
+                piece.className = 'confetti-piece';
+                const w = 5 + Math.random() * 4;
+                piece.style.cssText = [
+                    `left:${5 + Math.random() * 90}%`,
+                    `width:${w}px`, `height:${w * 1.6}px`,
+                    `background:${colors[i % colors.length]}`,
+                    `--dx:${(Math.random() - 0.5) * 160}px`,
+                    `--rot:${(Math.random() - 0.5) * 900}deg`,
+                    `--dur:${1.6 + Math.random() * 0.9}s`,
+                    `--delay:${Math.random() * 0.35}s`
+                ].join(';');
+                layer.appendChild(piece);
+            }
+            document.body.appendChild(layer);
+            setTimeout(() => layer.remove(), 3200);
+        }
+
         function renderSummaryCards() {
             const todayStr = formatDateToISO(new Date());
 
@@ -1958,12 +2072,30 @@
             // 目標進捗
             const goalSeconds = state.dailyGoalMinutes * 60;
             const percentage = goalSeconds > 0 ? Math.min(100, Math.round((todaySeconds / goalSeconds) * 100)) : 100;
-            document.getElementById('goalPercentageBadge').textContent = `${percentage}%`;
+            const achieved = goalSeconds > 0 && todaySeconds >= goalSeconds;
+            const badge = document.getElementById('goalPercentageBadge');
+            badge.classList.toggle('chip-done', achieved);
+            badge.classList.toggle('chip-accent', !achieved);
+            if (achieved) badge.innerHTML = '<i class="fa-solid fa-check text-[10px]"></i>達成';
+            else badge.textContent = `${percentage}%`;
             document.getElementById('goalProgressBar').style.width = `${percentage}%`;
             document.getElementById('dailyGoalText').textContent = formatSecondsToHoursMinutes(goalSeconds);
+            document.getElementById('todayCard').classList.toggle('is-done', achieved);
 
             const remainingSeconds = Math.max(0, goalSeconds - todaySeconds);
-            document.getElementById('remainingGoalText').textContent = remainingSeconds === 0 ? '目標達成！🎉' : `残り ${formatSecondsToHoursMinutes(remainingSeconds)}`;
+            const remainingEl = document.getElementById('remainingGoalText');
+            remainingEl.textContent = achieved ? '目標達成' : `残り ${formatSecondsToHoursMinutes(remainingSeconds)}`;
+            remainingEl.classList.toggle('goal-done-text', achieved);
+
+            // その日に初めて目標を超えたときだけお祝いする (起動時にすでに達成済みならお祝いしない)
+            if (achieved) {
+                let celebrated = null;
+                try { celebrated = localStorage.getItem(STORAGE_KEYS.GOAL_CELEBRATED); } catch (e) {}
+                if (celebrated !== todayStr) {
+                    try { localStorage.setItem(STORAGE_KEYS.GOAL_CELEBRATED, todayStr); } catch (e) {}
+                    if (state.appReady) celebrateGoal();
+                }
+            }
 
             // 2. 表示中の月の累計時間 & 学習日数
             const monthPrefix = getMonthPrefix();
@@ -2883,6 +3015,7 @@
             updateModeTabs();
             renderAll();
             updateTimerDisplay();
+            state.appReady = true;
 
             // リロード前に計測中だった場合は再開する
             if (state.timer.isRunning) {
