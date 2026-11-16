@@ -1,7 +1,7 @@
 // StudyLog Service Worker
 // アプリ本体はネットワーク優先 (更新をすぐ反映)、CDN の CSS / フォント / スクリプトはキャッシュ優先で
 // オフラインでも開けるようにする。
-const CACHE_NAME = 'studylog-v6';
+const CACHE_NAME = 'studylog-v7';
 const APP_SHELL = [
   './',
   './index.html',

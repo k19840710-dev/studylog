@@ -271,6 +271,11 @@
         .field-wrap .suffix { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-size: 13px; color: var(--text-3); pointer-events: none; }
         input[type="number"].field { font-variant-numeric: tabular-nums; }
         input[type="checkbox"] { accent-color: var(--accent); }
+        input[type="date"].field {
+            -webkit-appearance: none; appearance: none; display: block;
+            min-width: 0; max-width: 100%; text-align: left; line-height: 42px;
+        }
+        input[type="date"].field::-webkit-date-and-time-value { text-align: left; margin: 0; }
 
         /* セグメントコントロール (通常タイマー / ポモドーロ、テーマ) */
         .segmented { display: flex; gap: 2px; padding: 3px; border-radius: 12px; background: var(--seg-track); box-shadow: inset 0 0 0 1px var(--border); }
@@ -495,27 +500,19 @@
         .settings-note { padding: 0 16px; margin-top: 8px; font-size: 12px; line-height: 1.7; color: var(--text-3); }
 
         /* =========================================================
-           モーダル (スマホではボトムシート)
+           モーダル (画面中央に表示)
            ========================================================= */
         html .modal { background: var(--scrim); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
         .modal-panel {
-            width: 100%; background: var(--surface); border: 1px solid var(--border);
+            width: 100%; max-height: calc(100dvh - 32px); overflow-y: auto;
+            background: var(--surface); border: 1px solid var(--border);
             border-radius: 22px; box-shadow: var(--shadow-pop); padding: 24px;
-            animation: modal-in 0.32s var(--ease);
+            animation: modal-in 0.28s var(--ease);
         }
+        @media (max-width: 639px) { .modal-panel { padding: 20px; border-radius: 20px; } }
         .modal-title { font-size: 17px; font-weight: 700; letter-spacing: -0.015em; color: var(--text-1); }
         .modal-desc { font-size: 12.5px; line-height: 1.7; color: var(--text-3); }
-        @keyframes modal-in { from { opacity: 0; transform: translateY(10px) scale(0.98); } to { opacity: 1; transform: none; } }
-        @media (max-width: 639px) {
-            html .modal { align-items: flex-end; padding: 0; }
-            .modal-panel {
-                max-width: none !important; border-radius: 24px 24px 0 0; border-bottom: 0;
-                padding-bottom: calc(24px + env(safe-area-inset-bottom));
-                animation: sheet-in 0.36s var(--ease);
-            }
-            .modal-panel::before { content: ''; display: block; width: 36px; height: 4px; border-radius: 4px; background: var(--border-strong); margin: -12px auto 14px; }
-        }
-        @keyframes sheet-in { from { transform: translateY(100%); } to { transform: none; } }
+        @keyframes modal-in { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: none; } }
 
         /* 色選択 */
         .swatch { cursor: pointer; display: inline-flex; }
