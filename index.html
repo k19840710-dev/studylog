@@ -475,12 +475,38 @@
            記録リスト
            ========================================================= */
         .log-item {
-            display: flex; align-items: center; justify-content: space-between; gap: 10px;
-            padding: 10px 6px 10px 12px; border-radius: 14px;
+            display: flex; align-items: center; justify-content: space-between; gap: 6px;
+            padding: 10px 4px 10px 10px; border-radius: 14px;
             background: var(--surface-2); border: 1px solid var(--border);
             transition: background-color 0.2s ease, border-color 0.2s ease;
         }
         .log-item:hover { background: var(--surface); border-color: var(--border-strong); }
+        /* 科目アイコン: 科目の色を薄く敷いた角丸の四角に、同じ色のアイコン */
+        .subj-icon {
+            width: 36px; height: 36px; flex-shrink: 0; border-radius: 10px;
+            display: inline-flex; align-items: center; justify-content: center; font-size: 15px;
+            color: var(--c); background-color: var(--c-soft);
+            background-color: color-mix(in srgb, var(--c) 13%, transparent);
+        }
+        html.dark .subj-icon {
+            background-color: color-mix(in srgb, var(--c) 24%, transparent);
+            color: color-mix(in srgb, var(--c) 62%, white);
+        }
+        .subj-icon.md { width: 32px; height: 32px; border-radius: 9px; font-size: 14px; }
+        .subj-icon.sm { width: 28px; height: 28px; border-radius: 8px; font-size: 12px; }
+        .icon-grid { display: grid; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 6px; }
+        .icon-opt { cursor: pointer; display: block; }
+        .icon-opt span {
+            aspect-ratio: 1; border-radius: 10px; display: flex; align-items: center; justify-content: center;
+            font-size: 14px; color: var(--text-2); background: var(--surface-2); box-shadow: inset 0 0 0 1px var(--border);
+            transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.16s var(--ease);
+        }
+        .icon-opt:hover span { color: var(--text-1); }
+        .icon-opt:active span { transform: scale(0.92); }
+        .icon-opt input:checked + span { color: var(--accent-text); background: var(--accent-soft); box-shadow: inset 0 0 0 2px var(--accent); }
+        .icon-opt input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+        .subject-icon-btn { border-radius: 10px; }
+        .subject-icon-btn:hover .subj-icon { filter: brightness(0.95); }
         .log-stripe { width: 4px; align-self: stretch; border-radius: 4px; flex-shrink: 0; }
         .log-name { font-size: 14px; font-weight: 600; color: var(--text-1); }
         .log-memo { font-size: 12.5px; color: var(--text-3); margin-top: 2px; }
@@ -995,6 +1021,10 @@
                     <label class="label">カラー</label>
                     <div class="flex gap-3 pt-1" id="colorPickerContainer"></div>
                 </div>
+                <div>
+                    <label class="label">アイコン</label>
+                    <div class="icon-grid" id="iconPickerContainer"></div>
+                </div>
                 <div class="pt-1 flex justify-end gap-2">
                     <button type="button" class="closeModalBtn btn btn-ghost">キャンセル</button>
                     <button type="submit" class="btn btn-primary">追加する</button>
@@ -1153,11 +1183,32 @@
             { value: '#7c3aed', name: 'バイオレット' }
         ];
 
+        // 科目に使えるアイコン (Font Awesome)
+        const SUBJECT_ICONS = [
+            { value: 'fa-book', name: '本' },
+            { value: 'fa-language', name: '語学' },
+            { value: 'fa-calculator', name: '計算' },
+            { value: 'fa-code', name: 'コード' },
+            { value: 'fa-flask', name: '理科' },
+            { value: 'fa-earth-asia', name: '地理' },
+            { value: 'fa-landmark', name: '歴史' },
+            { value: 'fa-music', name: '音楽' },
+            { value: 'fa-palette', name: '美術' },
+            { value: 'fa-pen-nib', name: '作文' },
+            { value: 'fa-laptop', name: 'パソコン' },
+            { value: 'fa-brain', name: '思考' },
+            { value: 'fa-chart-line', name: 'グラフ' },
+            { value: 'fa-briefcase', name: '仕事・資格' },
+            { value: 'fa-microscope', name: '研究' },
+            { value: 'fa-dumbbell', name: '運動' }
+        ];
+        const DEFAULT_ICON = 'fa-book';
+
         const DEFAULT_SUBJECTS = [
-            { id: 'sub_1', name: '英語', color: '#4f46e5' },
-            { id: 'sub_2', name: '数学', color: '#059669' },
-            { id: 'sub_3', name: 'プログラミング', color: '#0284c7' },
-            { id: 'sub_4', name: '読書・その他', color: '#d97706' }
+            { id: 'sub_1', name: '英語', color: '#4f46e5', icon: 'fa-language' },
+            { id: 'sub_2', name: '数学', color: '#059669', icon: 'fa-calculator' },
+            { id: 'sub_3', name: 'プログラミング', color: '#0284c7', icon: 'fa-code' },
+            { id: 'sub_4', name: '読書・その他', color: '#d97706', icon: 'fa-book' }
         ];
 
         const DEFAULT_POMODORO = {
@@ -1275,7 +1326,25 @@
         }
 
         function getSubject(subjectId, fallbackName = '不明な科目') {
-            return state.subjects.find(s => s.id === subjectId) || { id: subjectId, name: fallbackName, color: '#94a3b8' };
+            return state.subjects.find(s => s.id === subjectId) || { id: subjectId, name: fallbackName, color: '#94a3b8', icon: 'fa-circle-question' };
+        }
+
+        // アイコンは決まった一覧の中からだけ使う (インポートデータ経由の不正な値を防ぐ)
+        function safeIcon(icon) {
+            return SUBJECT_ICONS.some(i => i.value === icon) || icon === 'fa-circle-question' ? icon : DEFAULT_ICON;
+        }
+
+        function subjectIconHTML(sub, extraClass = '') {
+            const c = safeColor(sub.color);
+            return `<span class="subj-icon ${extraClass}" style="--c:${c};--c-soft:${c}22"><i class="fa-solid ${safeIcon(sub.icon)}"></i></span>`;
+        }
+
+        // 既存データの科目にアイコンがなければ、初期の科目は決まったアイコン、それ以外は本のアイコンにする
+        function ensureSubjectIcons() {
+            const defaults = Object.fromEntries(DEFAULT_SUBJECTS.map(s => [s.id, s.icon]));
+            state.subjects.forEach(s => {
+                if (!s.icon || safeIcon(s.icon) !== s.icon) s.icon = defaults[s.id] || DEFAULT_ICON;
+            });
         }
 
         function getMonthPrefix() {
@@ -1412,6 +1481,7 @@
                 if (getActiveSubjects().length === 0) {
                     state.subjects.push({ ...DEFAULT_SUBJECTS[0], id: generateId('sub') });
                 }
+                ensureSubjectIcons();
                 const goal = savedGoal ? parseInt(savedGoal, 10) : 120;
                 state.dailyGoalMinutes = Number.isFinite(goal) ? goal : 120;
                 if (savedPomodoro) {
@@ -1578,6 +1648,7 @@
                         id: s.id,
                         name: s.name.slice(0, 30),
                         color: safeColor(s.color),
+                        icon: safeIcon(s.icon),
                         ...(s.archived ? { archived: true } : {})
                     }));
                     if (!subjects.some(s => !s.archived)) {
@@ -1589,6 +1660,7 @@
 
                     state.logs = logs;
                     state.subjects = subjects;
+                    ensureSubjectIcons();
                     const goal = parseInt(data.dailyGoalMinutes, 10);
                     if (Number.isFinite(goal) && goal >= 0 && goal <= 24 * 60) {
                         state.dailyGoalMinutes = goal;
@@ -2379,21 +2451,21 @@
                 const sub = getSubject(log.subjectId, 'その他');
                 return `
                     <div class="log-item">
-                        <div class="flex items-center gap-3 min-w-0">
-                            <span class="log-stripe" style="background-color: ${safeColor(sub.color)}"></span>
+                        <div class="flex items-center gap-2.5 min-w-0">
+                            ${subjectIconHTML(sub, 'md')}
                             <div class="min-w-0 py-0.5">
-                                <div class="flex items-center gap-2 flex-wrap">
-                                    <span class="log-name">${escapeHTML(sub.name)}</span>
-                                    <span class="chip chip-neutral" style="height:22px;padding:0 8px;font-size:11.5px">${formatSecondsToHoursMinutes(log.durationSeconds)}</span>
+                                <div class="flex items-center gap-2 min-w-0">
+                                    <span class="log-name truncate">${escapeHTML(sub.name)}</span>
+                                    <span class="chip chip-neutral flex-shrink-0" style="height:22px;padding:0 8px;font-size:11.5px">${formatSecondsToHoursMinutes(log.durationSeconds)}</span>
                                 </div>
                                 ${log.memo ? `<p class="log-memo truncate">${escapeHTML(log.memo)}</p>` : ''}
                             </div>
                         </div>
                         <div class="flex items-center flex-shrink-0">
-                            <button type="button" data-edit-id="${escapeHTML(log.id)}" title="記録を編集" aria-label="記録を編集" class="editLogBtn btn-icon ghost sm">
+                            <button type="button" data-edit-id="${escapeHTML(log.id)}" title="記録を編集" aria-label="記録を編集" class="editLogBtn btn-icon ghost sm" style="width:30px;height:30px">
                                 <i class="fa-solid fa-pen text-[12px]"></i>
                             </button>
-                            <button type="button" data-delete-id="${escapeHTML(log.id)}" title="記録を削除" aria-label="記録を削除" class="deleteLogBtn btn-icon ghost sm danger">
+                            <button type="button" data-delete-id="${escapeHTML(log.id)}" title="記録を削除" aria-label="記録を削除" class="deleteLogBtn btn-icon ghost sm danger" style="width:30px;height:30px">
                                 <i class="fa-solid fa-trash-can text-[12px]"></i>
                             </button>
                         </div>
@@ -2430,6 +2502,15 @@
             `).join('');
         }
 
+        function iconPickerHTML(name, selected) {
+            return SUBJECT_ICONS.map(ic => `
+                <label class="icon-opt" title="${ic.name}">
+                    <input type="radio" name="${name}" value="${ic.value}" ${ic.value === selected ? 'checked' : ''} class="sr-only" aria-label="${ic.name}">
+                    <span><i class="fa-solid ${ic.value}"></i></span>
+                </label>
+            `).join('');
+        }
+
         function renderManageSubjects() {
             const list = document.getElementById('manageSubjectsList');
             const active = getActiveSubjects();
@@ -2438,6 +2519,7 @@
                 return `
                     <div class="inset p-3" data-subject-id="${escapeHTML(sub.id)}">
                         <div class="flex items-center gap-2">
+                            <button type="button" class="subject-icon-btn" title="アイコンを変更" aria-label="${escapeHTML(sub.name)}のアイコンを変更" aria-expanded="false">${subjectIconHTML(sub)}</button>
                             <input type="text" value="${escapeHTML(sub.name)}" maxlength="30" aria-label="科目名" class="subject-name-input field field-sm flex-grow min-w-0" style="background: var(--surface)">
                             <button type="button" class="subject-delete-btn btn-icon ghost sm danger" title="科目を削除" aria-label="${escapeHTML(sub.name)}を削除">
                                 <i class="fa-solid fa-trash-can text-[12px]"></i>
@@ -2447,6 +2529,7 @@
                             <div class="flex gap-2.5">${colorSwatchesHTML(`color_${sub.id}`, sub.color, 20)}</div>
                             <span class="text-[11.5px] t3 whitespace-nowrap tabular-nums">記録 ${count}件</span>
                         </div>
+                        <div class="icon-grid subject-icon-grid hidden mt-3">${iconPickerHTML(`icon_${sub.id}`, safeIcon(sub.icon))}</div>
                     </div>
                 `;
             }).join('');
@@ -2456,7 +2539,7 @@
             document.getElementById('archivedSubjectsList').innerHTML = archived.map(sub => `
                 <div class="flex items-center justify-between text-sm py-1" data-subject-id="${escapeHTML(sub.id)}">
                     <span class="flex items-center gap-2 t2 min-w-0">
-                        <span class="legend-dot" style="background-color:${safeColor(sub.color)}"></span>
+                        ${subjectIconHTML(sub, 'sm')}
                         <span class="truncate">${escapeHTML(sub.name)}</span>
                     </span>
                     <button type="button" class="subject-restore-btn btn btn-soft btn-sm" style="height:28px">元に戻す</button>
@@ -2483,6 +2566,21 @@
             saveData();
             renderAll();
             showToast('科目名を変更しました');
+        }
+
+        function setSubjectIcon(id, icon) {
+            const sub = state.subjects.find(s => s.id === id);
+            if (!sub) return;
+            sub.icon = safeIcon(icon);
+            saveData();
+            renderAll();
+        }
+
+        // 科目の管理画面で、行の左のアイコンだけを最新の色・アイコンに差し替える
+        function refreshManageIcon(row) {
+            const sub = state.subjects.find(s => s.id === row.dataset.subjectId);
+            const btn = row.querySelector('.subject-icon-btn');
+            if (sub && btn) btn.innerHTML = subjectIconHTML(sub);
         }
 
         function recolorSubject(id, color) {
@@ -2620,6 +2718,7 @@
             const used = new Set(getActiveSubjects().map(s => s.color));
             const next = (SUBJECT_COLORS.find(c => !used.has(c.value)) || SUBJECT_COLORS[0]).value;
             document.getElementById('colorPickerContainer').innerHTML = colorSwatchesHTML('subjectColor', next);
+            document.getElementById('iconPickerContainer').innerHTML = iconPickerHTML('subjectIcon', DEFAULT_ICON);
             openModal('subjectModal');
         }
 
@@ -2851,7 +2950,8 @@
                     return;
                 }
 
-                const newSub = { id: generateId('sub'), name, color };
+                const checkedIcon = document.querySelector('input[name="subjectIcon"]:checked');
+                const newSub = { id: generateId('sub'), name, color, icon: safeIcon(checkedIcon ? checkedIcon.value : DEFAULT_ICON) };
                 state.subjects.push(newSub);
                 saveData();
                 renderAll();
@@ -2869,8 +2969,12 @@
                 if (!row) return;
                 if (e.target.classList.contains('subject-name-input')) {
                     renameSubject(row.dataset.subjectId, e.target.value);
+                } else if (e.target.type === 'radio' && e.target.name.startsWith('icon_')) {
+                    setSubjectIcon(row.dataset.subjectId, e.target.value);
+                    refreshManageIcon(row);
                 } else if (e.target.type === 'radio') {
                     recolorSubject(row.dataset.subjectId, e.target.value);
+                    refreshManageIcon(row);
                 }
             });
             manageList.addEventListener('keydown', (e) => {
@@ -2882,6 +2986,12 @@
             manageList.addEventListener('click', (e) => {
                 const btn = e.target.closest('.subject-delete-btn');
                 if (btn) deleteSubject(btn.closest('[data-subject-id]').dataset.subjectId);
+                const iconBtn = e.target.closest('.subject-icon-btn');
+                if (iconBtn) {
+                    const grid = iconBtn.closest('[data-subject-id]').querySelector('.subject-icon-grid');
+                    const open = grid.classList.toggle('hidden') === false;
+                    iconBtn.setAttribute('aria-expanded', open ? 'true' : 'false');
+                }
             });
             document.getElementById('archivedSubjectsList').addEventListener('click', (e) => {
                 const btn = e.target.closest('.subject-restore-btn');
