@@ -6,7 +6,7 @@
     <title>StudyLog - 勉強時間管理アプリ</title>
     <!-- PWA -->
     <link rel="manifest" href="manifest.webmanifest">
-    <meta name="theme-color" content="#4f46e5">
+    <meta name="theme-color" content="#f5f6f8">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
@@ -23,7 +23,7 @@
             } catch (e) {}
         })();
     </script>
-    <!-- Tailwind CSS -->
+    <!-- Tailwind CSS (レイアウト用ユーティリティ) -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts: Inter & Noto Sans JP -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -32,625 +32,1016 @@
     <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body {
-            font-family: 'Inter', 'Noto Sans JP', sans-serif;
-            background-color: #f8fafc;
-        }
-        .tabular-nums {
-            font-variant-numeric: tabular-nums;
-        }
-        /* カスタムスクロールバー */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: #f1f5f9; }
-        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        /* =========================================================
+           デザイントークン (ライト / ダーク)
+           色・影・角丸はすべてここで定義し、各コンポーネントは変数だけを参照する
+           ========================================================= */
+        :root {
+            --bg: #f5f6f8;
+            --bg-glow: rgba(99, 102, 241, 0.07);
+            --surface: #ffffff;
+            --surface-2: #f8f9fb;
+            --surface-3: #eef0f4;
+            --seg-track: #eef0f4;
+            --seg-active: #ffffff;
 
-        /* 週グラフ */
-        .week-col[aria-pressed="true"] .week-col-bg { background-color: #eef2ff; }
-        .week-col:hover .week-col-bg { background-color: #f1f5f9; }
-        .week-seg:last-child { border-top-left-radius: 4px; border-top-right-radius: 4px; }
+            --border: rgba(15, 23, 42, 0.06);
+            --border-strong: rgba(15, 23, 42, 0.11);
+            --hairline: rgba(15, 23, 42, 0.07);
+
+            --text-1: #0b1220;
+            --text-2: #4a5568;
+            --text-3: #8a94a6;
+            --text-4: #b6bdca;
+
+            --accent: #4f46e5;
+            --accent-text: #4f46e5;
+            --accent-soft: rgba(79, 70, 229, 0.08);
+            --accent-soft-2: rgba(79, 70, 229, 0.14);
+            --accent-ring: rgba(79, 70, 229, 0.20);
+            --grad-accent: linear-gradient(135deg, #5850ec 0%, #7c3aed 100%);
+
+            --success: #059669;
+            --success-soft: rgba(5, 150, 105, 0.10);
+            --danger: #e11d48;
+            --danger-soft: rgba(225, 29, 72, 0.08);
+
+            --heat-0: #f8f9fb;
+            --heat-1: rgba(99, 102, 241, 0.09);
+            --heat-2: rgba(99, 102, 241, 0.20);
+            --heat-3: rgba(99, 102, 241, 0.40);
+            --heat-4: linear-gradient(145deg, #6366f1 0%, #7c3aed 100%);
+            --heat-text-1: #5b54e8;
+            --heat-text-2: #4338ca;
+            --heat-text-3: #312e81;
+
+            --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
+            --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.03), 0 2px 8px -2px rgba(15, 23, 42, 0.04), 0 16px 32px -16px rgba(15, 23, 42, 0.06);
+            --shadow-pop: 0 2px 6px rgba(15, 23, 42, 0.05), 0 24px 56px -12px rgba(15, 23, 42, 0.20);
+            --shadow-btn: 0 1px 2px rgba(79, 70, 229, 0.22), 0 6px 14px -4px rgba(79, 70, 229, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+            --shadow-btn-success: 0 1px 2px rgba(5, 150, 105, 0.22), 0 6px 14px -4px rgba(5, 150, 105, 0.30), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+
+            --glass: rgba(255, 255, 255, 0.72);
+            --scrim: rgba(15, 23, 42, 0.28);
+            --toast-bg: rgba(15, 18, 26, 0.92);
+
+            --ease: cubic-bezier(0.22, 1, 0.36, 1);
+            --radius-card: 20px;
+        }
+
+        html.dark {
+            color-scheme: dark;
+            --bg: #08090d;
+            --bg-glow: rgba(99, 102, 241, 0.12);
+            --surface: #111319;
+            --surface-2: #161921;
+            --surface-3: #1e222c;
+            --seg-track: #0c0e13;
+            --seg-active: #232733;
+
+            --border: rgba(255, 255, 255, 0.06);
+            --border-strong: rgba(255, 255, 255, 0.11);
+            --hairline: rgba(255, 255, 255, 0.06);
+
+            --text-1: #f2f4f8;
+            --text-2: #a9b1c2;
+            --text-3: #737d90;
+            --text-4: #4a5263;
+
+            --accent: #6366f1;
+            --accent-text: #a5b4fc;
+            --accent-soft: rgba(129, 140, 248, 0.12);
+            --accent-soft-2: rgba(129, 140, 248, 0.20);
+            --accent-ring: rgba(129, 140, 248, 0.30);
+            --grad-accent: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+
+            --success: #34d399;
+            --success-soft: rgba(52, 211, 153, 0.12);
+            --danger: #fb7185;
+            --danger-soft: rgba(251, 113, 133, 0.12);
+
+            --heat-0: #161921;
+            --heat-1: rgba(129, 140, 248, 0.11);
+            --heat-2: rgba(129, 140, 248, 0.22);
+            --heat-3: rgba(129, 140, 248, 0.42);
+            --heat-4: linear-gradient(145deg, #6366f1 0%, #8b5cf6 100%);
+            --heat-text-1: #a5b4fc;
+            --heat-text-2: #c7d2fe;
+            --heat-text-3: #eef2ff;
+
+            --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+            --shadow-card: inset 0 1px 0 rgba(255, 255, 255, 0.025), 0 1px 2px rgba(0, 0, 0, 0.35), 0 16px 32px -16px rgba(0, 0, 0, 0.55);
+            --shadow-pop: 0 24px 64px -12px rgba(0, 0, 0, 0.75);
+            --shadow-btn: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 18px -6px rgba(99, 102, 241, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+            --shadow-btn-success: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 18px -6px rgba(16, 185, 129, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+
+            --glass: rgba(14, 16, 22, 0.72);
+            --scrim: rgba(0, 0, 0, 0.55);
+            --toast-bg: rgba(35, 39, 51, 0.94);
+        }
+
+        /* =========================================================
+           ベース
+           ========================================================= */
+        html, body { background-color: var(--bg); }
+        body {
+            font-family: 'Inter', 'Noto Sans JP', system-ui, -apple-system, sans-serif;
+            color: var(--text-1);
+            background-image: radial-gradient(1100px 520px at 50% -220px, var(--bg-glow), transparent 70%);
+            background-repeat: no-repeat;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
+        }
+        /* JS で付け外しする hidden を、コンポーネントの display 指定より必ず優先させる */
+        .hidden, [hidden] { display: none !important; }
+
+        .tabular-nums, .num { font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1; }
+        .t1 { color: var(--text-1); }
+        .t2 { color: var(--text-2); }
+        .t3 { color: var(--text-3); }
+        .t-accent { color: var(--accent-text); }
+
+        ::selection { background: var(--accent-soft-2); }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 8px; border: 2px solid transparent; background-clip: padding-box; }
+
+        button, [role="button"], label, select { -webkit-tap-highlight-color: transparent; }
+        button {
+            transition: transform 0.16s var(--ease), background-color 0.2s ease, color 0.2s ease,
+                        border-color 0.2s ease, box-shadow 0.25s ease, opacity 0.2s ease, filter 0.2s ease;
+        }
+        button:not(:disabled):active { transform: scale(0.98); }
+        :focus { outline: none; }
+        :focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+        /* =========================================================
+           タイポグラフィ
+           ========================================================= */
+        .eyebrow { font-size: 12px; font-weight: 500; color: var(--text-3); letter-spacing: 0.02em; }
+        .section-title { font-size: 15px; font-weight: 600; color: var(--text-1); letter-spacing: -0.01em; display: flex; align-items: center; gap: 8px; }
+        .section-title i { font-size: 13px; color: var(--accent-text); }
+        .stat-value {
+            font-size: 30px; font-weight: 600; letter-spacing: -0.035em; line-height: 1.15;
+            color: var(--text-1); font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1;
+        }
+        .meta { font-size: 12.5px; color: var(--text-3); }
+        .meta strong { color: var(--text-1); font-weight: 600; }
+
+        /* =========================================================
+           サーフェス
+           ========================================================= */
+        .card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-card);
+            box-shadow: var(--shadow-card);
+        }
+        .inset {
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+        }
+
+        /* =========================================================
+           ボタン
+           ========================================================= */
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+            height: 40px; padding: 0 16px; border-radius: 12px;
+            font-size: 14px; font-weight: 600; letter-spacing: 0.01em; white-space: nowrap;
+            border: 1px solid transparent; user-select: none;
+        }
+        .btn-sm { height: 34px; padding: 0 12px; border-radius: 10px; font-size: 13px; }
+        .btn-lg { height: 54px; border-radius: 16px; font-size: 15px; }
+        .btn-primary { background: var(--grad-accent); color: #fff; box-shadow: var(--shadow-btn); }
+        .btn-primary:hover { filter: brightness(1.07) saturate(1.05); }
+        .btn-primary.is-running { background: var(--text-1); color: var(--surface); box-shadow: 0 1px 2px rgba(15, 23, 42, 0.2), 0 8px 18px -8px rgba(15, 23, 42, 0.45); }
+        .btn-success { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; box-shadow: var(--shadow-btn-success); }
+        .btn-success:hover { filter: brightness(1.06); }
+        .btn-secondary { background: var(--surface); color: var(--text-1); border-color: var(--border-strong); box-shadow: var(--shadow-xs); }
+        .btn-secondary:hover { background: var(--surface-2); }
+        .btn-ghost { background: transparent; color: var(--text-2); }
+        .btn-ghost:hover { background: var(--surface-3); color: var(--text-1); }
+        .btn-soft { background: var(--accent-soft); color: var(--accent-text); }
+        .btn-soft:hover { background: var(--accent-soft-2); }
+        .btn:disabled { background: var(--surface-3); color: var(--text-4); box-shadow: none; border-color: transparent; filter: none; cursor: not-allowed; }
+
+        .btn-icon {
+            width: 40px; height: 40px; flex-shrink: 0; border-radius: 12px;
+            display: inline-flex; align-items: center; justify-content: center;
+            color: var(--text-2); background: var(--surface-2); border: 1px solid var(--border);
+            font-size: 14px;
+        }
+        .btn-icon:hover { color: var(--text-1); background: var(--surface-3); }
+        .btn-icon.sm { width: 32px; height: 32px; border-radius: 10px; font-size: 13px; }
+        .btn-icon.ghost { background: transparent; border-color: transparent; color: var(--text-3); }
+        .btn-icon.ghost:hover { background: var(--surface-3); color: var(--text-1); }
+        .btn-icon.danger:hover { background: var(--danger-soft); color: var(--danger); }
+
+        .link { font-size: 12.5px; font-weight: 500; color: var(--text-3); }
+        .link:hover { color: var(--text-1); }
+        .link-accent { font-size: 13px; font-weight: 600; color: var(--accent-text); display: inline-flex; align-items: center; gap: 6px; }
+        .link-accent:hover { opacity: 0.8; }
+        .link-accent i { font-size: 10px; transition: transform 0.2s var(--ease); }
+        .link-accent:hover i { transform: translateX(2px); }
+
+        /* =========================================================
+           フォーム
+           ========================================================= */
+        .label { display: block; font-size: 12.5px; font-weight: 500; color: var(--text-2); margin-bottom: 6px; }
+        .field {
+            width: 100%; height: 44px; padding: 0 14px; border-radius: 12px;
+            background: var(--surface-2); border: 1px solid var(--border-strong);
+            color: var(--text-1); font-size: 14px; font-weight: 500;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+        }
+        .field::placeholder { color: var(--text-4); font-weight: 400; }
+        .field:hover:not(:disabled) { border-color: var(--text-4); }
+        .field:focus { background: var(--surface); border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-ring); outline: none; }
+        .field:disabled { opacity: 0.55; cursor: not-allowed; }
+        .field-sm { height: 36px; border-radius: 10px; padding: 0 12px; font-size: 13.5px; }
+        select.field {
+            appearance: none; -webkit-appearance: none; padding-right: 38px; cursor: pointer;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='none' stroke='%238a94a6' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 8 4 4 4-4'/%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 12px center; background-size: 16px;
+        }
+        .field-wrap { position: relative; }
+        .field-wrap .suffix { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); font-size: 13px; color: var(--text-3); pointer-events: none; }
+        input[type="number"].field { font-variant-numeric: tabular-nums; }
+        input[type="checkbox"] { accent-color: var(--accent); }
+
+        /* セグメントコントロール (通常タイマー / ポモドーロ、テーマ) */
+        .segmented { display: flex; gap: 2px; padding: 3px; border-radius: 12px; background: var(--seg-track); box-shadow: inset 0 0 0 1px var(--border); }
+        .seg-item {
+            flex: 1; height: 36px; padding: 0 8px; border-radius: 9px;
+            display: flex; align-items: center; justify-content: center; gap: 6px;
+            font-size: 13.5px; font-weight: 600; color: var(--text-3); white-space: nowrap;
+        }
+        .seg-item:hover { color: var(--text-1); }
+        .seg-item.is-active { background: var(--seg-active); color: var(--text-1); box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 0 0 1px var(--border); }
+        .seg-item.is-active i { color: var(--accent-text); }
+        .seg-item:not(:disabled):active { transform: scale(0.97); }
+        .segmented.sm .seg-item { height: 30px; font-size: 12.5px; border-radius: 8px; }
+        @media (max-width: 380px) { .seg-item { font-size: 12.5px; } }
+
+        /* チップ・バッジ */
+        .chip { display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 10px; border-radius: 999px; font-size: 12px; font-weight: 600; white-space: nowrap; font-variant-numeric: tabular-nums; }
+        .chip-accent { background: var(--accent-soft); color: var(--accent-text); }
+        .chip-neutral { background: var(--surface); color: var(--text-2); box-shadow: inset 0 0 0 1px var(--border-strong); }
+        .chip-focus { background: var(--danger-soft); color: var(--danger); }
+        .chip-break { background: var(--success-soft); color: var(--success); }
+        .chip-focus::before, .chip-break::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
 
         kbd {
-            display: inline-block; min-width: 1.6em; padding: 0.1em 0.45em; border-radius: 6px;
-            border: 1px solid #cbd5e1; background: #f8fafc; font-size: 0.75rem; font-family: inherit;
-            text-align: center; box-shadow: 0 1px 0 #cbd5e1;
+            display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 20px; padding: 0 6px;
+            border-radius: 6px; border: 1px solid var(--border-strong); background: var(--surface);
+            box-shadow: 0 1px 0 var(--border-strong); font-size: 11px; font-family: inherit; font-weight: 600; color: var(--text-2);
         }
 
-        /* タブ: hidden 属性で確実に非表示にする (grid などの指定より優先) */
-        [hidden] { display: none !important; }
-        .tab-btn { color: #94a3b8; }
-        .tab-btn:hover { color: #475569; }
-        .tab-btn[aria-current="page"] { color: #4f46e5; }
-        html.dark .tab-btn { color: #64748b; }
-        html.dark .tab-btn:hover { color: #cbd5e1; }
-        html.dark .tab-btn[aria-current="page"] { color: #a5b4fc; }
-        html.dark .divide-slate-100 > :not([hidden]) ~ :not([hidden]) { border-color: #334155; }
+        /* =========================================================
+           ヘッダー / 下部タブバー (すりガラス)
+           ========================================================= */
+        .glass {
+            background: var(--glass);
+            -webkit-backdrop-filter: saturate(180%) blur(20px);
+            backdrop-filter: saturate(180%) blur(20px);
+        }
+        .app-header { border-bottom: 1px solid var(--hairline); }
+        .logo-mark {
+            width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
+            background: var(--grad-accent); color: #fff; font-size: 14px; box-shadow: var(--shadow-btn);
+        }
+        .app-title { font-size: 17px; font-weight: 700; letter-spacing: -0.02em; color: var(--text-1); }
 
-        /* ===== ダークモード =====
-           Tailwind のユーティリティを上書きして配色を切り替える */
-        html.dark { color-scheme: dark; }
-        html.dark body { background-color: #0b1120; color: #e2e8f0; }
-        html.dark * { --tw-ring-offset-color: #1e293b; }
-        html.dark ::-webkit-scrollbar-track { background: #1e293b; }
-        html.dark ::-webkit-scrollbar-thumb { background: #475569; }
+        #tabBar { border-top: 1px solid var(--hairline); }
+        .tab-btn { height: 62px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; color: var(--text-3); }
+        .tab-btn:not(:disabled):active { transform: none; }
+        .tab-btn:hover { color: var(--text-2); }
+        .tab-icon {
+            position: relative; width: 56px; height: 30px; border-radius: 999px;
+            display: flex; align-items: center; justify-content: center; font-size: 17px;
+            transition: background-color 0.3s var(--ease), transform 0.16s var(--ease);
+        }
+        .tab-btn:active .tab-icon { transform: scale(0.92); }
+        .tab-label { font-size: 10.5px; font-weight: 600; letter-spacing: 0.02em; font-variant-numeric: tabular-nums; }
+        .tab-btn[aria-current="page"] { color: var(--accent-text); }
+        .tab-btn[aria-current="page"] .tab-icon { background: var(--accent-soft); }
+        #tabTimerDot { position: absolute; top: 3px; right: 14px; width: 8px; height: 8px; border-radius: 50%; box-shadow: 0 0 0 2px var(--surface); }
 
-        html.dark .bg-white { background-color: #1e293b; }
-        html.dark .bg-slate-50 { background-color: #0f172a; }
-        html.dark .bg-slate-50\/50 { background-color: rgba(15, 23, 42, 0.5); }
-        html.dark .bg-slate-100 { background-color: #334155; }
-        html.dark .bg-slate-800 { background-color: #334155; }
-        html.dark .hover\:bg-slate-100:hover,
-        html.dark .hover\:bg-slate-100\/80:hover { background-color: #334155; }
-        html.dark .hover\:bg-slate-200:hover { background-color: #475569; }
-        html.dark .disabled\:bg-slate-200:disabled { background-color: #334155; }
-        html.dark .disabled\:text-slate-400:disabled { color: #64748b; }
+        /* =========================================================
+           タイマー
+           ========================================================= */
+        .progress { height: 6px; border-radius: 999px; background: var(--surface-3); overflow: hidden; }
+        .progress-fill { height: 100%; border-radius: inherit; background: var(--grad-accent); transition: width 0.9s var(--ease); }
 
-        html.dark .border-slate-100 { border-color: #334155; }
-        html.dark .border-slate-200 { border-color: #475569; }
+        .timer-stage {
+            position: relative; overflow: hidden; text-align: center;
+            padding: 30px 16px 26px; border-radius: 20px;
+            background: radial-gradient(120% 100% at 50% 0%, var(--accent-soft) 0%, transparent 62%), var(--surface-2);
+            border: 1px solid var(--border);
+            transition: border-color 0.4s ease, box-shadow 0.4s ease;
+        }
+        .timer-stage.is-running { border-color: var(--accent-ring); box-shadow: 0 0 0 4px var(--accent-soft); }
+        .timer-stage.is-break { background: radial-gradient(120% 100% at 50% 0%, var(--success-soft) 0%, transparent 62%), var(--surface-2); }
+        .timer-stage.is-break.is-running { border-color: var(--success-soft); box-shadow: 0 0 0 4px var(--success-soft); }
+        .timer-digits {
+            font-size: clamp(52px, 15vw, 72px); font-weight: 600; line-height: 1; letter-spacing: -0.045em;
+            color: var(--text-1); font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1;
+            margin: 6px 0 2px;
+        }
+        .timer-sub { display: inline-flex; align-items: center; gap: 7px; margin-top: 12px; font-size: 12.5px; font-weight: 500; color: var(--text-3); }
+        .timer-stage.is-running .timer-sub::before {
+            content: ''; width: 6px; height: 6px; border-radius: 50%; background: var(--accent);
+            animation: live-pulse 1.8s ease-in-out infinite;
+        }
+        .timer-stage.is-break .timer-sub::before { background: var(--success); }
+        @keyframes live-pulse {
+            0%, 100% { opacity: 1; box-shadow: 0 0 0 0 var(--accent-ring); }
+            50% { opacity: 0.55; box-shadow: 0 0 0 5px transparent; }
+        }
 
-        html.dark .text-slate-900 { color: #f1f5f9; }
-        html.dark .text-slate-800 { color: #e2e8f0; }
-        html.dark .text-slate-700 { color: #cbd5e1; }
-        html.dark .text-slate-600 { color: #cbd5e1; }
-        html.dark .text-slate-500 { color: #a3b1c6; }
-        html.dark .text-slate-400 { color: #94a3b8; }
-        html.dark .text-slate-300 { color: #64748b; }
-        html.dark .hover\:text-slate-900:hover,
-        html.dark .hover\:text-slate-600:hover { color: #f1f5f9; }
+        /* =========================================================
+           カレンダー
+           ========================================================= */
+        .cal-weekday { font-size: 11px; font-weight: 600; color: var(--text-3); text-align: center; padding: 4px 0 6px; letter-spacing: 0.04em; }
+        .cal-weekday.sun { color: #f43f5e; opacity: 0.8; }
+        .cal-weekday.sat { color: var(--accent-text); opacity: 0.85; }
+        .cal-cell {
+            position: relative; height: 58px; padding: 6px 5px 7px 7px; border-radius: 12px;
+            display: flex; flex-direction: column; justify-content: space-between; align-items: flex-start;
+            background: var(--heat-0); border: 1px solid var(--border);
+            transition: transform 0.16s var(--ease), box-shadow 0.25s ease, border-color 0.2s ease, filter 0.2s ease;
+        }
+        @media (min-width: 640px) { .cal-cell { height: 74px; padding: 8px 9px; } }
+        .cal-cell:hover { border-color: var(--border-strong); filter: brightness(0.985); }
+        html.dark .cal-cell:hover { filter: brightness(1.12); }
+        .cal-cell:not(:disabled):active { transform: scale(0.95); }
+        .cal-empty { height: 58px; }
+        @media (min-width: 640px) { .cal-empty { height: 74px; } }
+        .cal-day {
+            min-width: 22px; height: 22px; padding: 0 5px; border-radius: 999px;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: 12.5px; font-weight: 600; color: var(--text-2); font-variant-numeric: tabular-nums;
+            margin: -2px 0 0 -3px;
+        }
+        .cal-cell { overflow: hidden; }
+        .cal-time { align-self: flex-end; max-width: 100%; white-space: nowrap; font-size: 9.5px; font-weight: 600; letter-spacing: -0.04em; font-variant-numeric: tabular-nums; line-height: 1; }
+        @media (min-width: 400px) { .cal-time { font-size: 10.5px; letter-spacing: -0.03em; } }
+        @media (min-width: 640px) { .cal-time { font-size: 11.5px; } }
+        .heat-1 { background: var(--heat-1); border-color: transparent; }
+        .heat-2 { background: var(--heat-2); border-color: transparent; }
+        .heat-3 { background: var(--heat-3); border-color: transparent; }
+        .heat-4 { background: var(--heat-4); border-color: transparent; box-shadow: 0 6px 14px -8px rgba(99, 102, 241, 0.7); }
+        .heat-1 .cal-day, .heat-2 .cal-day, .heat-3 .cal-day { color: var(--text-1); }
+        .heat-1 .cal-time { color: var(--heat-text-1); }
+        .heat-2 .cal-time { color: var(--heat-text-2); }
+        .heat-3 .cal-time { color: var(--heat-text-3); }
+        .heat-4 .cal-day, .heat-4 .cal-time { color: #fff; }
+        .cal-cell.is-today .cal-day { background: var(--accent); color: #fff; }
+        .heat-3.is-today .cal-day, .heat-4.is-today .cal-day { background: #fff; color: #4f46e5; }
+        .cal-cell.is-selected { border-color: transparent; box-shadow: 0 0 0 2px var(--accent), 0 0 0 6px var(--accent-soft); z-index: 1; }
+        .legend-swatch { width: 12px; height: 12px; border-radius: 4px; display: inline-block; }
+        .legend-swatch.heat-0 { background: var(--heat-0); box-shadow: inset 0 0 0 1px var(--border-strong); }
 
-        html.dark .bg-indigo-50 { background-color: rgba(99, 102, 241, 0.18); }
-        html.dark .bg-indigo-100 { background-color: rgba(99, 102, 241, 0.34); }
-        html.dark .bg-indigo-300 { background-color: rgba(99, 102, 241, 0.6); }
-        html.dark .bg-indigo-600 { background-color: #6366f1; }
-        html.dark .hover\:bg-indigo-50:hover { background-color: rgba(99, 102, 241, 0.18); }
-        html.dark .hover\:bg-indigo-100:hover { background-color: rgba(99, 102, 241, 0.3); }
-        html.dark .hover\:bg-indigo-200:hover { background-color: rgba(99, 102, 241, 0.45); }
-        html.dark .hover\:bg-indigo-400:hover { background-color: rgba(99, 102, 241, 0.75); }
-        html.dark .hover\:bg-indigo-700:hover { background-color: #4f46e5; }
-        html.dark .border-indigo-100 { border-color: rgba(99, 102, 241, 0.35); }
-        html.dark .text-indigo-600 { color: #a5b4fc; }
-        html.dark .text-indigo-700 { color: #c7d2fe; }
-        html.dark .text-indigo-900,
-        html.dark .text-indigo-950 { color: #e0e7ff; }
-        html.dark .text-indigo-100 { color: #eef2ff; }
-        html.dark .hover\:text-indigo-600:hover,
-        html.dark .hover\:text-indigo-800:hover { color: #c7d2fe; }
-        html.dark .bg-indigo-600 .text-indigo-600,
-        html.dark button.bg-indigo-600 { color: #ffffff; }
+        /* =========================================================
+           記録リスト
+           ========================================================= */
+        .log-item {
+            display: flex; align-items: center; justify-content: space-between; gap: 10px;
+            padding: 10px 6px 10px 12px; border-radius: 14px;
+            background: var(--surface-2); border: 1px solid var(--border);
+            transition: background-color 0.2s ease, border-color 0.2s ease;
+        }
+        .log-item:hover { background: var(--surface); border-color: var(--border-strong); }
+        .log-stripe { width: 4px; align-self: stretch; border-radius: 4px; flex-shrink: 0; }
+        .log-name { font-size: 14px; font-weight: 600; color: var(--text-1); }
+        .log-memo { font-size: 12.5px; color: var(--text-3); margin-top: 2px; }
+        .empty-state {
+            padding: 32px 16px; text-align: center; border-radius: 14px;
+            border: 1px dashed var(--border-strong); color: var(--text-3); font-size: 13px;
+        }
+        .empty-state i { display: block; font-size: 20px; margin-bottom: 8px; color: var(--text-4); }
 
-        html.dark .bg-rose-100 { background-color: rgba(244, 63, 94, 0.2); }
-        html.dark .text-rose-600 { color: #fda4af; }
-        html.dark .bg-emerald-100 { background-color: rgba(16, 185, 129, 0.2); }
-        html.dark .text-emerald-700 { color: #6ee7b7; }
+        /* =========================================================
+           グラフ
+           ========================================================= */
+        .week-col-bg { border-radius: 10px; transition: background-color 0.2s ease; }
+        .week-col:hover .week-col-bg { background: var(--surface-2); }
+        .week-col[aria-pressed="true"] .week-col-bg { background: var(--accent-soft); }
+        .week-col:not(:disabled):active { transform: none; }
+        .week-col:active .week-col-bg { transform: scale(0.97); }
+        .week-seg { width: 100%; border-radius: 2px; }
+        .week-seg:last-child { border-top-left-radius: 6px; border-top-right-radius: 6px; }
+        .week-day { font-size: 11px; font-weight: 500; color: var(--text-3); font-variant-numeric: tabular-nums; }
+        .week-day.is-today { color: var(--accent-text); font-weight: 700; }
+        .grid-line { position: absolute; left: 0; right: 0; border-top: 1px dashed var(--hairline); }
+        .grid-line.base { border-top: 1px solid var(--border-strong); }
+        .axis-label { position: absolute; right: 8px; transform: translateY(-50%); font-size: 10px; font-weight: 500; color: var(--text-3); font-variant-numeric: tabular-nums; }
+        .legend-dot { width: 8px; height: 8px; border-radius: 3px; display: inline-block; flex-shrink: 0; }
+        .bar-track { height: 6px; border-radius: 999px; background: var(--surface-3); overflow: hidden; }
+        .bar-fill { height: 100%; border-radius: inherit; transition: width 0.8s var(--ease); }
 
-        html.dark input, html.dark select { color: #e2e8f0; }
-        html.dark kbd { background: #0f172a; border-color: #475569; box-shadow: 0 1px 0 #475569; }
-        html.dark .week-col[aria-pressed="true"] .week-col-bg { background-color: rgba(99, 102, 241, 0.16); }
-        html.dark .week-col:hover .week-col-bg { background-color: #334155; }
-        html.dark .grid-line { border-color: #334155; }
+        /* =========================================================
+           設定 (iOS風のグループリスト)
+           ========================================================= */
+        .settings-heading { padding: 0 16px; margin-bottom: 8px; font-size: 12px; font-weight: 600; color: var(--text-3); letter-spacing: 0.04em; }
+        .settings-group { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; box-shadow: var(--shadow-card); overflow: hidden; }
+        .settings-row {
+            position: relative; width: 100%; min-height: 54px; padding: 0 14px;
+            display: flex; align-items: center; gap: 12px; text-align: left; background: transparent;
+        }
+        .settings-row:not(:disabled):active { transform: none; background: var(--surface-3); }
+        button.settings-row:hover { background: var(--surface-2); }
+        .settings-row + .settings-row::before { content: ''; position: absolute; top: 0; left: 56px; right: 0; border-top: 1px solid var(--hairline); }
+        .settings-icon {
+            width: 30px; height: 30px; flex-shrink: 0; border-radius: 8px;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-size: 13px; color: #fff; box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22), 0 1px 2px rgba(15, 23, 42, 0.12);
+        }
+        .ic-indigo { background: linear-gradient(145deg, #6366f1, #4f46e5); }
+        .ic-orange { background: linear-gradient(145deg, #fb923c, #f97316); }
+        .ic-rose { background: linear-gradient(145deg, #fb7185, #e11d48); }
+        .ic-slate { background: linear-gradient(145deg, #94a3b8, #64748b); }
+        .ic-green { background: linear-gradient(145deg, #34d399, #059669); }
+        .ic-sky { background: linear-gradient(145deg, #38bdf8, #0284c7); }
+        .ic-violet { background: linear-gradient(145deg, #a78bfa, #7c3aed); }
+        .settings-label { flex: 1; min-width: 0; font-size: 14.5px; font-weight: 500; color: var(--text-1); }
+        .settings-value { font-size: 14px; color: var(--text-3); font-variant-numeric: tabular-nums; white-space: nowrap; }
+        .settings-chevron { font-size: 11px; color: var(--text-4); }
+        .settings-note { padding: 0 16px; margin-top: 8px; font-size: 12px; line-height: 1.7; color: var(--text-3); }
+
+        /* =========================================================
+           モーダル (スマホではボトムシート)
+           ========================================================= */
+        html .modal { background: var(--scrim); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px); }
+        .modal-panel {
+            width: 100%; background: var(--surface); border: 1px solid var(--border);
+            border-radius: 22px; box-shadow: var(--shadow-pop); padding: 24px;
+            animation: modal-in 0.32s var(--ease);
+        }
+        .modal-title { font-size: 17px; font-weight: 700; letter-spacing: -0.015em; color: var(--text-1); }
+        .modal-desc { font-size: 12.5px; line-height: 1.7; color: var(--text-3); }
+        @keyframes modal-in { from { opacity: 0; transform: translateY(10px) scale(0.98); } to { opacity: 1; transform: none; } }
+        @media (max-width: 639px) {
+            html .modal { align-items: flex-end; padding: 0; }
+            .modal-panel {
+                max-width: none !important; border-radius: 24px 24px 0 0; border-bottom: 0;
+                padding-bottom: calc(24px + env(safe-area-inset-bottom));
+                animation: sheet-in 0.36s var(--ease);
+            }
+            .modal-panel::before { content: ''; display: block; width: 36px; height: 4px; border-radius: 4px; background: var(--border-strong); margin: -12px auto 14px; }
+        }
+        @keyframes sheet-in { from { transform: translateY(100%); } to { transform: none; } }
+
+        /* 色選択 */
+        .swatch { cursor: pointer; display: inline-flex; }
+        .swatch span { display: block; border-radius: 999px; transition: box-shadow 0.2s ease, transform 0.16s var(--ease); }
+        .swatch:active span { transform: scale(0.9); }
+        .swatch input:checked + span { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px currentColor; }
+        .swatch input:focus-visible + span { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--accent); }
+
+        /* トースト */
+        .toast {
+            display: flex; align-items: center; gap: 10px; padding: 11px 14px; border-radius: 14px;
+            background: var(--toast-bg); color: #f5f7fb; font-size: 13.5px; font-weight: 500;
+            border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: var(--shadow-pop);
+            -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+        }
+        .toast-success i { color: #34d399; }
+        .toast-info i { color: #a5b4fc; }
+        .toast-error i { color: #fb7185; }
+        .toast-action { margin-left: 4px; padding: 4px 10px; border-radius: 8px; font-size: 12.5px; font-weight: 700; color: #c7d2fe; background: rgba(255, 255, 255, 0.08); white-space: nowrap; }
+        .toast-action:hover { background: rgba(255, 255, 255, 0.14); color: #fff; }
+
+        /* タブ切り替え時のフェード */
+        .tab-panel:not([hidden]) { animation: panel-in 0.35s var(--ease); }
+        @keyframes panel-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; transition-duration: 0.01ms !important; }
+        }
     </style>
 </head>
-<body class="text-slate-800 antialiased min-h-screen flex flex-col">
+<body class="min-h-screen flex flex-col">
 
     <!-- ヘッダー -->
-    <header class="bg-white border-b border-slate-200 sticky top-0 z-30" style="padding-top: env(safe-area-inset-top)">
+    <header class="app-header glass sticky top-0 z-30" style="padding-top: env(safe-area-inset-top)">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
             <div class="flex items-center gap-2.5">
-                <div class="bg-indigo-600 text-white w-9 h-9 rounded-xl shadow-sm flex items-center justify-center">
-                    <i class="fa-solid fa-book-open"></i>
-                </div>
-                <h1 class="text-lg font-bold tracking-tight text-slate-900">StudyLog</h1>
+                <div class="logo-mark"><i class="fa-solid fa-book-open"></i></div>
+                <h1 class="app-title">StudyLog</h1>
             </div>
-            <button id="openManualModalBtn" class="text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 px-3.5 py-2 rounded-lg shadow-sm transition-colors flex items-center gap-2" title="手動記録 (N)">
-                <i class="fa-solid fa-plus"></i>
+            <button id="openManualModalBtn" class="btn btn-primary btn-sm" title="手動記録 (N)">
+                <i class="fa-solid fa-plus text-xs"></i>
                 <span>手動記録</span>
             </button>
         </div>
     </header>
 
     <!-- メインコンテンツ (下部タブで切り替え) -->
-    <main class="flex-grow max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-5 sm:pt-8" style="padding-bottom: calc(6rem + env(safe-area-inset-bottom))">
+    <main class="flex-grow max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-5 sm:pt-8" style="padding-bottom: calc(6.5rem + env(safe-area-inset-bottom))">
 
         <!-- 通知メッセージボックス (タブバーの上に表示) -->
-        <div id="toastContainer" class="fixed right-5 left-5 sm:left-auto z-50 flex flex-col items-end gap-2 pointer-events-none" style="bottom: calc(5.5rem + env(safe-area-inset-bottom))"></div>
+        <div id="toastContainer" class="fixed right-4 left-4 sm:left-auto sm:right-6 z-50 flex flex-col items-center sm:items-end gap-2 pointer-events-none" style="bottom: calc(5.75rem + env(safe-area-inset-bottom))"></div>
 
         <!-- ===== タブ1: タイマー ===== -->
-        <section data-tab-panel="timer" class="tab-panel max-w-xl mx-auto flex flex-col gap-5" aria-label="タイマー">
+        <section data-tab-panel="timer" class="tab-panel max-w-xl mx-auto flex flex-col gap-4" aria-label="タイマー">
 
             <!-- 今日の勉強時間 & 目標達成率 -->
-            <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100">
-                <div class="flex justify-between items-start mb-2">
+            <div class="card p-5">
+                <div class="flex justify-between items-start">
                     <div>
-                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">今日の勉強時間</p>
-                        <h2 id="todayTotalDisplay" class="text-2xl sm:text-3xl font-bold text-slate-900 mt-1 tabular-nums">0時間 0分</h2>
+                        <p class="eyebrow">今日の勉強時間</p>
+                        <h2 id="todayTotalDisplay" class="stat-value mt-1.5">0時間 0分</h2>
                     </div>
-                    <span id="goalPercentageBadge" class="text-xs font-bold px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-600">0%</span>
+                    <span id="goalPercentageBadge" class="chip chip-accent">0%</span>
                 </div>
-                <div class="mt-3">
-                    <div class="flex justify-between text-xs text-slate-500 mb-1">
-                        <button id="openGoalModalBtn" class="hover:text-indigo-600 underline decoration-dotted underline-offset-2" title="目標を変更">目標: <span id="dailyGoalText">2時間 0分</span></button>
-                        <span id="remainingGoalText">残り 2時間 0分</span>
+                <div class="mt-4">
+                    <div class="progress">
+                        <div id="goalProgressBar" class="progress-fill" style="width: 0%"></div>
                     </div>
-                    <div class="w-full bg-slate-100 rounded-full h-2.5 overflow-hidden">
-                        <div id="goalProgressBar" class="bg-indigo-600 h-2.5 rounded-full transition-all duration-500" style="width: 0%"></div>
+                    <div class="flex justify-between mt-2.5 meta">
+                        <button id="openGoalModalBtn" class="link inline-flex items-center gap-1.5" title="目標を変更">
+                            <i class="fa-solid fa-bullseye text-[11px]"></i>目標 <span id="dailyGoalText" class="tabular-nums">2時間 0分</span>
+                        </button>
+                        <span id="remainingGoalText" class="tabular-nums">残り 2時間 0分</span>
                     </div>
                 </div>
             </div>
 
             <!-- タイマーカード -->
-            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+            <div class="card p-5 sm:p-6">
                 <!-- モード切替タブ -->
-                <div class="flex bg-slate-100 p-1 rounded-xl mb-6">
-                    <button id="modeStopwatchBtn" class="flex-1 py-2 text-sm font-semibold rounded-lg transition-all">
-                        <i class="fa-solid fa-stopwatch mr-1.5"></i>通常タイマー
+                <div class="segmented mb-5">
+                    <button id="modeStopwatchBtn" class="seg-item is-active">
+                        <i class="fa-solid fa-stopwatch"></i>通常タイマー
                     </button>
-                    <button id="modePomodoroBtn" class="flex-1 py-2 text-sm font-semibold rounded-lg transition-all">
-                        <i class="fa-solid fa-clock mr-1.5"></i><span id="pomodoroTabLabel">ポモドーロ (25分)</span>
+                    <button id="modePomodoroBtn" class="seg-item">
+                        <i class="fa-solid fa-clock"></i><span id="pomodoroTabLabel">ポモドーロ (25分)</span>
                     </button>
                 </div>
 
                 <!-- 科目選択 -->
-                <div class="mb-5">
-                    <label for="subjectSelect" class="block text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">学習する科目・タグ</label>
+                <div class="mb-4">
+                    <label for="subjectSelect" class="label">学習する科目</label>
                     <div class="flex gap-2">
-                        <select id="subjectSelect" class="flex-grow min-w-0 bg-slate-50 border border-slate-200 text-slate-800 text-sm rounded-xl focus:ring-indigo-500 focus:border-indigo-500 block p-2.5 font-medium disabled:opacity-60"></select>
-                        <button id="addSubjectBtn" title="新しい科目を追加" class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-3.5 rounded-xl transition-colors">
+                        <select id="subjectSelect" class="field flex-grow min-w-0"></select>
+                        <button id="addSubjectBtn" title="新しい科目を追加" class="btn-icon" style="width: 44px; height: 44px;">
                             <i class="fa-solid fa-plus"></i>
                         </button>
-                        <button id="manageSubjectsBtn" title="科目の管理 (名前・色の変更、削除)" class="bg-slate-100 hover:bg-slate-200 text-slate-600 px-3.5 rounded-xl transition-colors">
-                            <i class="fa-solid fa-pen"></i>
+                        <button id="manageSubjectsBtn" title="科目の管理 (名前・色の変更、削除)" class="btn-icon" style="width: 44px; height: 44px;">
+                            <i class="fa-solid fa-pen text-[13px]"></i>
                         </button>
                     </div>
                 </div>
 
                 <!-- タイマー表示部 -->
-                <div class="text-center py-6 bg-slate-50 rounded-2xl border border-slate-100 mb-4 relative overflow-hidden">
-                    <div class="flex items-center justify-center gap-2 mb-2 min-h-[24px]">
-                        <span id="pomodoroStatusBadge" class="hidden inline-block px-3 py-1 rounded-full text-xs font-bold bg-rose-100 text-rose-600">集中タイム</span>
-                        <button id="openPomodoroSettingsBtn" class="hidden text-xs text-slate-400 hover:text-slate-600 px-1" title="ポモドーロ設定">
-                            <i class="fa-solid fa-gear"></i>
+                <div id="timerStage" class="timer-stage mb-4">
+                    <div class="flex items-center justify-center gap-1.5 min-h-[24px]">
+                        <span id="pomodoroStatusBadge" class="chip chip-focus hidden">集中タイム</span>
+                        <button id="openPomodoroSettingsBtn" class="btn-icon ghost sm hidden" title="ポモドーロ設定" style="width: 26px; height: 26px;">
+                            <i class="fa-solid fa-sliders text-[12px]"></i>
                         </button>
                     </div>
-                    <div id="timerDisplay" class="text-5xl sm:text-6xl font-bold text-slate-900 tracking-tight tabular-nums my-1">00:00:00</div>
-                    <p id="timerSubtext" class="text-xs text-slate-400 mt-2">計測を開始してください</p>
+                    <div id="timerDisplay" class="timer-digits">00:00:00</div>
+                    <p id="timerSubtext" class="timer-sub">計測を開始してください</p>
                 </div>
 
                 <!-- タイマー記録用メモ -->
                 <div class="mb-4">
-                    <input type="text" id="timerMemoInput" maxlength="100" placeholder="メモ (任意) 例: 英単語帳 P.10〜30" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                    <input type="text" id="timerMemoInput" maxlength="100" placeholder="メモ (任意)  例: 英単語帳 P.10〜30" class="field">
                 </div>
 
                 <!-- コントロールボタン -->
                 <div class="grid grid-cols-2 gap-3">
-                    <button id="startPauseBtn" class="bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3.5 px-3 rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 text-sm sm:text-base whitespace-nowrap">
+                    <button id="startPauseBtn" class="btn btn-primary btn-lg">
                         <i class="fa-solid fa-play"></i>
                         <span>スタート</span>
                     </button>
-                    <button id="finishSaveBtn" disabled class="bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-200 disabled:text-slate-400 disabled:cursor-not-allowed text-white font-semibold py-3.5 px-3 rounded-xl shadow-sm transition-all flex items-center justify-center gap-2 text-sm sm:text-base whitespace-nowrap">
+                    <button id="finishSaveBtn" disabled class="btn btn-success btn-lg">
                         <i class="fa-solid fa-check"></i>
                         <span>完了して記録</span>
                     </button>
                 </div>
-                <div class="mt-3 flex items-center justify-between">
-                    <span class="hidden sm:inline text-xs text-slate-400"><kbd>Space</kbd> で開始 / 停止</span>
-                    <button id="resetTimerBtn" class="text-xs text-slate-400 hover:text-slate-600 underline py-1 ml-auto">タイマーをリセット</button>
+                <div class="mt-3.5 flex items-center justify-between">
+                    <span class="hidden sm:inline-flex items-center gap-1.5 meta"><kbd>Space</kbd> で開始 / 停止</span>
+                    <button id="resetTimerBtn" class="link ml-auto py-1">タイマーをリセット</button>
                 </div>
             </div>
 
-            <button type="button" data-goto="records" data-goto-today="1" class="self-center text-sm font-medium text-indigo-600 hover:text-indigo-800 px-3 py-2 rounded-lg hover:bg-indigo-50 transition-colors">
-                今日の記録を見る <i class="fa-solid fa-arrow-right ml-1 text-xs"></i>
+            <button type="button" data-goto="records" data-goto-today="1" class="link-accent self-center px-3 py-2">
+                今日の記録を見る <i class="fa-solid fa-arrow-right"></i>
             </button>
         </section>
 
         <!-- ===== タブ2: 記録 ===== -->
-        <section data-tab-panel="records" hidden class="tab-panel grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-start" aria-label="記録">
+        <section data-tab-panel="records" hidden class="tab-panel grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 items-start" aria-label="記録">
 
             <!-- カレンダーカード -->
-            <div class="lg:col-span-7 bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-100">
-                <div class="flex items-center justify-between mb-5">
-                    <h3 id="calendarMonthYear" class="text-lg font-bold text-slate-900"></h3>
-                    <div class="flex items-center space-x-2">
-                        <button id="prevMonthBtn" class="p-2 rounded-lg hover:bg-slate-100 text-slate-600 transition-colors" title="前月 (←)">
+            <div class="lg:col-span-7 card p-4 sm:p-6">
+                <div class="flex items-center justify-between mb-4 px-1">
+                    <h3 id="calendarMonthYear" class="text-lg font-bold t1 tracking-tight tabular-nums"></h3>
+                    <div class="flex items-center gap-1.5">
+                        <button id="prevMonthBtn" class="btn-icon ghost sm" title="前月 (←)">
                             <i class="fa-solid fa-chevron-left"></i>
                         </button>
-                        <button id="todayBtn" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors" title="今日 (T)">今日</button>
-                        <button id="nextMonthBtn" class="p-2 rounded-lg hover:bg-slate-100 text-slate-600 transition-colors" title="翌月 (→)">
+                        <button id="todayBtn" class="btn btn-secondary btn-sm" style="height: 30px;" title="今日 (T)">今日</button>
+                        <button id="nextMonthBtn" class="btn-icon ghost sm" title="翌月 (→)">
                             <i class="fa-solid fa-chevron-right"></i>
                         </button>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-7 gap-1 text-center mb-2">
-                    <div class="text-xs font-semibold text-rose-500 py-1">日</div>
-                    <div class="text-xs font-semibold text-slate-500 py-1">月</div>
-                    <div class="text-xs font-semibold text-slate-500 py-1">火</div>
-                    <div class="text-xs font-semibold text-slate-500 py-1">水</div>
-                    <div class="text-xs font-semibold text-slate-500 py-1">木</div>
-                    <div class="text-xs font-semibold text-slate-500 py-1">金</div>
-                    <div class="text-xs font-semibold text-indigo-500 py-1">土</div>
+                <div class="grid grid-cols-7 gap-1.5 sm:gap-2">
+                    <div class="cal-weekday sun">日</div>
+                    <div class="cal-weekday">月</div>
+                    <div class="cal-weekday">火</div>
+                    <div class="cal-weekday">水</div>
+                    <div class="cal-weekday">木</div>
+                    <div class="cal-weekday">金</div>
+                    <div class="cal-weekday sat">土</div>
                 </div>
 
                 <div id="calendarGrid" class="grid grid-cols-7 gap-1.5 sm:gap-2"></div>
 
                 <!-- ヒートマップ凡例 (カレンダーのセル色と一致させる) -->
-                <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between gap-2 text-xs text-slate-400">
-                    <span>月合計 <strong id="calendarMonthTotal" class="text-slate-700 tabular-nums">0時間 0分</strong></span>
-                    <span class="flex items-center gap-2">
-                        <span>少ない</span>
-                        <span class="w-3 h-3 rounded-sm bg-slate-50 border border-slate-200 inline-block" title="記録なし"></span>
-                        <span class="w-3 h-3 rounded-sm bg-indigo-50 border border-indigo-100 inline-block" title="30分未満"></span>
-                        <span class="w-3 h-3 rounded-sm bg-indigo-100 inline-block" title="30分〜1時間30分"></span>
-                        <span class="w-3 h-3 rounded-sm bg-indigo-300 inline-block" title="1時間30分〜3時間"></span>
-                        <span class="w-3 h-3 rounded-sm bg-indigo-600 inline-block" title="3時間以上"></span>
-                        <span>多い</span>
+                <div class="mt-4 pt-3.5 flex items-center justify-between gap-2 meta px-1" style="border-top: 1px solid var(--hairline)">
+                    <span>月合計 <strong id="calendarMonthTotal" class="tabular-nums">0時間 0分</strong></span>
+                    <span class="flex items-center gap-1.5">
+                        <span class="mr-0.5">少</span>
+                        <span class="legend-swatch heat-0" title="記録なし"></span>
+                        <span class="legend-swatch heat-1" title="30分未満"></span>
+                        <span class="legend-swatch heat-2" title="30分〜1時間30分"></span>
+                        <span class="legend-swatch heat-3" title="1時間30分〜3時間"></span>
+                        <span class="legend-swatch heat-4" title="3時間以上"></span>
+                        <span class="ml-0.5">多</span>
                     </span>
                 </div>
             </div>
 
             <!-- 選択された日の学習ログ一覧 -->
-            <div class="lg:col-span-5 bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-100">
-                <div class="flex items-center justify-between mb-4">
+            <div class="lg:col-span-5 card p-5 sm:p-6">
+                <div class="flex items-start justify-between gap-3 mb-4">
                     <div>
-                        <h3 id="selectedDateTitle" class="text-base font-bold text-slate-800"></h3>
-                        <p id="selectedDateTotal" class="text-xs text-slate-500 mt-0.5">合計: 0時間 0分</p>
+                        <h3 id="selectedDateTitle" class="section-title"></h3>
+                        <p id="selectedDateTotal" class="meta mt-1 tabular-nums">合計: 0時間 0分</p>
                     </div>
-                    <button id="addRecordForSelectedDateBtn" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg transition-colors">+ この日に追加</button>
+                    <button id="addRecordForSelectedDateBtn" class="btn btn-soft btn-sm">
+                        <i class="fa-solid fa-plus text-[11px]"></i>追加
+                    </button>
                 </div>
-                <div id="dayLogsList" class="space-y-2.5"></div>
+                <div id="dayLogsList" class="flex flex-col gap-2"></div>
             </div>
         </section>
 
         <!-- ===== タブ3: 分析 ===== -->
-        <section data-tab-panel="stats" hidden class="tab-panel grid grid-cols-1 lg:grid-cols-2 gap-5 sm:gap-6 items-start" aria-label="分析">
+        <section data-tab-panel="stats" hidden class="tab-panel grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 items-start" aria-label="分析">
 
-            <div class="lg:col-span-2 grid grid-cols-2 gap-4">
+            <div class="lg:col-span-2 grid grid-cols-2 gap-3 sm:gap-4">
                 <!-- 表示中の月の累計時間 -->
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between">
+                <div class="card p-4 sm:p-5 flex flex-col justify-between">
                     <div>
-                        <p id="monthTotalLabel" class="text-xs font-semibold uppercase tracking-wider text-slate-400">今月の累計時間</p>
-                        <h2 id="monthTotalDisplay" class="text-xl sm:text-3xl font-bold text-slate-900 mt-1 tabular-nums">0時間 0分</h2>
+                        <p id="monthTotalLabel" class="eyebrow">今月の累計時間</p>
+                        <h2 id="monthTotalDisplay" class="stat-value mt-1.5" style="font-size: clamp(20px, 5.6vw, 30px)">0時間 0分</h2>
                     </div>
-                    <div class="mt-3 flex items-center text-xs text-slate-500">
-                        <i class="fa-regular fa-calendar-check text-emerald-500 mr-1.5 text-sm"></i>
-                        <span>学習日数: <strong id="monthStudyDays" class="text-slate-700">0</strong> 日</span>
+                    <div class="mt-3 flex items-center gap-1.5 meta">
+                        <i class="fa-regular fa-calendar-check" style="color: var(--success)"></i>
+                        <span>学習日数 <strong id="monthStudyDays" class="tabular-nums">0</strong> 日</span>
                     </div>
                 </div>
 
                 <!-- 連続学習記録 (ストリーク) -->
-                <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-100 flex flex-col justify-between">
+                <div class="card p-4 sm:p-5 flex flex-col justify-between">
                     <div>
-                        <p class="text-xs font-semibold uppercase tracking-wider text-slate-400">連続学習記録</p>
-                        <div class="flex items-baseline gap-2 mt-1">
-                            <h2 id="streakDisplay" class="text-xl sm:text-3xl font-bold text-slate-900 tabular-nums">0</h2>
-                            <span class="text-sm font-medium text-slate-600">日連続</span>
+                        <p class="eyebrow">連続学習記録</p>
+                        <div class="flex items-baseline gap-1.5 mt-1.5">
+                            <h2 id="streakDisplay" class="stat-value" style="font-size: clamp(20px, 5.6vw, 30px)">0</h2>
+                            <span class="text-sm font-semibold t2">日連続</span>
                         </div>
                     </div>
-                    <div class="mt-3 flex items-start text-xs text-slate-500">
-                        <i class="fa-solid fa-fire text-orange-500 mr-1.5 text-sm"></i>
+                    <div class="mt-3 flex items-start gap-1.5 meta">
+                        <i class="fa-solid fa-fire mt-0.5" style="color: #f97316"></i>
                         <span id="streakMessage">今日も学習して記録を伸ばそう！</span>
                     </div>
                 </div>
             </div>
 
             <!-- 直近7日間のグラフ -->
-            <div class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-100">
-                <div class="flex items-start justify-between mb-4 gap-3">
-                    <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
-                        <i class="fa-solid fa-chart-column text-indigo-500"></i>
-                        直近7日間
-                    </h3>
-                    <div class="text-right text-xs text-slate-500 leading-5">
-                        <div>合計 <strong id="weekTotal" class="text-slate-800 tabular-nums">0時間 0分</strong></div>
-                        <div>1日平均 <strong id="weekAverage" class="text-slate-800 tabular-nums">0時間 0分</strong></div>
+            <div class="card p-5 sm:p-6">
+                <div class="flex items-start justify-between mb-5 gap-3">
+                    <h3 class="section-title"><i class="fa-solid fa-chart-column"></i>直近7日間</h3>
+                    <div class="text-right meta leading-5">
+                        <div>合計 <strong id="weekTotal" class="tabular-nums">0時間 0分</strong></div>
+                        <div>1日平均 <strong id="weekAverage" class="tabular-nums">0時間 0分</strong></div>
                     </div>
                 </div>
                 <div class="flex">
-                    <div id="weekYAxis" class="relative w-8 flex-shrink-0 text-[10px] text-slate-400 tabular-nums" style="height: 150px"></div>
+                    <div id="weekYAxis" class="relative w-9 flex-shrink-0" style="height: 150px"></div>
                     <div class="relative flex-grow">
                         <div id="weekGrid" class="absolute inset-x-0 top-0 pointer-events-none" style="height: 150px"></div>
                         <div id="weekBars" class="relative flex gap-1"></div>
                     </div>
                 </div>
-                <div id="weekDetail" class="mt-3 pt-3 border-t border-slate-100 text-xs text-slate-500 min-h-[40px]"></div>
-                <div id="weekLegend" class="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-xs text-slate-600"></div>
+                <div id="weekDetail" class="mt-4 pt-3.5 text-xs t3 min-h-[40px]" style="border-top: 1px solid var(--hairline)"></div>
+                <div id="weekLegend" class="mt-3 flex flex-wrap gap-x-3.5 gap-y-1.5 text-xs t2"></div>
             </div>
 
             <!-- 科目別内訳 (表示中の月) -->
-            <div class="bg-white p-5 sm:p-6 rounded-2xl shadow-sm border border-slate-100">
-                <div class="flex items-center justify-between mb-4 gap-2">
-                    <h3 class="text-base font-bold text-slate-800 flex items-center gap-2">
-                        <i class="fa-solid fa-chart-pie text-indigo-500"></i>
-                        <span id="subjectStatsTitle">今月の科目別バランス</span>
-                    </h3>
-                    <div class="flex items-center">
-                        <button id="statsPrevMonthBtn" class="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 text-xs" title="前月"><i class="fa-solid fa-chevron-left"></i></button>
-                        <button id="statsNextMonthBtn" class="p-1.5 rounded-lg hover:bg-slate-100 text-slate-500 text-xs" title="翌月"><i class="fa-solid fa-chevron-right"></i></button>
+            <div class="card p-5 sm:p-6">
+                <div class="flex items-center justify-between mb-5 gap-2">
+                    <h3 class="section-title"><i class="fa-solid fa-chart-pie"></i><span id="subjectStatsTitle">今月の科目別バランス</span></h3>
+                    <div class="flex items-center gap-0.5">
+                        <button id="statsPrevMonthBtn" class="btn-icon ghost sm" title="前月"><i class="fa-solid fa-chevron-left text-[11px]"></i></button>
+                        <button id="statsNextMonthBtn" class="btn-icon ghost sm" title="翌月"><i class="fa-solid fa-chevron-right text-[11px]"></i></button>
                     </div>
                 </div>
-                <div id="subjectStatsContainer" class="space-y-3">
-                    <p class="text-sm text-slate-400 text-center py-4">まだ記録がありません</p>
+                <div id="subjectStatsContainer" class="flex flex-col gap-4">
+                    <p class="meta text-center py-4">まだ記録がありません</p>
                 </div>
             </div>
         </section>
 
         <!-- ===== タブ4: 設定 ===== -->
-        <section data-tab-panel="settings" hidden class="tab-panel max-w-xl mx-auto flex flex-col gap-5" aria-label="設定">
+        <section data-tab-panel="settings" hidden class="tab-panel max-w-xl mx-auto flex flex-col gap-6" aria-label="設定">
 
             <div>
-                <h3 class="px-1 mb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">学習</h3>
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden divide-y divide-slate-100">
-                    <button data-action="goal" class="settings-row w-full flex items-center justify-between gap-3 px-4 py-3.5 hover:bg-slate-100 text-left transition-colors">
-                        <span class="flex items-center gap-3 text-sm font-medium text-slate-800"><i class="fa-solid fa-bullseye w-5 text-center text-indigo-500"></i>1日の目標</span>
-                        <span class="flex items-center gap-2 text-sm text-slate-500"><span id="settingsGoalValue">2時間 0分</span><i class="fa-solid fa-chevron-right text-xs text-slate-400"></i></span>
+                <h3 class="settings-heading">学習</h3>
+                <div class="settings-group">
+                    <button data-action="goal" class="settings-row">
+                        <span class="settings-icon ic-indigo"><i class="fa-solid fa-bullseye"></i></span>
+                        <span class="settings-label">1日の目標</span>
+                        <span id="settingsGoalValue" class="settings-value">2時間 0分</span>
+                        <i class="fa-solid fa-chevron-right settings-chevron"></i>
                     </button>
-                    <button data-action="subjects" class="settings-row w-full flex items-center justify-between gap-3 px-4 py-3.5 hover:bg-slate-100 text-left transition-colors">
-                        <span class="flex items-center gap-3 text-sm font-medium text-slate-800"><i class="fa-solid fa-tags w-5 text-center text-indigo-500"></i>科目の管理</span>
-                        <span class="flex items-center gap-2 text-sm text-slate-500"><span id="settingsSubjectsValue">4科目</span><i class="fa-solid fa-chevron-right text-xs text-slate-400"></i></span>
+                    <button data-action="subjects" class="settings-row">
+                        <span class="settings-icon ic-orange"><i class="fa-solid fa-tags"></i></span>
+                        <span class="settings-label">科目の管理</span>
+                        <span id="settingsSubjectsValue" class="settings-value">4科目</span>
+                        <i class="fa-solid fa-chevron-right settings-chevron"></i>
                     </button>
-                    <button data-action="pomodoro" class="settings-row w-full flex items-center justify-between gap-3 px-4 py-3.5 hover:bg-slate-100 text-left transition-colors">
-                        <span class="flex items-center gap-3 text-sm font-medium text-slate-800"><i class="fa-solid fa-clock w-5 text-center text-indigo-500"></i>ポモドーロ設定</span>
-                        <span class="flex items-center gap-2 text-sm text-slate-500"><span id="settingsPomodoroValue">25分 / 5分</span><i class="fa-solid fa-chevron-right text-xs text-slate-400"></i></span>
+                    <button data-action="pomodoro" class="settings-row">
+                        <span class="settings-icon ic-rose"><i class="fa-solid fa-clock"></i></span>
+                        <span class="settings-label">ポモドーロ設定</span>
+                        <span id="settingsPomodoroValue" class="settings-value">25分 / 5分</span>
+                        <i class="fa-solid fa-chevron-right settings-chevron"></i>
                     </button>
                 </div>
             </div>
 
             <div>
-                <h3 class="px-1 mb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">表示</h3>
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 px-4 py-3.5">
-                    <div class="flex items-center justify-between gap-3">
-                        <span class="flex items-center gap-3 text-sm font-medium text-slate-800"><i class="fa-solid fa-circle-half-stroke w-5 text-center text-indigo-500"></i>テーマ</span>
-                        <div class="flex bg-slate-100 p-1 rounded-lg text-xs font-semibold w-48" id="themeSwitcher">
-                            <button data-theme-choice="system" class="flex-1 py-1.5 rounded-md">自動</button>
-                            <button data-theme-choice="light" class="flex-1 py-1.5 rounded-md">ライト</button>
-                            <button data-theme-choice="dark" class="flex-1 py-1.5 rounded-md">ダーク</button>
+                <h3 class="settings-heading">表示</h3>
+                <div class="settings-group">
+                    <div class="settings-row">
+                        <span class="settings-icon ic-slate"><i class="fa-solid fa-circle-half-stroke"></i></span>
+                        <span class="settings-label">テーマ</span>
+                        <div class="segmented sm w-44 sm:w-52" id="themeSwitcher">
+                            <button data-theme-choice="system" class="seg-item">自動</button>
+                            <button data-theme-choice="light" class="seg-item">ライト</button>
+                            <button data-theme-choice="dark" class="seg-item">ダーク</button>
                         </div>
                     </div>
                 </div>
             </div>
 
             <div>
-                <h3 class="px-1 mb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">データ</h3>
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden divide-y divide-slate-100">
-                    <button data-action="export" class="settings-row w-full flex items-center justify-between gap-3 px-4 py-3.5 hover:bg-slate-100 text-left transition-colors">
-                        <span class="flex items-center gap-3 text-sm font-medium text-slate-800"><i class="fa-solid fa-download w-5 text-center text-indigo-500"></i>データを書き出す (バックアップ)</span>
-                        <i class="fa-solid fa-chevron-right text-xs text-slate-400"></i>
+                <h3 class="settings-heading">データ</h3>
+                <div class="settings-group">
+                    <button data-action="export" class="settings-row">
+                        <span class="settings-icon ic-green"><i class="fa-solid fa-arrow-down"></i></span>
+                        <span class="settings-label">データを書き出す</span>
+                        <span class="settings-value">バックアップ</span>
+                        <i class="fa-solid fa-chevron-right settings-chevron"></i>
                     </button>
-                    <button data-action="import" class="settings-row w-full flex items-center justify-between gap-3 px-4 py-3.5 hover:bg-slate-100 text-left transition-colors">
-                        <span class="flex items-center gap-3 text-sm font-medium text-slate-800"><i class="fa-solid fa-upload w-5 text-center text-indigo-500"></i>データを読み込む (復元)</span>
-                        <i class="fa-solid fa-chevron-right text-xs text-slate-400"></i>
+                    <button data-action="import" class="settings-row">
+                        <span class="settings-icon ic-sky"><i class="fa-solid fa-arrow-up"></i></span>
+                        <span class="settings-label">データを読み込む</span>
+                        <span class="settings-value">復元</span>
+                        <i class="fa-solid fa-chevron-right settings-chevron"></i>
                     </button>
                 </div>
-                <p class="px-1 mt-2 text-xs text-slate-500 leading-relaxed">記録はこの端末のブラウザ内だけに保存されています。機種変更やブラウザのデータ削除に備えて、ときどき書き出しておくと安心です。</p>
+                <p class="settings-note">記録はこの端末のブラウザ内だけに保存されています。機種変更やブラウザのデータ削除に備えて、ときどき書き出しておくと安心です。</p>
                 <input type="file" id="importFileInput" accept="application/json,.json" class="hidden">
             </div>
 
             <div>
-                <h3 class="px-1 mb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">その他</h3>
-                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden divide-y divide-slate-100">
-                    <button data-action="shortcuts" class="settings-row w-full flex items-center justify-between gap-3 px-4 py-3.5 hover:bg-slate-100 text-left transition-colors">
-                        <span class="flex items-center gap-3 text-sm font-medium text-slate-800"><i class="fa-regular fa-keyboard w-5 text-center text-indigo-500"></i>キーボードショートカット</span>
-                        <i class="fa-solid fa-chevron-right text-xs text-slate-400"></i>
+                <h3 class="settings-heading">その他</h3>
+                <div class="settings-group">
+                    <button data-action="shortcuts" class="settings-row">
+                        <span class="settings-icon ic-violet"><i class="fa-regular fa-keyboard"></i></span>
+                        <span class="settings-label">キーボードショートカット</span>
+                        <i class="fa-solid fa-chevron-right settings-chevron"></i>
                     </button>
                 </div>
             </div>
         </section>
     </main>
 
-    <!-- 下部タブバー -->
-    <nav id="tabBar" class="fixed bottom-0 inset-x-0 bg-white border-t border-slate-200 z-30" style="padding-bottom: env(safe-area-inset-bottom)" aria-label="画面の切り替え">
-        <div class="max-w-xl mx-auto grid grid-cols-4">
-            <button type="button" data-tab="timer" class="tab-btn h-16 flex flex-col items-center justify-center gap-1">
-                <span class="relative">
-                    <i class="fa-solid fa-stopwatch text-lg"></i>
-                    <span id="tabTimerDot" class="hidden absolute -top-0.5 -right-1.5 w-2 h-2 rounded-full bg-rose-500"></span>
+    <!-- 下部タブバー (すりガラス) -->
+    <nav id="tabBar" class="glass fixed bottom-0 inset-x-0 z-30" style="padding-bottom: env(safe-area-inset-bottom)" aria-label="画面の切り替え">
+        <div class="max-w-xl mx-auto grid grid-cols-4 px-2">
+            <button type="button" data-tab="timer" class="tab-btn">
+                <span class="tab-icon">
+                    <i class="fa-solid fa-stopwatch"></i>
+                    <span id="tabTimerDot" class="hidden bg-rose-500"></span>
                 </span>
-                <span id="tabTimerLabel" class="text-[11px] font-semibold tabular-nums">タイマー</span>
+                <span id="tabTimerLabel" class="tab-label">タイマー</span>
             </button>
-            <button type="button" data-tab="records" class="tab-btn h-16 flex flex-col items-center justify-center gap-1">
-                <i class="fa-solid fa-calendar-days text-lg"></i>
-                <span class="text-[11px] font-semibold">記録</span>
+            <button type="button" data-tab="records" class="tab-btn">
+                <span class="tab-icon"><i class="fa-solid fa-calendar-days"></i></span>
+                <span class="tab-label">記録</span>
             </button>
-            <button type="button" data-tab="stats" class="tab-btn h-16 flex flex-col items-center justify-center gap-1">
-                <i class="fa-solid fa-chart-column text-lg"></i>
-                <span class="text-[11px] font-semibold">分析</span>
+            <button type="button" data-tab="stats" class="tab-btn">
+                <span class="tab-icon"><i class="fa-solid fa-chart-simple"></i></span>
+                <span class="tab-label">分析</span>
             </button>
-            <button type="button" data-tab="settings" class="tab-btn h-16 flex flex-col items-center justify-center gap-1">
-                <i class="fa-solid fa-gear text-lg"></i>
-                <span class="text-[11px] font-semibold">設定</span>
+            <button type="button" data-tab="settings" class="tab-btn">
+                <span class="tab-icon"><i class="fa-solid fa-gear"></i></span>
+                <span class="tab-label">設定</span>
             </button>
         </div>
     </nav>
 
     <!-- モーダル1: 手動記録 / 記録の編集 -->
-    <div id="manualModal" class="modal fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl">
-            <div class="flex justify-between items-center mb-4">
-                <h3 id="manualModalTitle" class="text-lg font-bold text-slate-900">勉強時間を手動で記録</h3>
-                <button class="closeModalBtn text-slate-400 hover:text-slate-600 p-1" title="閉じる">
-                    <i class="fa-solid fa-xmark text-lg"></i>
-                </button>
+    <div id="manualModal" class="modal fixed inset-0 z-50 hidden items-center justify-center p-4">
+        <div class="modal-panel max-w-md">
+            <div class="flex justify-between items-center mb-5">
+                <h3 id="manualModalTitle" class="modal-title">勉強時間を手動で記録</h3>
+                <button class="closeModalBtn btn-icon ghost sm" title="閉じる"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <form id="manualRecordForm" class="space-y-4">
                 <div>
-                    <label for="manualDateInput" class="block text-xs font-semibold text-slate-600 mb-1">日付</label>
-                    <input type="date" id="manualDateInput" required class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                    <label for="manualDateInput" class="label">日付</label>
+                    <input type="date" id="manualDateInput" required class="field">
                 </div>
                 <div>
-                    <label for="manualSubjectSelect" class="block text-xs font-semibold text-slate-600 mb-1">科目</label>
-                    <select id="manualSubjectSelect" required class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm focus:ring-indigo-500 focus:border-indigo-500"></select>
+                    <label for="manualSubjectSelect" class="label">科目</label>
+                    <select id="manualSubjectSelect" required class="field"></select>
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">勉強時間</label>
+                    <label class="label">勉強時間</label>
                     <div class="grid grid-cols-2 gap-3">
-                        <div class="relative">
-                            <input type="number" id="manualHoursInput" min="0" max="24" value="1" required inputmode="numeric" aria-label="時間" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 pr-10 text-sm focus:ring-indigo-500 focus:border-indigo-500">
-                            <span class="absolute right-3 top-2.5 text-sm text-slate-400">時間</span>
+                        <div class="field-wrap">
+                            <input type="number" id="manualHoursInput" min="0" max="24" value="1" required inputmode="numeric" aria-label="時間" class="field pr-12">
+                            <span class="suffix">時間</span>
                         </div>
-                        <div class="relative">
-                            <input type="number" id="manualMinutesInput" min="0" max="59" value="0" required inputmode="numeric" aria-label="分" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 pr-8 text-sm focus:ring-indigo-500 focus:border-indigo-500">
-                            <span class="absolute right-3 top-2.5 text-sm text-slate-400">分</span>
+                        <div class="field-wrap">
+                            <input type="number" id="manualMinutesInput" min="0" max="59" value="0" required inputmode="numeric" aria-label="分" class="field pr-10">
+                            <span class="suffix">分</span>
                         </div>
                     </div>
                 </div>
                 <div>
-                    <label for="manualMemoInput" class="block text-xs font-semibold text-slate-600 mb-1">メモ (任意)</label>
-                    <input type="text" id="manualMemoInput" maxlength="100" placeholder="例: 英単語帳 P.10〜30" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                    <label for="manualMemoInput" class="label">メモ <span class="t3 font-normal">(任意)</span></label>
+                    <input type="text" id="manualMemoInput" maxlength="100" placeholder="例: 英単語帳 P.10〜30" class="field">
                 </div>
                 <div class="pt-2 flex justify-end gap-2">
-                    <button type="button" class="closeModalBtn px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-xl">キャンセル</button>
-                    <button type="submit" id="manualSubmitBtn" class="px-5 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-sm">保存する</button>
+                    <button type="button" class="closeModalBtn btn btn-ghost">キャンセル</button>
+                    <button type="submit" id="manualSubmitBtn" class="btn btn-primary">保存する</button>
                 </div>
             </form>
         </div>
     </div>
 
     <!-- モーダル2: 科目追加 -->
-    <div id="subjectModal" class="modal fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-bold text-slate-900">新しい科目を追加</h3>
-                <button class="closeModalBtn text-slate-400 hover:text-slate-600 p-1" title="閉じる">
-                    <i class="fa-solid fa-xmark text-lg"></i>
-                </button>
+    <div id="subjectModal" class="modal fixed inset-0 z-50 hidden items-center justify-center p-4">
+        <div class="modal-panel max-w-sm">
+            <div class="flex justify-between items-center mb-5">
+                <h3 class="modal-title">新しい科目を追加</h3>
+                <button class="closeModalBtn btn-icon ghost sm" title="閉じる"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            <form id="addSubjectForm" class="space-y-4">
+            <form id="addSubjectForm" class="space-y-5">
                 <div>
-                    <label for="newSubjectName" class="block text-xs font-semibold text-slate-600 mb-1">科目名</label>
-                    <input type="text" id="newSubjectName" required maxlength="30" placeholder="例: プログラミング、資格勉強" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-sm focus:ring-indigo-500 focus:border-indigo-500">
+                    <label for="newSubjectName" class="label">科目名</label>
+                    <input type="text" id="newSubjectName" required maxlength="30" placeholder="例: プログラミング、資格勉強" class="field">
                 </div>
                 <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-2">カラー選択</label>
-                    <div class="flex gap-2.5" id="colorPickerContainer"></div>
+                    <label class="label">カラー</label>
+                    <div class="flex gap-3 pt-1" id="colorPickerContainer"></div>
                 </div>
-                <div class="pt-2 flex justify-end gap-2">
-                    <button type="button" class="closeModalBtn px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-xl">キャンセル</button>
-                    <button type="submit" class="px-5 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-sm">追加する</button>
+                <div class="pt-1 flex justify-end gap-2">
+                    <button type="button" class="closeModalBtn btn btn-ghost">キャンセル</button>
+                    <button type="submit" class="btn btn-primary">追加する</button>
                 </div>
             </form>
         </div>
     </div>
 
     <!-- モーダル3: 目標設定 -->
-    <div id="goalModal" class="modal fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-bold text-slate-900">1日の目標勉強時間</h3>
-                <button class="closeModalBtn text-slate-400 hover:text-slate-600 p-1" title="閉じる">
-                    <i class="fa-solid fa-xmark text-lg"></i>
-                </button>
+    <div id="goalModal" class="modal fixed inset-0 z-50 hidden items-center justify-center p-4">
+        <div class="modal-panel max-w-sm">
+            <div class="flex justify-between items-center mb-2">
+                <h3 class="modal-title">1日の目標勉強時間</h3>
+                <button class="closeModalBtn btn-icon ghost sm" title="閉じる"><i class="fa-solid fa-xmark"></i></button>
             </div>
+            <p class="modal-desc mb-5">毎日の達成率の計算に使います。</p>
             <form id="goalForm" class="space-y-4">
                 <div class="grid grid-cols-2 gap-3">
-                    <div class="relative">
-                        <input type="number" id="goalHoursInput" min="0" max="24" required inputmode="numeric" aria-label="時間" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 pr-10 text-sm focus:ring-indigo-500 focus:border-indigo-500">
-                        <span class="absolute right-3 top-2.5 text-sm text-slate-400">時間</span>
+                    <div class="field-wrap">
+                        <input type="number" id="goalHoursInput" min="0" max="24" required inputmode="numeric" aria-label="時間" class="field pr-12">
+                        <span class="suffix">時間</span>
                     </div>
-                    <div class="relative">
-                        <input type="number" id="goalMinutesInput" min="0" max="59" required inputmode="numeric" aria-label="分" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 pr-8 text-sm focus:ring-indigo-500 focus:border-indigo-500">
-                        <span class="absolute right-3 top-2.5 text-sm text-slate-400">分</span>
+                    <div class="field-wrap">
+                        <input type="number" id="goalMinutesInput" min="0" max="59" required inputmode="numeric" aria-label="分" class="field pr-10">
+                        <span class="suffix">分</span>
                     </div>
                 </div>
                 <div class="pt-2 flex justify-end gap-2">
-                    <button type="button" class="closeModalBtn px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-xl">キャンセル</button>
-                    <button type="submit" class="px-5 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-sm">設定を保存</button>
+                    <button type="button" class="closeModalBtn btn btn-ghost">キャンセル</button>
+                    <button type="submit" class="btn btn-primary">設定を保存</button>
                 </div>
             </form>
         </div>
     </div>
 
     <!-- モーダル4: 科目の管理 -->
-    <div id="manageSubjectsModal" class="modal fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl max-h-[90vh] flex flex-col">
-            <div class="flex justify-between items-center mb-1">
-                <h3 class="text-lg font-bold text-slate-900">科目の管理</h3>
-                <button class="closeModalBtn text-slate-400 hover:text-slate-600 p-1" title="閉じる">
-                    <i class="fa-solid fa-xmark text-lg"></i>
-                </button>
+    <div id="manageSubjectsModal" class="modal fixed inset-0 z-50 hidden items-center justify-center p-4">
+        <div class="modal-panel max-w-md max-h-[90vh] flex flex-col">
+            <div class="flex justify-between items-center mb-1.5">
+                <h3 class="modal-title">科目の管理</h3>
+                <button class="closeModalBtn btn-icon ghost sm" title="閉じる"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            <p class="text-xs text-slate-500 mb-4">名前と色は変更するとすぐ保存されます。記録がある科目を削除しても、過去の記録は残ります。</p>
-            <div id="manageSubjectsList" class="space-y-3 overflow-y-auto pr-1 flex-grow"></div>
-            <div id="archivedSubjectsSection" class="hidden mt-4 pt-3 border-t border-slate-100">
-                <p class="text-xs font-semibold text-slate-500 mb-2">削除した科目</p>
-                <div id="archivedSubjectsList" class="space-y-2"></div>
+            <p class="modal-desc mb-4">名前と色は変更するとすぐ保存されます。記録がある科目を削除しても、過去の記録は残ります。</p>
+            <div id="manageSubjectsList" class="flex flex-col gap-2.5 overflow-y-auto pr-1 -mr-1 flex-grow"></div>
+            <div id="archivedSubjectsSection" class="hidden mt-4 pt-3.5" style="border-top: 1px solid var(--hairline)">
+                <p class="eyebrow mb-2">削除した科目</p>
+                <div id="archivedSubjectsList" class="flex flex-col gap-1.5"></div>
             </div>
             <div class="pt-4 flex justify-between gap-2">
-                <button type="button" id="manageAddSubjectBtn" class="px-4 py-2 text-sm font-medium text-indigo-600 hover:bg-indigo-50 rounded-xl"><i class="fa-solid fa-plus mr-1"></i>科目を追加</button>
-                <button type="button" class="closeModalBtn px-5 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-sm">完了</button>
+                <button type="button" id="manageAddSubjectBtn" class="btn btn-soft"><i class="fa-solid fa-plus text-xs"></i>科目を追加</button>
+                <button type="button" class="closeModalBtn btn btn-primary">完了</button>
             </div>
         </div>
     </div>
 
     <!-- モーダル5: ポモドーロ設定 -->
-    <div id="pomodoroModal" class="modal fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-bold text-slate-900">ポモドーロ設定</h3>
-                <button class="closeModalBtn text-slate-400 hover:text-slate-600 p-1" title="閉じる">
-                    <i class="fa-solid fa-xmark text-lg"></i>
-                </button>
+    <div id="pomodoroModal" class="modal fixed inset-0 z-50 hidden items-center justify-center p-4">
+        <div class="modal-panel max-w-sm">
+            <div class="flex justify-between items-center mb-5">
+                <h3 class="modal-title">ポモドーロ設定</h3>
+                <button class="closeModalBtn btn-icon ghost sm" title="閉じる"><i class="fa-solid fa-xmark"></i></button>
             </div>
             <form id="pomodoroForm" class="space-y-4">
                 <div class="grid grid-cols-2 gap-3">
                     <div>
-                        <label for="pomoFocusInput" class="block text-xs font-semibold text-slate-600 mb-1">集中する時間</label>
-                        <div class="relative">
-                            <input type="number" id="pomoFocusInput" min="1" max="180" required inputmode="numeric" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 pr-8 text-sm">
-                            <span class="absolute right-3 top-2.5 text-sm text-slate-400">分</span>
+                        <label for="pomoFocusInput" class="label">集中する時間</label>
+                        <div class="field-wrap">
+                            <input type="number" id="pomoFocusInput" min="1" max="180" required inputmode="numeric" class="field pr-10">
+                            <span class="suffix">分</span>
                         </div>
                     </div>
                     <div>
-                        <label for="pomoShortInput" class="block text-xs font-semibold text-slate-600 mb-1">短い休憩</label>
-                        <div class="relative">
-                            <input type="number" id="pomoShortInput" min="1" max="60" required inputmode="numeric" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 pr-8 text-sm">
-                            <span class="absolute right-3 top-2.5 text-sm text-slate-400">分</span>
+                        <label for="pomoShortInput" class="label">短い休憩</label>
+                        <div class="field-wrap">
+                            <input type="number" id="pomoShortInput" min="1" max="60" required inputmode="numeric" class="field pr-10">
+                            <span class="suffix">分</span>
                         </div>
                     </div>
                     <div>
-                        <label for="pomoLongInput" class="block text-xs font-semibold text-slate-600 mb-1">長い休憩</label>
-                        <div class="relative">
-                            <input type="number" id="pomoLongInput" min="1" max="90" required inputmode="numeric" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 pr-8 text-sm">
-                            <span class="absolute right-3 top-2.5 text-sm text-slate-400">分</span>
+                        <label for="pomoLongInput" class="label">長い休憩</label>
+                        <div class="field-wrap">
+                            <input type="number" id="pomoLongInput" min="1" max="90" required inputmode="numeric" class="field pr-10">
+                            <span class="suffix">分</span>
                         </div>
                     </div>
                     <div>
-                        <label for="pomoEveryInput" class="block text-xs font-semibold text-slate-600 mb-1">長い休憩の間隔</label>
-                        <div class="relative">
-                            <input type="number" id="pomoEveryInput" min="1" max="10" required inputmode="numeric" class="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 pr-14 text-sm">
-                            <span class="absolute right-3 top-2.5 text-sm text-slate-400">回ごと</span>
+                        <label for="pomoEveryInput" class="label">長い休憩の間隔</label>
+                        <div class="field-wrap">
+                            <input type="number" id="pomoEveryInput" min="1" max="10" required inputmode="numeric" class="field pr-16">
+                            <span class="suffix">回ごと</span>
                         </div>
                     </div>
                 </div>
-                <label class="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                <label class="inset flex items-center gap-3 px-3.5 py-3 text-sm font-medium t1 cursor-pointer">
                     <input type="checkbox" id="pomoAutoBreakInput" class="w-4 h-4 rounded">
                     集中が終わったら休憩を自動で始める
                 </label>
-                <p class="text-xs text-slate-500 leading-relaxed">集中タイムが終わると、その時間は自動で記録されます。タブを閉じていなければ、終了時にブラウザの通知でもお知らせします。</p>
-                <div class="pt-2 flex justify-end gap-2">
-                    <button type="button" class="closeModalBtn px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-100 rounded-xl">キャンセル</button>
-                    <button type="submit" class="px-5 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-sm">設定を保存</button>
+                <p class="modal-desc">集中タイムが終わると、その時間は自動で記録されます。タブを閉じていなければ、終了時にブラウザの通知でもお知らせします。</p>
+                <div class="pt-1 flex justify-end gap-2">
+                    <button type="button" class="closeModalBtn btn btn-ghost">キャンセル</button>
+                    <button type="submit" class="btn btn-primary">設定を保存</button>
                 </div>
             </form>
         </div>
     </div>
 
     <!-- モーダル6: キーボードショートカット -->
-    <div id="shortcutsModal" class="modal fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-sm w-full p-6 shadow-xl">
+    <div id="shortcutsModal" class="modal fixed inset-0 z-50 hidden items-center justify-center p-4">
+        <div class="modal-panel max-w-sm">
             <div class="flex justify-between items-center mb-4">
-                <h3 class="text-lg font-bold text-slate-900">キーボードショートカット</h3>
-                <button class="closeModalBtn text-slate-400 hover:text-slate-600 p-1" title="閉じる">
-                    <i class="fa-solid fa-xmark text-lg"></i>
-                </button>
+                <h3 class="modal-title">キーボードショートカット</h3>
+                <button class="closeModalBtn btn-icon ghost sm" title="閉じる"><i class="fa-solid fa-xmark"></i></button>
             </div>
-            <dl class="text-sm text-slate-700 space-y-2.5">
-                <div class="flex justify-between"><dt>タイマーの開始 / 一時停止</dt><dd><kbd>Space</kbd></dd></div>
-                <div class="flex justify-between"><dt>完了して記録</dt><dd><kbd>S</kbd></dd></div>
-                <div class="flex justify-between"><dt>手動で記録</dt><dd><kbd>N</kbd></dd></div>
-                <div class="flex justify-between"><dt>前の月 / 次の月</dt><dd><kbd>←</kbd> <kbd>→</kbd></dd></div>
-                <div class="flex justify-between"><dt>今日の記録を表示</dt><dd><kbd>T</kbd></dd></div>
-                <div class="flex justify-between"><dt>タブの切り替え</dt><dd><kbd>1</kbd>〜<kbd>4</kbd></dd></div>
-                <div class="flex justify-between"><dt>この一覧を表示</dt><dd><kbd>?</kbd></dd></div>
-                <div class="flex justify-between"><dt>ダイアログを閉じる</dt><dd><kbd>Esc</kbd></dd></div>
+            <dl class="text-sm t2">
+                <div class="flex justify-between items-center py-2.5"><dt>タイマーの開始 / 一時停止</dt><dd><kbd>Space</kbd></dd></div>
+                <div class="flex justify-between items-center py-2.5" style="border-top: 1px solid var(--hairline)"><dt>完了して記録</dt><dd><kbd>S</kbd></dd></div>
+                <div class="flex justify-between items-center py-2.5" style="border-top: 1px solid var(--hairline)"><dt>手動で記録</dt><dd><kbd>N</kbd></dd></div>
+                <div class="flex justify-between items-center py-2.5" style="border-top: 1px solid var(--hairline)"><dt>前の月 / 次の月</dt><dd class="flex gap-1"><kbd>←</kbd><kbd>→</kbd></dd></div>
+                <div class="flex justify-between items-center py-2.5" style="border-top: 1px solid var(--hairline)"><dt>今日の記録を表示</dt><dd><kbd>T</kbd></dd></div>
+                <div class="flex justify-between items-center py-2.5" style="border-top: 1px solid var(--hairline)"><dt>タブの切り替え</dt><dd class="flex items-center gap-1"><kbd>1</kbd><span class="t3">〜</span><kbd>4</kbd></dd></div>
+                <div class="flex justify-between items-center py-2.5" style="border-top: 1px solid var(--hairline)"><dt>この一覧を表示</dt><dd><kbd>?</kbd></dd></div>
+                <div class="flex justify-between items-center py-2.5" style="border-top: 1px solid var(--hairline)"><dt>ダイアログを閉じる</dt><dd><kbd>Esc</kbd></dd></div>
             </dl>
         </div>
     </div>
@@ -828,10 +1219,10 @@
         function showToast(message, type = 'success', action = null) {
             const container = document.getElementById('toastContainer');
             const toast = document.createElement('div');
-            const bgColor = type === 'success' ? 'bg-slate-800' : (type === 'info' ? 'bg-indigo-600' : 'bg-rose-600');
-            const iconClass = type === 'success' ? 'fa-circle-check text-emerald-400' : 'fa-circle-info text-white';
+            const toastType = ['success', 'info', 'error'].includes(type) ? type : 'error';
+            const iconClass = { success: 'fa-circle-check', info: 'fa-circle-info', error: 'fa-circle-exclamation' }[toastType];
 
-            toast.className = `${bgColor} text-white px-4 py-3 rounded-xl shadow-lg flex items-center gap-3 text-sm font-medium transform transition-all duration-300 translate-y-2 opacity-0 pointer-events-auto max-w-full`;
+            toast.className = `toast toast-${toastType} transform transition-all duration-300 translate-y-2 opacity-0 pointer-events-auto max-w-full`;
             toast.setAttribute('role', 'status');
 
             const icon = document.createElement('i');
@@ -848,7 +1239,7 @@
             if (action) {
                 const btn = document.createElement('button');
                 btn.type = 'button';
-                btn.className = 'ml-2 underline font-bold text-amber-300 hover:text-amber-200 whitespace-nowrap';
+                btn.className = 'toast-action';
                 btn.textContent = action.label;
                 btn.addEventListener('click', () => {
                     action.onClick();
@@ -1136,10 +1527,10 @@
         function applyTheme() {
             const dark = state.themePref === 'dark' || (state.themePref === 'system' && darkMedia.matches);
             document.documentElement.classList.toggle('dark', dark);
-            document.querySelector('meta[name="theme-color"]').setAttribute('content', dark ? '#1e293b' : '#4f46e5');
+            document.querySelector('meta[name="theme-color"]').setAttribute('content', dark ? '#08090d' : '#f5f6f8');
             document.querySelectorAll('[data-theme-choice]').forEach(btn => {
                 const active = btn.dataset.themeChoice === state.themePref;
-                btn.className = `flex-1 py-1.5 rounded-md ${active ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-600 hover:text-slate-900'}`;
+                btn.className = `seg-item${active ? ' is-active' : ''}`;
                 btn.setAttribute('aria-pressed', active ? 'true' : 'false');
             });
         }
@@ -1219,19 +1610,19 @@
             const elapsed = getElapsedSeconds();
             const onBreak = isBreak();
 
-            startPauseBtn.classList.remove('bg-amber-500', 'hover:bg-amber-600', 'bg-indigo-600', 'hover:bg-indigo-700');
+            startPauseBtn.classList.toggle('is-running', t.isRunning);
+            const stage = document.getElementById('timerStage');
+            stage.classList.toggle('is-running', t.isRunning);
+            stage.classList.toggle('is-break', onBreak);
 
             if (t.isRunning) {
                 startPauseBtn.innerHTML = '<i class="fa-solid fa-pause"></i><span>一時停止</span>';
-                startPauseBtn.classList.add('bg-amber-500', 'hover:bg-amber-600');
-                subtextEl.textContent = onBreak ? 'ひと休みしましょう ☕' : '集中して計測中...';
+                subtextEl.textContent = onBreak ? 'ひと休みしましょう' : '計測中';
             } else if (elapsed > 0) {
                 startPauseBtn.innerHTML = '<i class="fa-solid fa-play"></i><span>再開</span>';
-                startPauseBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
                 subtextEl.textContent = '一時停止中';
             } else {
                 startPauseBtn.innerHTML = `<i class="fa-solid fa-play"></i><span>${onBreak ? '休憩を開始' : 'スタート'}</span>`;
-                startPauseBtn.classList.add('bg-indigo-600', 'hover:bg-indigo-700');
                 subtextEl.textContent = onBreak ? '休憩を始めましょう' : '計測を開始してください';
             }
 
@@ -1262,22 +1653,22 @@
             }
             badge.classList.remove('hidden');
             gear.classList.remove('hidden');
-            badge.classList.remove('bg-rose-100', 'text-rose-600', 'bg-emerald-100', 'text-emerald-700');
+            badge.classList.remove('chip-focus', 'chip-break');
             if (t.phase === 'focus') {
                 const setNo = (t.completedFocus % p.longBreakEvery) + 1;
                 badge.textContent = `集中タイム ${setNo}/${p.longBreakEvery}`;
-                badge.classList.add('bg-rose-100', 'text-rose-600');
+                badge.classList.add('chip-focus');
             } else {
                 badge.textContent = t.breakKind === 'long' ? `長い休憩 (${p.longBreakMin}分)` : `休憩 (${p.shortBreakMin}分)`;
-                badge.classList.add('bg-emerald-100', 'text-emerald-700');
+                badge.classList.add('chip-break');
             }
         }
 
         function updateModeTabs() {
             const swBtn = document.getElementById('modeStopwatchBtn');
             const pomoBtn = document.getElementById('modePomodoroBtn');
-            const active = 'flex-1 py-2 px-1 text-[13px] sm:text-sm whitespace-nowrap font-semibold rounded-lg bg-white text-indigo-600 shadow-sm transition-all';
-            const inactive = 'flex-1 py-2 px-1 text-[13px] sm:text-sm whitespace-nowrap font-semibold rounded-lg text-slate-600 hover:text-slate-900 transition-all';
+            const active = 'seg-item is-active';
+            const inactive = 'seg-item';
             const isSw = state.timer.mode === 'stopwatch';
             swBtn.className = isSw ? active : inactive;
             pomoBtn.className = isSw ? inactive : active;
@@ -1627,38 +2018,38 @@
             const scaleHours = Math.max(1, Math.ceil(maxSec / 3600));
             const scaleSec = scaleHours * 3600;
             const plotH = 130; // 棒の最大の高さ(px)
-            const labelH = 20;
 
             // Y軸とグリッド線 (0, 半分, 最大)
             const ticks = [0, scaleSec / 2, scaleSec];
             document.getElementById('weekYAxis').innerHTML = ticks.map(sec => {
                 const y = plotH - (sec / scaleSec) * plotH;
                 const label = sec === 0 ? '0' : formatSecondsToShort(sec);
-                return `<span class="absolute right-1.5 -translate-y-1/2" style="top:${y}px">${label}</span>`;
+                return `<span class="axis-label" style="top:${y}px">${label}</span>`;
             }).join('');
             document.getElementById('weekGrid').innerHTML = ticks.map(sec => {
                 const y = plotH - (sec / scaleSec) * plotH;
-                return `<div class="grid-line absolute inset-x-0 border-t ${sec === 0 ? 'border-slate-200' : 'border-dashed border-slate-100'}" style="top:${y}px"></div>`;
+                return `<div class="grid-line${sec === 0 ? ' base' : ''}" style="top:${y}px"></div>`;
             }).join('');
 
-            // 棒
+            // 棒 (科目ごとに積み上げ。セグメントの間は 2px の隙間)
             const barsEl = document.getElementById('weekBars');
             barsEl.innerHTML = data.map(d => {
                 const isToday = d.date === todayStr;
                 const isSelected = d.date === state.selectedDateStr;
                 const segs = d.breakdown.map(b => {
                     const h = Math.max(2, (b.seconds / scaleSec) * plotH - 2);
-                    return `<div class="week-seg w-full" style="height:${h}px;background-color:${safeColor(b.subject.color)}"></div>`;
+                    return `<div class="week-seg" style="height:${h}px;background-color:${safeColor(b.subject.color)}"></div>`;
                 }).join('');
                 const aria = `${formatDayLabel(d.date)} 合計 ${formatSecondsToHoursMinutes(d.total)}`
                     + d.breakdown.map(b => `、${b.subject.name} ${formatSecondsToHoursMinutes(b.seconds)}`).join('');
+                const date = parseISODate(d.date);
                 return `
                     <button type="button" class="week-col flex-1 min-w-0 flex flex-col items-center" data-date="${d.date}" aria-pressed="${isSelected}" aria-label="${escapeHTML(aria)}">
-                        <div class="week-col-bg w-full rounded-lg flex flex-col justify-end items-center transition-colors" style="height:${plotH}px">
-                            <div class="flex flex-col-reverse gap-[2px] w-3/5 max-w-[28px]">${segs}</div>
+                        <div class="week-col-bg w-full flex flex-col justify-end items-center" style="height:${plotH}px">
+                            <div class="flex flex-col-reverse gap-[2px] w-[56%] max-w-[26px]">${segs}</div>
                         </div>
-                        <span class="mt-1 text-[10px] sm:text-xs leading-4 tabular-nums ${isToday ? 'font-bold text-indigo-600' : 'text-slate-500'}" style="height:${labelH - 4}px">
-                            ${parseISODate(d.date).getDate()}<span class="hidden sm:inline">(${WEEKDAYS[parseISODate(d.date).getDay()]})</span>
+                        <span class="week-day mt-1.5 leading-4${isToday ? ' is-today' : ''}">
+                            ${date.getDate()}<span class="hidden sm:inline">(${WEEKDAYS[date.getDay()]})</span>
                         </span>
                     </button>
                 `;
@@ -1672,11 +2063,9 @@
             data.forEach(d => d.breakdown.forEach(b => shown.set(b.subject.id, b.subject)));
             const order = state.subjects.map(s => s.id);
             const legendItems = [...shown.values()].sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
-            document.getElementById('weekLegend').innerHTML = legendItems.length === 0
-                ? ''
-                : legendItems.map(s => `
-                    <span class="flex items-center gap-1.5"><span class="w-2.5 h-2.5 rounded-sm inline-block" style="background-color:${safeColor(s.color)}"></span>${escapeHTML(s.name)}</span>
-                `).join('');
+            document.getElementById('weekLegend').innerHTML = legendItems.map(s => `
+                <span class="inline-flex items-center gap-1.5"><span class="legend-dot" style="background-color:${safeColor(s.color)}"></span>${escapeHTML(s.name)}</span>
+            `).join('');
         }
 
         function renderWeekDetail(data, todayStr) {
@@ -1687,21 +2076,21 @@
             const d = data.find(x => x.date === target);
 
             if (data.every(x => x.total === 0)) {
-                el.innerHTML = '<p class="text-center text-slate-400 py-2">この7日間の記録はまだありません</p>';
+                el.innerHTML = '<p class="text-center py-2">この7日間の記録はまだありません</p>';
                 return;
             }
             const items = d.breakdown.length === 0
-                ? '<span class="text-slate-400">記録なし</span>'
+                ? '<span>記録なし</span>'
                 : d.breakdown.map(b => `
-                    <span class="inline-flex items-center gap-1.5 mr-3"><span class="w-2 h-2 rounded-full inline-block" style="background-color:${safeColor(b.subject.color)}"></span><span class="text-slate-700">${escapeHTML(b.subject.name)}</span> <span class="tabular-nums">${formatSecondsToShort(b.seconds)}</span></span>
+                    <span class="inline-flex items-center gap-1.5 mr-3.5"><span class="legend-dot" style="background-color:${safeColor(b.subject.color)}"></span><span class="t2">${escapeHTML(b.subject.name)}</span><span class="tabular-nums t1 font-semibold">${formatSecondsToShort(b.seconds)}</span></span>
                 `).join('');
             el.innerHTML = `
-                <div class="flex items-baseline justify-between gap-2 mb-1">
-                    <span class="font-semibold text-slate-700">${formatDayLabel(d.date)}${d.date === todayStr ? ' 今日' : ''}</span>
-                    <span class="tabular-nums text-slate-700 font-semibold">${formatSecondsToHoursMinutes(d.total)}</span>
+                <div class="flex items-baseline justify-between gap-2 mb-1.5">
+                    <span class="font-semibold t1 text-[13px]">${formatDayLabel(d.date)}${d.date === todayStr ? '<span class="chip chip-accent ml-2" style="height:18px;padding:0 7px;font-size:10.5px">今日</span>' : ''}</span>
+                    <span class="tabular-nums t1 font-semibold text-[13px]">${formatSecondsToHoursMinutes(d.total)}</span>
                 </div>
                 <div class="leading-6">${items}</div>
-                ${d.breakdown.length > 0 ? `<button type="button" data-goto="records" class="mt-1 text-indigo-600 hover:text-indigo-800 font-semibold">この日の記録を見る <i class="fa-solid fa-arrow-right text-[10px]"></i></button>` : ''}
+                ${d.breakdown.length > 0 ? `<button type="button" data-goto="records" class="link-accent mt-2 text-xs">この日の記録を見る <i class="fa-solid fa-arrow-right"></i></button>` : ''}
             `;
         }
 
@@ -1715,7 +2104,7 @@
                 : `${state.currentYear}年${state.currentMonth + 1}月の科目別バランス`;
 
             if (monthLogs.length === 0) {
-                container.innerHTML = '<p class="text-sm text-slate-400 text-center py-4">この月の学習記録はまだありません</p>';
+                container.innerHTML = '<div class="empty-state"><i class="fa-regular fa-chart-bar"></i>この月の学習記録はまだありません</div>';
                 return;
             }
 
@@ -1731,15 +2120,15 @@
 
             container.innerHTML = sortedSubjects.map(item => `
                 <div>
-                    <div class="flex justify-between text-xs font-medium mb-1">
-                        <span class="flex items-center gap-1.5 text-slate-700">
-                            <span class="w-2.5 h-2.5 rounded-full inline-block" style="background-color: ${safeColor(item.color)}"></span>
-                            ${escapeHTML(item.name)}
+                    <div class="flex justify-between items-baseline gap-3 mb-2">
+                        <span class="flex items-center gap-2 text-[13px] font-medium t1 min-w-0">
+                            <span class="legend-dot" style="background-color: ${safeColor(item.color)}"></span>
+                            <span class="truncate">${escapeHTML(item.name)}</span>
                         </span>
-                        <span class="text-slate-500 tabular-nums">${formatSecondsToHoursMinutes(item.seconds)} (${item.percent}%)</span>
+                        <span class="text-[12.5px] t3 tabular-nums whitespace-nowrap">${formatSecondsToHoursMinutes(item.seconds)}<span class="t1 font-semibold ml-2 inline-block w-9 text-right">${item.percent}%</span></span>
                     </div>
-                    <div class="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
-                        <div class="h-2 rounded-full" style="width: ${item.percent}%; background-color: ${safeColor(item.color)}"></div>
+                    <div class="bar-track">
+                        <div class="bar-fill" style="width: ${item.percent}%; background-color: ${safeColor(item.color)}"></div>
                     </div>
                 </div>
             `).join('');
@@ -1765,7 +2154,7 @@
 
             for (let i = 0; i < firstDay; i++) {
                 const emptyCell = document.createElement('div');
-                emptyCell.className = 'h-16 sm:h-20 rounded-xl bg-slate-50/50';
+                emptyCell.className = 'cal-empty';
                 grid.appendChild(emptyCell);
             }
 
@@ -1775,36 +2164,22 @@
                 const isSelected = dateStr === state.selectedDateStr;
                 const isToday = dateStr === todayStr;
 
-                // ヒートマップ背景色の決定 (凡例と同じ5段階)
-                let bgClass = 'bg-slate-50 hover:bg-slate-100 text-slate-700';
-                let timeTextClass = 'text-slate-400';
+                // ヒートマップの濃さ (凡例と同じ5段階)
+                let heat = 0;
                 if (totalSec > 0) {
                     const mins = totalSec / 60;
-                    if (mins < 30) {
-                        bgClass = 'bg-indigo-50 hover:bg-indigo-100 text-indigo-900';
-                        timeTextClass = 'text-indigo-600 font-semibold';
-                    } else if (mins < 90) {
-                        bgClass = 'bg-indigo-100 hover:bg-indigo-200 text-indigo-950';
-                        timeTextClass = 'text-indigo-700 font-semibold';
-                    } else if (mins < 180) {
-                        bgClass = 'bg-indigo-300 hover:bg-indigo-400 text-indigo-950';
-                        timeTextClass = 'text-indigo-950 font-bold';
-                    } else {
-                        bgClass = 'bg-indigo-600 hover:bg-indigo-700 text-white';
-                        timeTextClass = 'text-indigo-100 font-bold';
-                    }
+                    heat = mins < 30 ? 1 : mins < 90 ? 2 : mins < 180 ? 3 : 4;
                 }
 
                 const cell = document.createElement('button');
                 cell.type = 'button';
                 cell.setAttribute('aria-label', `${state.currentMonth + 1}月${day}日 ${totalSec > 0 ? formatSecondsToHoursMinutes(totalSec) : '記録なし'}`);
                 cell.setAttribute('aria-pressed', isSelected ? 'true' : 'false');
-                cell.className = `h-16 sm:h-20 p-1.5 sm:p-2 rounded-xl flex flex-col justify-between items-start transition-all relative border ${bgClass} ${
-                    isSelected ? 'ring-2 ring-indigo-600 ring-offset-1 border-transparent' : 'border-slate-100'
-                }`;
+                if (isToday) cell.setAttribute('aria-current', 'date');
+                cell.className = `cal-cell heat-${heat}${isToday ? ' is-today' : ''}${isSelected ? ' is-selected' : ''}`;
                 cell.innerHTML = `
-                    <span class="text-xs sm:text-sm font-semibold ${isToday ? 'bg-rose-500 text-white w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center' : ''}">${day}</span>
-                    ${totalSec > 0 ? `<span class="text-[10px] sm:text-xs tracking-tighter self-end ${timeTextClass}">${formatSecondsToShort(totalSec)}</span>` : ''}
+                    <span class="cal-day">${day}</span>
+                    ${totalSec > 0 ? `<span class="cal-time">${formatSecondsToShort(totalSec)}</span>` : ''}
                 `;
                 cell.addEventListener('click', () => {
                     state.selectedDateStr = dateStr;
@@ -1827,8 +2202,9 @@
 
             if (dayLogs.length === 0) {
                 listEl.innerHTML = `
-                    <div class="text-center py-8 bg-slate-50 rounded-xl border border-dashed border-slate-200">
-                        <p class="text-sm text-slate-400">この日の勉強記録はありません</p>
+                    <div class="empty-state">
+                        <i class="fa-regular fa-calendar"></i>
+                        この日の勉強記録はありません
                     </div>
                 `;
                 return;
@@ -1837,25 +2213,23 @@
             listEl.innerHTML = dayLogs.map(log => {
                 const sub = getSubject(log.subjectId, 'その他');
                 return `
-                    <div class="flex items-center justify-between p-3 bg-slate-50 hover:bg-slate-100/80 rounded-xl border border-slate-100 transition-colors">
+                    <div class="log-item">
                         <div class="flex items-center gap-3 min-w-0">
-                            <span class="w-3 h-3 rounded-full flex-shrink-0" style="background-color: ${safeColor(sub.color)}"></span>
-                            <div class="min-w-0">
+                            <span class="log-stripe" style="background-color: ${safeColor(sub.color)}"></span>
+                            <div class="min-w-0 py-0.5">
                                 <div class="flex items-center gap-2 flex-wrap">
-                                    <span class="text-sm font-bold text-slate-800">${escapeHTML(sub.name)}</span>
-                                    <span class="text-xs font-semibold px-2 py-0.5 rounded-md bg-white text-slate-600 border border-slate-200 tabular-nums">
-                                        ${formatSecondsToHoursMinutes(log.durationSeconds)}
-                                    </span>
+                                    <span class="log-name">${escapeHTML(sub.name)}</span>
+                                    <span class="chip chip-neutral" style="height:22px;padding:0 8px;font-size:11.5px">${formatSecondsToHoursMinutes(log.durationSeconds)}</span>
                                 </div>
-                                ${log.memo ? `<p class="text-xs text-slate-500 truncate mt-0.5">${escapeHTML(log.memo)}</p>` : ''}
+                                ${log.memo ? `<p class="log-memo truncate">${escapeHTML(log.memo)}</p>` : ''}
                             </div>
                         </div>
                         <div class="flex items-center flex-shrink-0">
-                            <button type="button" data-edit-id="${escapeHTML(log.id)}" title="記録を編集" aria-label="記録を編集" class="editLogBtn text-slate-400 hover:text-indigo-600 p-2 rounded-lg transition-colors">
-                                <i class="fa-solid fa-pen text-sm"></i>
+                            <button type="button" data-edit-id="${escapeHTML(log.id)}" title="記録を編集" aria-label="記録を編集" class="editLogBtn btn-icon ghost sm">
+                                <i class="fa-solid fa-pen text-[12px]"></i>
                             </button>
-                            <button type="button" data-delete-id="${escapeHTML(log.id)}" title="記録を削除" aria-label="記録を削除" class="deleteLogBtn text-slate-400 hover:text-rose-500 p-2 rounded-lg transition-colors">
-                                <i class="fa-solid fa-trash-can text-sm"></i>
+                            <button type="button" data-delete-id="${escapeHTML(log.id)}" title="記録を削除" aria-label="記録を削除" class="deleteLogBtn btn-icon ghost sm danger">
+                                <i class="fa-solid fa-trash-can text-[12px]"></i>
                             </button>
                         </div>
                     </div>
@@ -1882,11 +2256,11 @@
         }
 
         // --- 科目の管理 ---
-        function colorSwatchesHTML(name, selected, size = 'w-7 h-7') {
+        function colorSwatchesHTML(name, selected, size = 28) {
             return SUBJECT_COLORS.map(c => `
-                <label class="cursor-pointer" title="${c.name}">
-                    <input type="radio" name="${name}" value="${c.value}" ${c.value === selected ? 'checked' : ''} class="sr-only peer" aria-label="${c.name}">
-                    <span class="${size} rounded-full block peer-checked:ring-2 peer-checked:ring-offset-2 peer-focus-visible:ring-2 peer-focus-visible:ring-offset-2" style="background-color:${c.value}; --tw-ring-color:${c.value}"></span>
+                <label class="swatch" title="${c.name}" style="color:${c.value}">
+                    <input type="radio" name="${name}" value="${c.value}" ${c.value === selected ? 'checked' : ''} class="sr-only" aria-label="${c.name}">
+                    <span style="width:${size}px;height:${size}px;background-color:${c.value}"></span>
                 </label>
             `).join('');
         }
@@ -1897,16 +2271,16 @@
             list.innerHTML = active.map(sub => {
                 const count = state.logs.filter(l => l.subjectId === sub.id).length;
                 return `
-                    <div class="p-3 bg-slate-50 rounded-xl border border-slate-100" data-subject-id="${escapeHTML(sub.id)}">
+                    <div class="inset p-3" data-subject-id="${escapeHTML(sub.id)}">
                         <div class="flex items-center gap-2">
-                            <input type="text" value="${escapeHTML(sub.name)}" maxlength="30" aria-label="科目名" class="subject-name-input flex-grow min-w-0 bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-sm font-medium focus:ring-indigo-500 focus:border-indigo-500">
-                            <button type="button" class="subject-delete-btn text-slate-400 hover:text-rose-500 p-2 rounded-lg" title="科目を削除" aria-label="${escapeHTML(sub.name)}を削除">
-                                <i class="fa-solid fa-trash-can text-sm"></i>
+                            <input type="text" value="${escapeHTML(sub.name)}" maxlength="30" aria-label="科目名" class="subject-name-input field field-sm flex-grow min-w-0" style="background: var(--surface)">
+                            <button type="button" class="subject-delete-btn btn-icon ghost sm danger" title="科目を削除" aria-label="${escapeHTML(sub.name)}を削除">
+                                <i class="fa-solid fa-trash-can text-[12px]"></i>
                             </button>
                         </div>
-                        <div class="flex items-center justify-between mt-2.5 gap-2">
-                            <div class="flex gap-2">${colorSwatchesHTML(`color_${sub.id}`, sub.color, 'w-5 h-5')}</div>
-                            <span class="text-[11px] text-slate-400 whitespace-nowrap">記録 ${count}件</span>
+                        <div class="flex items-center justify-between mt-3 gap-2 pl-0.5">
+                            <div class="flex gap-2.5">${colorSwatchesHTML(`color_${sub.id}`, sub.color, 20)}</div>
+                            <span class="text-[11.5px] t3 whitespace-nowrap tabular-nums">記録 ${count}件</span>
                         </div>
                     </div>
                 `;
@@ -1915,12 +2289,12 @@
             const archived = state.subjects.filter(s => s.archived);
             document.getElementById('archivedSubjectsSection').classList.toggle('hidden', archived.length === 0);
             document.getElementById('archivedSubjectsList').innerHTML = archived.map(sub => `
-                <div class="flex items-center justify-between text-sm" data-subject-id="${escapeHTML(sub.id)}">
-                    <span class="flex items-center gap-2 text-slate-500 min-w-0">
-                        <span class="w-2.5 h-2.5 rounded-full inline-block flex-shrink-0" style="background-color:${safeColor(sub.color)}"></span>
+                <div class="flex items-center justify-between text-sm py-1" data-subject-id="${escapeHTML(sub.id)}">
+                    <span class="flex items-center gap-2 t2 min-w-0">
+                        <span class="legend-dot" style="background-color:${safeColor(sub.color)}"></span>
                         <span class="truncate">${escapeHTML(sub.name)}</span>
                     </span>
-                    <button type="button" class="subject-restore-btn text-xs font-semibold text-indigo-600 hover:bg-indigo-50 px-2.5 py-1 rounded-lg">元に戻す</button>
+                    <button type="button" class="subject-restore-btn btn btn-soft btn-sm" style="height:28px">元に戻す</button>
                 </div>
             `).join('');
         }
