@@ -510,6 +510,16 @@
         .log-stripe { width: 4px; align-self: stretch; border-radius: 4px; flex-shrink: 0; }
         .log-name { font-size: 14px; font-weight: 600; color: var(--text-1); }
         .log-memo { font-size: 12.5px; color: var(--text-3); margin-top: 2px; }
+        /* 空っぽのときの案内: アイコン + 見出し + 説明 (+ 次の操作ボタン) */
+        .es { text-align: center; padding: 20px 12px 8px; }
+        .es-ic {
+            width: 52px; height: 52px; margin: 0 auto 12px; border-radius: 16px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 20px; color: var(--accent-text); background: var(--accent-soft);
+        }
+        .es-t { font-size: 14px; font-weight: 600; color: var(--text-1); }
+        .es-d { font-size: 12.5px; line-height: 1.6; color: var(--text-3); margin-top: 4px; }
+        .es-b { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-top: 16px; }
         .empty-state {
             padding: 32px 16px; text-align: center; border-radius: 14px;
             border: 1px dashed var(--border-strong); color: var(--text-3); font-size: 13px;
@@ -838,7 +848,7 @@
                         <div>1日平均 <strong id="weekAverage" class="tabular-nums">0時間 0分</strong></div>
                     </div>
                 </div>
-                <div class="flex">
+                <div id="weekChartArea" class="flex">
                     <div id="weekYAxis" class="relative w-9 flex-shrink-0" style="height: 150px"></div>
                     <div class="relative flex-grow">
                         <div id="weekGrid" class="absolute inset-x-0 top-0 pointer-events-none" style="height: 150px"></div>
@@ -2238,6 +2248,17 @@
             return `${d.getMonth() + 1}/${d.getDate()}(${WEEKDAYS[d.getDay()]})`;
         }
 
+        function emptyStateHTML(icon, title, desc, buttons = '') {
+            return `
+                <div class="es">
+                    <div class="es-ic"><i class="${icon}"></i></div>
+                    <p class="es-t">${title}</p>
+                    <p class="es-d">${desc}</p>
+                    ${buttons ? `<div class="es-b">${buttons}</div>` : ''}
+                </div>
+            `;
+        }
+
         function renderWeeklyChart() {
             const days = getWeekDays();
             const todayStr = days[days.length - 1];
@@ -2312,8 +2333,12 @@
                 : inWeek(state.selectedDateStr) ? state.selectedDateStr : todayStr;
             const d = data.find(x => x.date === target);
 
-            if (data.every(x => x.total === 0)) {
-                el.innerHTML = '<p class="text-center py-2">この7日間の記録はまだありません</p>';
+            const empty = data.every(x => x.total === 0);
+            document.getElementById('weekChartArea').classList.toggle('hidden', empty);
+            el.style.borderTop = empty ? '0' : '';
+            el.style.marginTop = empty ? '0' : '';
+            if (empty) {
+                el.innerHTML = emptyStateHTML('fa-solid fa-chart-column', 'この7日間の記録はまだありません', '記録すると、ここに科目ごとのグラフが表示されます');
                 return;
             }
             const items = d.breakdown.length === 0
@@ -2341,7 +2366,7 @@
                 : `${state.currentYear}年${state.currentMonth + 1}月の科目別バランス`;
 
             if (monthLogs.length === 0) {
-                container.innerHTML = '<div class="empty-state"><i class="fa-regular fa-chart-bar"></i>この月の学習記録はまだありません</div>';
+                container.innerHTML = emptyStateHTML('fa-solid fa-chart-pie', 'この月の記録はまだありません', '科目ごとの勉強時間の割合がここに表示されます');
                 return;
             }
 
@@ -2438,12 +2463,13 @@
             document.getElementById('selectedDateTotal').textContent = `合計: ${formatSecondsToHoursMinutes(totalSec)}`;
 
             if (dayLogs.length === 0) {
-                listEl.innerHTML = `
-                    <div class="empty-state">
-                        <i class="fa-regular fa-calendar"></i>
-                        この日の勉強記録はありません
-                    </div>
-                `;
+                listEl.innerHTML = emptyStateHTML(
+                    'fa-regular fa-calendar-plus',
+                    'この日の記録はまだありません',
+                    'タイマーで計るか、あとから手動で追加できます',
+                    `<button type="button" data-goto="timer" class="btn btn-primary btn-sm"><i class="fa-solid fa-stopwatch text-xs"></i>タイマーで記録</button>
+                     <button type="button" class="es-add-btn btn btn-secondary btn-sm"><i class="fa-solid fa-plus text-xs"></i>手動で追加</button>`
+                );
                 return;
             }
 
@@ -2793,6 +2819,7 @@
                 if (del) deleteLog(del.dataset.deleteId);
                 const edit = e.target.closest('.editLogBtn');
                 if (edit) openManualModal(null, edit.dataset.editId);
+                if (e.target.closest('.es-add-btn')) openManualModal(state.selectedDateStr);
             });
 
             // 週グラフ: ホバーで詳細、タップでその日を選択
