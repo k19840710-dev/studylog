@@ -25,8 +25,6 @@
     </script>
     <!-- Tailwind CSS (レイアウト用ユーティリティ) -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Font Awesome for Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         /* =========================================================
            デザイントークン (ライト / ダーク)
@@ -34,7 +32,7 @@
            ========================================================= */
         :root {
             --bg: #f5f6f8;
-            --bg-glow: rgba(99, 102, 241, 0.07);
+            --bg-glow: transparent;
             --surface: #ffffff;
             --surface-2: #f8f9fb;
             --surface-3: #eef0f4;
@@ -55,7 +53,8 @@
             --accent-soft: rgba(79, 70, 229, 0.08);
             --accent-soft-2: rgba(79, 70, 229, 0.14);
             --accent-ring: rgba(79, 70, 229, 0.20);
-            --grad-accent: linear-gradient(135deg, #5850ec 0%, #7c3aed 100%);
+            --grad-accent: #4f46e5;
+            --text-label: #64748b;
 
             --success: #059669;
             --success-soft: rgba(5, 150, 105, 0.10);
@@ -66,16 +65,16 @@
             --heat-1: rgba(99, 102, 241, 0.09);
             --heat-2: rgba(99, 102, 241, 0.20);
             --heat-3: rgba(99, 102, 241, 0.40);
-            --heat-4: linear-gradient(145deg, #6366f1 0%, #7c3aed 100%);
+            --heat-4: #5b54e8;
             --heat-text-1: #5b54e8;
             --heat-text-2: #4338ca;
             --heat-text-3: #312e81;
 
             --shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.04);
-            --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.03), 0 2px 8px -2px rgba(15, 23, 42, 0.04), 0 16px 32px -16px rgba(15, 23, 42, 0.06);
+            --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.04);
             --shadow-pop: 0 2px 6px rgba(15, 23, 42, 0.05), 0 24px 56px -12px rgba(15, 23, 42, 0.20);
-            --shadow-btn: 0 1px 2px rgba(79, 70, 229, 0.22), 0 6px 14px -4px rgba(79, 70, 229, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.16);
-            --shadow-btn-success: 0 1px 2px rgba(5, 150, 105, 0.22), 0 6px 14px -4px rgba(5, 150, 105, 0.30), inset 0 1px 0 rgba(255, 255, 255, 0.16);
+            --shadow-btn: 0 1px 2px rgba(15, 23, 42, 0.12);
+            --shadow-btn-success: 0 1px 2px rgba(15, 23, 42, 0.12);
 
             --glass: rgba(255, 255, 255, 0.72);
             --scrim: rgba(15, 23, 42, 0.28);
@@ -88,7 +87,7 @@
         html.dark {
             color-scheme: dark;
             --bg: #08090d;
-            --bg-glow: rgba(99, 102, 241, 0.12);
+            --bg-glow: transparent;
             --surface: #111319;
             --surface-2: #161921;
             --surface-3: #1e222c;
@@ -109,7 +108,8 @@
             --accent-soft: rgba(129, 140, 248, 0.12);
             --accent-soft-2: rgba(129, 140, 248, 0.20);
             --accent-ring: rgba(129, 140, 248, 0.30);
-            --grad-accent: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+            --grad-accent: #6366f1;
+            --text-label: #9aa3b5;
 
             --success: #34d399;
             --success-soft: rgba(52, 211, 153, 0.12);
@@ -120,16 +120,16 @@
             --heat-1: rgba(129, 140, 248, 0.11);
             --heat-2: rgba(129, 140, 248, 0.22);
             --heat-3: rgba(129, 140, 248, 0.42);
-            --heat-4: linear-gradient(145deg, #6366f1 0%, #8b5cf6 100%);
+            --heat-4: #6366f1;
             --heat-text-1: #a5b4fc;
             --heat-text-2: #c7d2fe;
             --heat-text-3: #eef2ff;
 
             --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
-            --shadow-card: inset 0 1px 0 rgba(255, 255, 255, 0.025), 0 1px 2px rgba(0, 0, 0, 0.35), 0 16px 32px -16px rgba(0, 0, 0, 0.55);
+            --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.35);
             --shadow-pop: 0 24px 64px -12px rgba(0, 0, 0, 0.75);
-            --shadow-btn: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 18px -6px rgba(99, 102, 241, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.14);
-            --shadow-btn-success: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 18px -6px rgba(16, 185, 129, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.14);
+            --shadow-btn: 0 1px 2px rgba(0, 0, 0, 0.4);
+            --shadow-btn-success: 0 1px 2px rgba(0, 0, 0, 0.4);
 
             --glass: rgba(14, 16, 22, 0.72);
             --scrim: rgba(0, 0, 0, 0.55);
@@ -177,20 +177,20 @@
         /* =========================================================
            タイポグラフィ
            ========================================================= */
-        .eyebrow { font-size: 12px; font-weight: 600; color: var(--text-3); letter-spacing: 0.02em; }
+        .eyebrow { font-size: 14px; font-weight: 600; color: var(--text-label); }
         .section-title { font-size: 16px; font-weight: 700; color: var(--text-1); letter-spacing: -0.01em; display: flex; align-items: center; gap: 8px; }
-        .section-title i { font-size: 13px; color: var(--accent-text); width: 13px; text-align: center; }
+        .section-title .lc { width: 18px; height: 18px; color: var(--accent-text); }
         .section-title-lg { font-size: 18px; }
         .section-title h3 { font: inherit; }
         .stat-value {
-            font-size: 30px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.15;
+            font-size: 34px; font-weight: 800; letter-spacing: -0.02em; line-height: 1.15;
             color: var(--text-1); font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1;
         }
         /* 大きな数字の単位 (時間・分・日連続) は小さく薄くして、数字を主役にする */
         .u { font-size: 0.5em; font-weight: 700; color: var(--text-3); letter-spacing: 0; margin: 0 0.3em 0 0.12em; }
         .u:last-child { margin-right: 0; }
         .u-streak { font-size: clamp(11px, 2.9vw, 15px); margin-left: 0.15em; }
-        .meta { font-size: 12.5px; color: var(--text-3); }
+        .meta { font-size: 13px; color: var(--text-label); }
         .meta strong { color: var(--text-1); font-weight: 600; }
 
         /* =========================================================
@@ -220,10 +220,10 @@
         .btn-sm { height: 32px; padding: 0 12px; border-radius: 10px; font-size: 13px; }
         .btn-lg { height: 54px; border-radius: 16px; font-size: 15px; }
         .btn-primary { background: var(--grad-accent); color: #fff; box-shadow: var(--shadow-btn); }
-        .btn-primary:hover { filter: brightness(1.07) saturate(1.05); }
+        .btn-primary:hover { filter: brightness(0.92); }
         .btn-primary.is-running { background: var(--text-1); color: var(--surface); box-shadow: 0 1px 2px rgba(15, 23, 42, 0.2), 0 8px 18px -8px rgba(15, 23, 42, 0.45); }
-        .btn-success { background: linear-gradient(135deg, #10b981 0%, #059669 100%); color: #fff; box-shadow: var(--shadow-btn-success); }
-        .btn-success:hover { filter: brightness(1.06); }
+        .btn-success { background: #059669; color: #fff; box-shadow: var(--shadow-btn-success); }
+        .btn-success:hover { filter: brightness(0.92); }
         .btn-secondary { background: var(--surface); color: var(--text-1); border-color: var(--border-strong); box-shadow: var(--shadow-xs); }
         .btn-secondary:hover { background: var(--surface-2); }
         .btn-ghost { background: transparent; color: var(--text-2); }
@@ -251,8 +251,8 @@
         .link:hover { color: var(--text-1); }
         .link-accent { font-size: 13px; font-weight: 600; color: var(--accent-text); display: inline-flex; align-items: center; gap: 6px; }
         .link-accent:hover { opacity: 0.8; }
-        .link-accent i { font-size: 10px; transition: transform 0.2s var(--ease); }
-        .link-accent:hover i { transform: translateX(2px); }
+        .link-accent .lc { width: 14px; height: 14px; transition: transform 0.2s var(--ease); }
+        .link-accent:hover .lc { transform: translateX(2px); }
 
         /* =========================================================
            フォーム
@@ -293,7 +293,7 @@
         }
         .seg-item:hover { color: var(--text-1); }
         .seg-item.is-active { background: var(--seg-active); color: var(--text-1); box-shadow: 0 1px 2px rgba(15, 23, 42, 0.06), 0 0 0 1px var(--border); }
-        .seg-item.is-active i { color: var(--accent-text); }
+        .seg-item.is-active .lc { color: var(--accent-text); }
         .seg-item:not(:disabled):active { transform: scale(0.97); }
         .segmented.sm .seg-item { height: 30px; font-size: 12.5px; border-radius: 8px; }
         @media (max-width: 380px) { .seg-item { font-size: 12.5px; } }
@@ -312,6 +312,13 @@
             box-shadow: 0 1px 0 var(--border-strong); font-size: 11px; font-family: inherit; font-weight: 600; color: var(--text-2);
         }
 
+        /* 線のアイコン (Lucide) */
+        .lc { width: 1.15em; height: 1.15em; display: inline-block; vertical-align: -0.2em; flex-shrink: 0; }
+        .tab-icon .lc { width: 21px; height: 21px; }
+        .settings-icon .lc { width: 16px; height: 16px; }
+        .tile .lc { width: 26px; height: 26px; }
+        .es-ic .lc { width: 24px; height: 24px; }
+
         /* =========================================================
            ヘッダー / 下部タブバー (すりガラス)
            ========================================================= */
@@ -323,7 +330,7 @@
         .app-header { border-bottom: 1px solid var(--hairline); }
         .logo-mark {
             width: 34px; height: 34px; border-radius: 11px; display: flex; align-items: center; justify-content: center;
-            background: var(--grad-accent); color: #fff; font-size: 15px; box-shadow: var(--shadow-btn);
+            background: var(--grad-accent); color: #fff; font-size: 15px;
         }
         .app-title { font-size: 18px; font-weight: 800; letter-spacing: -0.02em; color: var(--text-1); }
 
@@ -346,18 +353,18 @@
            タイマー
            ========================================================= */
         .progress { height: 6px; border-radius: 999px; background: var(--surface-3); overflow: hidden; }
-        .progress-fill { height: 100%; border-radius: inherit; background: var(--grad-accent); transition: width 0.9s var(--ease); }
+        .progress-fill { height: 100%; border-radius: inherit; background: var(--accent); transition: width 0.9s var(--ease); }
 
         .timer-stage {
             position: relative; overflow: hidden; text-align: center;
             padding: 30px 16px 26px; border-radius: 20px;
-            background: radial-gradient(120% 100% at 50% 0%, var(--accent-soft) 0%, transparent 62%), var(--surface-2);
+            background: var(--surface-2);
             border: 1px solid var(--border);
             transition: border-color 0.4s ease, box-shadow 0.4s ease;
         }
-        .timer-stage.is-running { border-color: var(--accent-ring); box-shadow: 0 0 0 4px var(--accent-soft); }
-        .timer-stage.is-break { background: radial-gradient(120% 100% at 50% 0%, var(--success-soft) 0%, transparent 62%), var(--surface-2); }
-        .timer-stage.is-break.is-running { border-color: var(--success-soft); box-shadow: 0 0 0 4px var(--success-soft); }
+        .timer-stage.is-running { border-color: var(--accent-ring); }
+        .timer-stage.is-break { background: var(--surface-2); }
+        .timer-stage.is-break.is-running { border-color: var(--success); }
         .timer-digits {
             font-size: clamp(52px, 15vw, 72px); font-weight: 700; line-height: 1; letter-spacing: -0.03em;
             color: var(--text-1); font-variant-numeric: tabular-nums; font-feature-settings: "tnum" 1;
@@ -379,22 +386,39 @@
         @media (max-width: 360px) { .timer-ring { width: 232px; height: 232px; } }
         .timer-ring svg { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
         .ring-track { fill: none; stroke: var(--surface-3); stroke-width: 10; }
-        .ring-fill { fill: none; stroke: url(#ringGradFocus); stroke-width: 10; stroke-linecap: round; transition: stroke-dashoffset 0.4s linear, opacity 0.3s ease; }
-        .timer-stage.is-break .ring-fill { stroke: url(#ringGradBreak); }
-        .ring-fill.is-done { stroke: url(#ringGradBreak); }
+        .ring-fill { fill: none; stroke: var(--accent); stroke-width: 10; stroke-linecap: round; transition: stroke-dashoffset 0.4s linear, opacity 0.3s ease; }
+        .timer-stage.is-break .ring-fill { stroke: var(--success); }
+        .ring-fill.is-done { stroke: var(--success); }
         .timer-ring .timer-digits { font-size: clamp(40px, 12vw, 48px); margin: 0; position: relative; }
         .ring-caption { position: relative; margin-top: 8px; font-size: 12.5px; font-weight: 500; color: var(--text-3); font-variant-numeric: tabular-nums; }
         .ring-caption.is-done { color: var(--success); font-weight: 600; }
         .timer-ring + .timer-sub { margin-top: 6px; }
 
+        /* パステルのアイコンタイル */
+        .tile { width: 56px; height: 56px; flex-shrink: 0; border-radius: 16px; display: flex; align-items: center; justify-content: center; }
+        .tile-indigo { background: var(--accent-soft); color: var(--accent-text); }
+        .tile-green { background: var(--success-soft); color: var(--success); }
+        .tile-orange { background: rgba(234, 88, 12, 0.10); color: #ea580c; }
+        html.dark .tile-orange { background: rgba(251, 146, 60, 0.16); color: #fdba74; }
+
+        /* 週グラフ (1色の太い棒 + 上に数字) */
+        .week-val { font-size: 11px; font-weight: 800; letter-spacing: -0.02em; color: var(--text-1); margin-bottom: 6px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+        @media (min-width: 400px) { .week-val { font-size: 12px; } }
+        @media (min-width: 640px) { .week-val { font-size: 13px; letter-spacing: 0; } }
+        .week-bar { display: block; width: 72%; max-width: 40px; border-radius: 10px 10px 4px 4px; background: var(--accent); transition: height 0.6s var(--ease); }
+        .week-bar.is-zero { background: var(--surface-3); }
+        .week-bar.is-today { background: var(--accent-soft-2); border: 2px dashed var(--accent); }
+        .week-day.is-today { color: var(--accent-text); font-weight: 700; }
+        .week-col .week-day { margin-top: 8px; }
+
         /* 目標達成 */
         .card.is-done {
             border-color: rgba(16, 185, 129, 0.35);
-            background: linear-gradient(180deg, rgba(16, 185, 129, 0.07), transparent 60%), var(--surface);
-            box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.10), var(--shadow-card);
+            background: var(--surface);
+            box-shadow: var(--shadow-card);
             transition: border-color 0.5s ease, box-shadow 0.5s ease;
         }
-        .card.is-done .progress-fill { background: linear-gradient(90deg, #10b981, #34d399); }
+        .card.is-done .progress-fill { background: var(--success); }
         .chip-done { background: var(--success-soft); color: var(--success); }
         .goal-done-text { color: var(--success); font-weight: 600; }
         .confetti-layer { position: fixed; inset: 0; pointer-events: none; z-index: 70; overflow: hidden; }
@@ -407,7 +431,7 @@
             80% { opacity: 1; }
             100% { transform: translate(var(--dx), 105vh) rotate(var(--rot)); opacity: 0; }
         }
-        .toast-goal i { color: #fbbf24; }
+        .toast-goal .lc { color: #fbbf24; }
 
         /* =========================================================
            カレンダー
@@ -527,7 +551,7 @@
             padding: 32px 16px; text-align: center; border-radius: 14px;
             border: 1px dashed var(--border-strong); color: var(--text-3); font-size: 13px;
         }
-        .empty-state i { display: block; font-size: 20px; margin-bottom: 8px; color: var(--text-4); }
+        .empty-state .lc { display: block; margin-left: auto; margin-right: auto; font-size: 20px; margin-bottom: 8px; color: var(--text-4); }
 
         /* =========================================================
            グラフ
@@ -539,7 +563,7 @@
         .week-col:active .week-col-bg { transform: scale(0.97); }
         .week-seg { width: 100%; border-radius: 2px; }
         .week-seg:last-child { border-top-left-radius: 6px; border-top-right-radius: 6px; }
-        .week-day { font-size: 11px; font-weight: 500; color: var(--text-3); font-variant-numeric: tabular-nums; }
+        .week-day { font-size: 12px; font-weight: 600; color: var(--text-label); font-variant-numeric: tabular-nums; }
         .week-day.is-today { color: var(--accent-text); font-weight: 700; }
         .grid-line { position: absolute; left: 0; right: 0; border-top: 1px dashed var(--hairline); }
         .grid-line.base { border-top: 1px solid var(--border-strong); }
@@ -607,9 +631,9 @@
             border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: var(--shadow-pop);
             -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
         }
-        .toast-success i { color: #34d399; }
-        .toast-info i { color: #a5b4fc; }
-        .toast-error i { color: #fb7185; }
+        .toast-success .lc { color: #34d399; }
+        .toast-info .lc { color: #a5b4fc; }
+        .toast-error .lc { color: #fb7185; }
         .toast-action { margin-left: 4px; padding: 4px 10px; border-radius: 8px; font-size: 12.5px; font-weight: 700; color: #c7d2fe; background: rgba(255, 255, 255, 0.08); white-space: nowrap; }
         .toast-action:hover { background: rgba(255, 255, 255, 0.14); color: #fff; }
 
@@ -649,10 +673,13 @@
 
             <!-- 今日の勉強時間 & 目標達成率 -->
             <div id="todayCard" class="card p-5 sm:p-6">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <p class="eyebrow">今日の勉強時間</p>
-                        <h2 id="todayTotalDisplay" class="stat-value mt-1.5">0時間 0分</h2>
+                <div class="flex justify-between items-center gap-3">
+                    <div class="flex items-center gap-4 min-w-0">
+                        <div class="tile tile-indigo"><i class="fa-solid fa-clock"></i></div>
+                        <div class="min-w-0">
+                            <p class="eyebrow">今日の勉強時間</p>
+                            <h2 id="todayTotalDisplay" class="stat-value mt-1">0時間 0分</h2>
+                        </div>
                     </div>
                     <span id="goalPercentageBadge" class="chip chip-accent">0%</span>
                 </div>
@@ -813,31 +840,30 @@
         <!-- ===== タブ3: 分析 ===== -->
         <section data-tab-panel="stats" hidden class="tab-panel grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 items-start" aria-label="分析">
 
-            <div class="lg:col-span-2 grid grid-cols-2 gap-3 sm:gap-4">
-                <!-- 表示中の月の累計時間 -->
-                <div class="card p-4 sm:p-6 flex flex-col justify-between">
-                    <div>
-                        <p id="monthTotalLabel" class="eyebrow">今月の累計時間</p>
-                        <h2 id="monthTotalDisplay" class="stat-value mt-1.5" style="font-size: clamp(20px, 5.6vw, 30px)">0時間 0分</h2>
-                    </div>
-                    <div class="mt-3 flex items-center gap-1.5 meta">
-                        <i class="fa-regular fa-calendar-check" style="color: var(--success)"></i>
-                        <span>学習日数 <strong id="monthStudyDays" class="tabular-nums">0</strong> 日</span>
+            <div class="lg:col-span-2 grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4">
+                <!-- 表示中の月の勉強時間 -->
+                <div class="card p-5 flex items-center gap-4">
+                    <div class="tile tile-indigo"><i class="fa-solid fa-clock"></i></div>
+                    <div class="min-w-0">
+                        <p id="monthTotalLabel" class="eyebrow">今月の勉強時間</p>
+                        <h2 id="monthTotalDisplay" class="stat-value mt-1">0時間 0分</h2>
                     </div>
                 </div>
-
-                <!-- 連続学習記録 (ストリーク) -->
-                <div class="card p-4 sm:p-6 flex flex-col justify-between">
-                    <div>
-                        <p class="eyebrow">連続学習記録</p>
-                        <div class="flex items-baseline mt-1.5">
-                            <h2 id="streakDisplay" class="stat-value" style="font-size: clamp(20px, 5.6vw, 30px)">0</h2>
-                            <span class="u u-streak">日連続</span>
-                        </div>
+                <!-- 表示中の月の学習日数 -->
+                <div class="card p-5 flex items-center gap-4">
+                    <div class="tile tile-green"><i class="fa-regular fa-calendar-check"></i></div>
+                    <div class="min-w-0">
+                        <p id="monthDaysLabel" class="eyebrow">今月の学習日数</p>
+                        <h2 class="stat-value mt-1"><span id="monthStudyDays">0</span><span class="u">日</span></h2>
                     </div>
-                    <div class="mt-3 flex items-start gap-1.5 meta">
-                        <i class="fa-solid fa-fire mt-0.5" style="color: #f97316"></i>
-                        <span id="streakMessage">今日も学習して記録を伸ばそう！</span>
+                </div>
+                <!-- 連続学習記録 (ストリーク) -->
+                <div class="card p-5 flex items-center gap-4">
+                    <div class="tile tile-orange"><i class="fa-solid fa-fire"></i></div>
+                    <div class="min-w-0">
+                        <p class="eyebrow">連続学習記録</p>
+                        <h2 class="stat-value mt-1"><span id="streakDisplay">0</span><span class="u">日連続</span></h2>
+                        <p id="streakMessage" class="hidden"></p>
                     </div>
                 </div>
             </div>
@@ -851,15 +877,10 @@
                         <div>1日平均 <strong id="weekAverage" class="tabular-nums">0時間 0分</strong></div>
                     </div>
                 </div>
-                <div id="weekChartArea" class="flex">
-                    <div id="weekYAxis" class="relative w-9 flex-shrink-0" style="height: 150px"></div>
-                    <div class="relative flex-grow">
-                        <div id="weekGrid" class="absolute inset-x-0 top-0 pointer-events-none" style="height: 150px"></div>
-                        <div id="weekBars" class="relative flex gap-1"></div>
-                    </div>
+                <div id="weekChartArea">
+                    <div id="weekBars" class="flex items-end gap-1.5" style="height: 190px"></div>
                 </div>
-                <div id="weekDetail" class="mt-4 pt-3.5 text-xs t3 min-h-[40px]" style="border-top: 1px solid var(--hairline)"></div>
-                <div id="weekLegend" class="mt-3 flex flex-wrap gap-x-3.5 gap-y-1.5 text-xs t2"></div>
+                <div id="weekDetail" class="text-xs t3"></div>
             </div>
 
             <!-- 科目別内訳 (表示中の月) -->
@@ -1180,6 +1201,37 @@
     </div>
 
     <script>
+        /* =========================================================
+           アイコン: 画面に追加された Font Awesome 形式の指定 (<i class="fa-solid fa-xxx">) を
+           Lucide の線のアイコン (SVG) に自動で差し替える。保存データの科目アイコン名 (fa-xxx) はそのまま使える
+           ========================================================= */
+        const LUCIDE_ICONS = {"chevron-right":"<path d=\"m9 18 6-6-6-6\" />","xmark":"<path d=\"M18 6 6 18\" /> <path d=\"m6 6 12 12\" />","plus":"<path d=\"M5 12h14\" /> <path d=\"M12 5v14\" />","stopwatch":"<line x1=\"10\" x2=\"14\" y1=\"2\" y2=\"2\" /> <line x1=\"12\" x2=\"15\" y1=\"14\" y2=\"11\" /> <circle cx=\"12\" cy=\"14\" r=\"8\" />","play":"<polygon points=\"6 3 20 12 6 21 6 3\" />","check":"<path d=\"M20 6 9 17l-5-5\" />","book":"<path d=\"M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20\" />","trash-can":"<path d=\"M3 6h18\" /> <path d=\"M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6\" /> <path d=\"M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2\" /> <line x1=\"10\" x2=\"10\" y1=\"11\" y2=\"17\" /> <line x1=\"14\" x2=\"14\" y1=\"11\" y2=\"17\" />","pen":"<path d=\"M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z\" /> <path d=\"m15 5 4 4\" />","language":"<path d=\"m5 8 6 6\" /> <path d=\"m4 14 6-6 2-3\" /> <path d=\"M2 5h12\" /> <path d=\"M7 2h1\" /> <path d=\"m22 22-5-10-5 10\" /> <path d=\"M14 18h6\" />","code":"<polyline points=\"16 18 22 12 16 6\" /> <polyline points=\"8 6 2 12 8 18\" />","clock":"<circle cx=\"12\" cy=\"12\" r=\"10\" /> <polyline points=\"12 6 12 12 16 14\" />","circle-question":"<circle cx=\"12\" cy=\"12\" r=\"10\" /> <path d=\"M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3\" /> <path d=\"M12 17h.01\" />","chevron-left":"<path d=\"m15 18-6-6 6-6\" />","chart-pie":"<path d=\"M21 12c.552 0 1.005-.449.95-.998a10 10 0 0 0-8.953-8.951c-.55-.055-.998.398-.998.95v8a1 1 0 0 0 1 1z\" /> <path d=\"M21.21 15.89A10 10 0 1 1 8 2.83\" />","chart-column":"<path d=\"M3 3v16a2 2 0 0 0 2 2h16\" /> <path d=\"M18 17V9\" /> <path d=\"M13 17V5\" /> <path d=\"M8 17v-3\" />","calendar-days":"<path d=\"M8 2v4\" /> <path d=\"M16 2v4\" /> <rect width=\"18\" height=\"18\" x=\"3\" y=\"4\" rx=\"2\" /> <path d=\"M3 10h18\" /> <path d=\"M8 14h.01\" /> <path d=\"M12 14h.01\" /> <path d=\"M16 14h.01\" /> <path d=\"M8 18h.01\" /> <path d=\"M12 18h.01\" /> <path d=\"M16 18h.01\" />","calculator":"<rect width=\"16\" height=\"20\" x=\"4\" y=\"2\" rx=\"2\" /> <line x1=\"8\" x2=\"16\" y1=\"6\" y2=\"6\" /> <line x1=\"16\" x2=\"16\" y1=\"14\" y2=\"18\" /> <path d=\"M16 10h.01\" /> <path d=\"M12 10h.01\" /> <path d=\"M8 10h.01\" /> <path d=\"M12 14h.01\" /> <path d=\"M8 14h.01\" /> <path d=\"M12 18h.01\" /> <path d=\"M8 18h.01\" />","bullseye":"<circle cx=\"12\" cy=\"12\" r=\"10\" /> <circle cx=\"12\" cy=\"12\" r=\"6\" /> <circle cx=\"12\" cy=\"12\" r=\"2\" />","arrow-right":"<path d=\"M5 12h14\" /> <path d=\"m12 5 7 7-7 7\" />","trophy":"<path d=\"M6 9H4.5a2.5 2.5 0 0 1 0-5H6\" /> <path d=\"M18 9h1.5a2.5 2.5 0 0 0 0-5H18\" /> <path d=\"M4 22h16\" /> <path d=\"M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22\" /> <path d=\"M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22\" /> <path d=\"M18 2H6v7a6 6 0 0 0 12 0V2Z\" />","tags":"<path d=\"m15 5 6.3 6.3a2.4 2.4 0 0 1 0 3.4L17 19\" /> <path d=\"M9.586 5.586A2 2 0 0 0 8.172 5H3a1 1 0 0 0-1 1v5.172a2 2 0 0 0 .586 1.414L8.29 18.29a2.426 2.426 0 0 0 3.42 0l3.58-3.58a2.426 2.426 0 0 0 0-3.42z\" /> <circle cx=\"6.5\" cy=\"9.5\" r=\".5\" fill=\"currentColor\" />","sliders":"<line x1=\"21\" x2=\"14\" y1=\"4\" y2=\"4\" /> <line x1=\"10\" x2=\"3\" y1=\"4\" y2=\"4\" /> <line x1=\"21\" x2=\"12\" y1=\"12\" y2=\"12\" /> <line x1=\"8\" x2=\"3\" y1=\"12\" y2=\"12\" /> <line x1=\"21\" x2=\"16\" y1=\"20\" y2=\"20\" /> <line x1=\"12\" x2=\"3\" y1=\"20\" y2=\"20\" /> <line x1=\"14\" x2=\"14\" y1=\"2\" y2=\"6\" /> <line x1=\"8\" x2=\"8\" y1=\"10\" y2=\"14\" /> <line x1=\"16\" x2=\"16\" y1=\"18\" y2=\"22\" />","pen-nib":"<path d=\"M15.707 21.293a1 1 0 0 1-1.414 0l-1.586-1.586a1 1 0 0 1 0-1.414l5.586-5.586a1 1 0 0 1 1.414 0l1.586 1.586a1 1 0 0 1 0 1.414z\" /> <path d=\"m18 13-1.375-6.874a1 1 0 0 0-.746-.776L3.235 2.028a1 1 0 0 0-1.207 1.207L5.35 15.879a1 1 0 0 0 .776.746L13 18\" /> <path d=\"m2.3 2.3 7.286 7.286\" /> <circle cx=\"11\" cy=\"11\" r=\"2\" />","pause":"<rect x=\"14\" y=\"4\" width=\"4\" height=\"16\" rx=\"1\" /> <rect x=\"6\" y=\"4\" width=\"4\" height=\"16\" rx=\"1\" />","palette":"<circle cx=\"13.5\" cy=\"6.5\" r=\".5\" fill=\"currentColor\" /> <circle cx=\"17.5\" cy=\"10.5\" r=\".5\" fill=\"currentColor\" /> <circle cx=\"8.5\" cy=\"7.5\" r=\".5\" fill=\"currentColor\" /> <circle cx=\"6.5\" cy=\"12.5\" r=\".5\" fill=\"currentColor\" /> <path d=\"M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z\" />","music":"<path d=\"M9 18V5l12-2v13\" /> <circle cx=\"6\" cy=\"18\" r=\"3\" /> <circle cx=\"18\" cy=\"16\" r=\"3\" />","microscope":"<path d=\"M6 18h8\" /> <path d=\"M3 22h18\" /> <path d=\"M14 22a7 7 0 1 0 0-14h-1\" /> <path d=\"M9 14h2\" /> <path d=\"M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Z\" /> <path d=\"M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3\" />","list-check":"<path d=\"m3 17 2 2 4-4\" /> <path d=\"m3 7 2 2 4-4\" /> <path d=\"M13 6h8\" /> <path d=\"M13 12h8\" /> <path d=\"M13 18h8\" />","laptop":"<path d=\"M20 16V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9m16 0H4m16 0 1.28 2.55a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45L4 16\" />","landmark":"<line x1=\"3\" x2=\"21\" y1=\"22\" y2=\"22\" /> <line x1=\"6\" x2=\"6\" y1=\"18\" y2=\"11\" /> <line x1=\"10\" x2=\"10\" y1=\"18\" y2=\"11\" /> <line x1=\"14\" x2=\"14\" y1=\"18\" y2=\"11\" /> <line x1=\"18\" x2=\"18\" y1=\"18\" y2=\"11\" /> <polygon points=\"12 2 20 7 4 7\" />","keyboard":"<path d=\"M10 8h.01\" /> <path d=\"M12 12h.01\" /> <path d=\"M14 8h.01\" /> <path d=\"M16 12h.01\" /> <path d=\"M18 8h.01\" /> <path d=\"M6 8h.01\" /> <path d=\"M7 16h10\" /> <path d=\"M8 12h.01\" /> <rect width=\"20\" height=\"16\" x=\"2\" y=\"4\" rx=\"2\" />","gear":"<path d=\"M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z\" /> <circle cx=\"12\" cy=\"12\" r=\"3\" />","forward":"<polygon points=\"5 4 15 12 5 20 5 4\" /> <line x1=\"19\" x2=\"19\" y1=\"5\" y2=\"19\" />","flask":"<path d=\"M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2\" /> <path d=\"M8.5 2h7\" /> <path d=\"M7 16h10\" />","fire":"<path d=\"M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z\" />","earth-asia":"<path d=\"M21.54 15H17a2 2 0 0 0-2 2v4.54\" /> <path d=\"M7 3.34V5a3 3 0 0 0 3 3a2 2 0 0 1 2 2c0 1.1.9 2 2 2a2 2 0 0 0 2-2c0-1.1.9-2 2-2h3.17\" /> <path d=\"M11 21.95V18a2 2 0 0 0-2-2a2 2 0 0 1-2-2v-1a2 2 0 0 0-2-2H2.05\" /> <circle cx=\"12\" cy=\"12\" r=\"10\" />","dumbbell":"<path d=\"M14.4 14.4 9.6 9.6\" /> <path d=\"M18.657 21.485a2 2 0 1 1-2.829-2.828l-1.767 1.768a2 2 0 1 1-2.829-2.829l6.364-6.364a2 2 0 1 1 2.829 2.829l-1.768 1.767a2 2 0 1 1 2.828 2.829z\" /> <path d=\"m21.5 21.5-1.4-1.4\" /> <path d=\"M3.9 3.9 2.5 2.5\" /> <path d=\"M6.404 12.768a2 2 0 1 1-2.829-2.829l1.768-1.767a2 2 0 1 1-2.828-2.829l2.828-2.828a2 2 0 1 1 2.829 2.828l1.767-1.768a2 2 0 1 1 2.829 2.829z\" />","cloud":"<path d=\"M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z\" />","circle-info":"<circle cx=\"12\" cy=\"12\" r=\"10\" /> <path d=\"M12 16v-4\" /> <path d=\"M12 8h.01\" />","circle-half-stroke":"<path d=\"M12 8a2.83 2.83 0 0 0 4 4 4 4 0 1 1-4-4\" /> <path d=\"M12 2v2\" /> <path d=\"M12 20v2\" /> <path d=\"m4.9 4.9 1.4 1.4\" /> <path d=\"m17.7 17.7 1.4 1.4\" /> <path d=\"M2 12h2\" /> <path d=\"M20 12h2\" /> <path d=\"m6.3 17.7-1.4 1.4\" /> <path d=\"m19.1 4.9-1.4 1.4\" />","circle-exclamation":"<circle cx=\"12\" cy=\"12\" r=\"10\" /> <line x1=\"12\" x2=\"12\" y1=\"8\" y2=\"12\" /> <line x1=\"12\" x2=\"12.01\" y1=\"16\" y2=\"16\" />","circle-check":"<circle cx=\"12\" cy=\"12\" r=\"10\" /> <path d=\"m9 12 2 2 4-4\" />","chart-simple":"<line x1=\"18\" x2=\"18\" y1=\"20\" y2=\"10\" /> <line x1=\"12\" x2=\"12\" y1=\"20\" y2=\"4\" /> <line x1=\"6\" x2=\"6\" y1=\"20\" y2=\"14\" />","chart-line":"<path d=\"M3 3v16a2 2 0 0 0 2 2h16\" /> <path d=\"m19 9-5 5-4-4-3 3\" />","calendar-plus":"<path d=\"M8 2v4\" /> <path d=\"M16 2v4\" /> <path d=\"M21 13V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h8\" /> <path d=\"M3 10h18\" /> <path d=\"M16 19h6\" /> <path d=\"M19 16v6\" />","calendar-check":"<path d=\"M8 2v4\" /> <path d=\"M16 2v4\" /> <rect width=\"18\" height=\"18\" x=\"3\" y=\"4\" rx=\"2\" /> <path d=\"M3 10h18\" /> <path d=\"m9 16 2 2 4-4\" />","briefcase":"<path d=\"M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16\" /> <rect width=\"20\" height=\"14\" x=\"2\" y=\"6\" rx=\"2\" />","brain":"<path d=\"M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z\" /> <path d=\"M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z\" /> <path d=\"M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4\" /> <path d=\"M17.599 6.5a3 3 0 0 0 .399-1.375\" /> <path d=\"M6.003 5.125A3 3 0 0 0 6.401 6.5\" /> <path d=\"M3.477 10.896a4 4 0 0 1 .585-.396\" /> <path d=\"M19.938 10.5a4 4 0 0 1 .585.396\" /> <path d=\"M6 18a4 4 0 0 1-1.967-.516\" /> <path d=\"M19.967 17.484A4 4 0 0 1 18 18\" />","book-open":"<path d=\"M12 7v14\" /> <path d=\"M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z\" />","arrow-up":"<path d=\"m5 12 7-7 7 7\" /> <path d=\"M12 19V5\" />","arrow-down":"<path d=\"M12 5v14\" /> <path d=\"m19 12-7 7-7-7\" />","calendar":"<path d=\"M8 2v4\" /> <path d=\"M16 2v4\" /> <rect width=\"18\" height=\"18\" x=\"3\" y=\"4\" rx=\"2\" /> <path d=\"M3 10h18\" />","chart-bar":"<path d=\"M3 3v16a2 2 0 0 0 2 2h16\" /> <path d=\"M18 17V9\" /> <path d=\"M13 17V5\" /> <path d=\"M8 17v-3\" />"};
+        const FILLED_ICONS = new Set(['play', 'pause', 'forward']);
+        function lucideSvg(name, extraClass = '') {
+            const inner = LUCIDE_ICONS[name] || LUCIDE_ICONS['circle-question'];
+            const fill = FILLED_ICONS.has(name) ? 'currentColor' : 'none';
+            return `<svg class="lc ${extraClass}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="${fill}" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${inner}</svg>`;
+        }
+        function hydrateIcons(root) {
+            if (!root || root.nodeType !== 1) return;
+            const list = root.matches('i[class*="fa-"]') ? [root] : [...root.querySelectorAll('i[class*="fa-"]')];
+            list.forEach(el => {
+                const classes = [...el.classList];
+                const nameClass = classes.find(c => c.startsWith('fa-') && c !== 'fa-solid' && c !== 'fa-regular');
+                if (!nameClass) return;
+                const keep = classes.filter(c => !c.startsWith('fa-')).join(' ');
+                const holder = document.createElement('span');
+                holder.innerHTML = lucideSvg(nameClass.slice(3), keep);
+                const svg = holder.firstElementChild;
+                if (el.getAttribute('style')) svg.setAttribute('style', el.getAttribute('style'));
+                el.replaceWith(svg);
+            });
+        }
+        new MutationObserver(mutations => {
+            mutations.forEach(m => m.addedNodes.forEach(hydrateIcons));
+        }).observe(document.documentElement, { childList: true, subtree: true });
+        hydrateIcons(document.body);
+
         /**
          * StudyLog アプリケーションロジック
          * 状態管理、タイマー制御、カレンダー・グラフ描画、LocalStorage永続化を担当
@@ -2525,8 +2577,11 @@
             const uniqueDays = new Set(monthLogs.map(l => l.date)).size;
 
             document.getElementById('monthTotalLabel').textContent = isViewingCurrentMonth()
-                ? '今月の累計時間'
-                : `${state.currentYear}年${state.currentMonth + 1}月の累計時間`;
+                ? '今月の勉強時間'
+                : `${state.currentYear}年${state.currentMonth + 1}月の勉強時間`;
+            document.getElementById('monthDaysLabel').textContent = isViewingCurrentMonth()
+                ? '今月の学習日数'
+                : `${state.currentYear}年${state.currentMonth + 1}月の学習日数`;
             document.getElementById('monthTotalDisplay').innerHTML = formatDurationHTML(monthSeconds);
             document.getElementById('monthStudyDays').textContent = uniqueDays;
 
@@ -2601,98 +2656,41 @@
         function renderWeeklyChart() {
             const days = getWeekDays();
             const todayStr = days[days.length - 1];
-            const data = days.map(date => {
-                const breakdown = getDayBreakdown(date);
-                return { date, breakdown, total: breakdown.reduce((s, b) => s + b.seconds, 0) };
-            });
+            const data = days.map(date => ({ date, total: getDayTotal(date) }));
 
             const weekTotal = data.reduce((s, d) => s + d.total, 0);
             document.getElementById('weekTotal').textContent = formatSecondsToHoursMinutes(weekTotal);
             document.getElementById('weekAverage').textContent = formatSecondsToHoursMinutes(Math.round(weekTotal / 7));
 
-            // 目盛り: 1時間単位で切り上げ (最低1時間)
-            const maxSec = Math.max(...data.map(d => d.total), 0);
-            const scaleHours = Math.max(1, Math.ceil(maxSec / 3600));
-            const scaleSec = scaleHours * 3600;
-            const plotH = 130; // 棒の最大の高さ(px)
-
-            // Y軸とグリッド線 (0, 半分, 最大)
-            const ticks = [0, scaleSec / 2, scaleSec];
-            document.getElementById('weekYAxis').innerHTML = ticks.map(sec => {
-                const y = plotH - (sec / scaleSec) * plotH;
-                const label = sec === 0 ? '0' : formatSecondsToShort(sec);
-                return `<span class="axis-label" style="top:${y}px">${label}</span>`;
-            }).join('');
-            document.getElementById('weekGrid').innerHTML = ticks.map(sec => {
-                const y = plotH - (sec / scaleSec) * plotH;
-                return `<div class="grid-line${sec === 0 ? ' base' : ''}" style="top:${y}px"></div>`;
-            }).join('');
-
-            // 棒 (科目ごとに積み上げ。セグメントの間は 2px の隙間)
-            const barsEl = document.getElementById('weekBars');
-            barsEl.innerHTML = data.map(d => {
+            // 1色の太い棒。上に時間を書き、今日 (途中) は点線の薄い色で表示する
+            const maxSec = Math.max(...data.map(d => d.total), 1);
+            const plotH = 130;
+            document.getElementById('weekBars').innerHTML = data.map(d => {
                 const isToday = d.date === todayStr;
-                const isSelected = d.date === state.selectedDateStr;
-                const segs = d.breakdown.map(b => {
-                    const h = Math.max(2, (b.seconds / scaleSec) * plotH - 2);
-                    return `<div class="week-seg" style="height:${h}px;background-color:${safeColor(b.subject.color)}"></div>`;
-                }).join('');
-                const aria = `${formatDayLabel(d.date)} 合計 ${formatSecondsToHoursMinutes(d.total)}`
-                    + d.breakdown.map(b => `、${b.subject.name} ${formatSecondsToHoursMinutes(b.seconds)}`).join('');
+                const h = d.total > 0 ? Math.max(8, Math.round((d.total / maxSec) * plotH)) : 6;
+                const barClass = d.total === 0 ? 'is-zero' : (isToday ? 'is-today' : '');
                 const date = parseISODate(d.date);
+                const aria = `${formatDayLabel(d.date)} 合計 ${formatSecondsToHoursMinutes(d.total)}`;
                 return `
-                    <button type="button" class="week-col flex-1 min-w-0 flex flex-col items-center" data-date="${d.date}" aria-pressed="${isSelected}" aria-label="${escapeHTML(aria)}">
-                        <div class="week-col-bg w-full flex flex-col justify-end items-center" style="height:${plotH}px">
-                            <div class="flex flex-col-reverse gap-[2px] w-[56%] max-w-[26px]">${segs}</div>
-                        </div>
-                        <span class="week-day mt-1.5 leading-4${isToday ? ' is-today' : ''}">
-                            ${date.getDate()}<span class="hidden sm:inline">(${WEEKDAYS[date.getDay()]})</span>
-                        </span>
+                    <button type="button" class="week-col flex-1 min-w-0 flex flex-col items-center justify-end h-full" data-date="${d.date}" aria-label="${escapeHTML(aria)}" title="${escapeHTML(aria)}">
+                        <span class="week-val">${d.total > 0 ? formatSecondsToShort(d.total) : '0'}</span>
+                        <span class="week-bar ${barClass}" style="height:${h}px"></span>
+                        <span class="week-day${isToday ? ' is-today' : ''}">${isToday ? '今日' : WEEKDAYS[date.getDay()]}</span>
                     </button>
                 `;
             }).join('');
 
-            // 詳細 (ホバー中の日 > 選択中の日 (今週なら) > 今日)
             renderWeekDetail(data, todayStr);
-
-            // 凡例 (今週出てきた科目のみ、科目の並び順で)
-            const shown = new Map();
-            data.forEach(d => d.breakdown.forEach(b => shown.set(b.subject.id, b.subject)));
-            const order = state.subjects.map(s => s.id);
-            const legendItems = [...shown.values()].sort((a, b) => order.indexOf(a.id) - order.indexOf(b.id));
-            document.getElementById('weekLegend').innerHTML = legendItems.map(s => `
-                <span class="inline-flex items-center gap-1.5"><span class="legend-dot" style="background-color:${safeColor(s.color)}"></span>${escapeHTML(s.name)}</span>
-            `).join('');
         }
 
-        function renderWeekDetail(data, todayStr) {
+        // 記録がない週は棒を隠して案内を表示する
+        function renderWeekDetail(data) {
             const el = document.getElementById('weekDetail');
-            const inWeek = date => data.some(d => d.date === date);
-            const target = (state.weekHoverDate && inWeek(state.weekHoverDate)) ? state.weekHoverDate
-                : inWeek(state.selectedDateStr) ? state.selectedDateStr : todayStr;
-            const d = data.find(x => x.date === target);
-
             const empty = data.every(x => x.total === 0);
             document.getElementById('weekChartArea').classList.toggle('hidden', empty);
-            el.style.borderTop = empty ? '0' : '';
-            el.style.marginTop = empty ? '0' : '';
-            if (empty) {
-                el.innerHTML = emptyStateHTML('fa-solid fa-chart-column', 'この7日間の記録はまだありません', '記録すると、ここに科目ごとのグラフが表示されます');
-                return;
-            }
-            const items = d.breakdown.length === 0
-                ? '<span>記録なし</span>'
-                : d.breakdown.map(b => `
-                    <span class="inline-flex items-center gap-1.5 mr-3.5"><span class="legend-dot" style="background-color:${safeColor(b.subject.color)}"></span><span class="t2">${escapeHTML(b.subject.name)}</span><span class="tabular-nums t1 font-semibold">${formatSecondsToShort(b.seconds)}</span></span>
-                `).join('');
-            el.innerHTML = `
-                <div class="flex items-baseline justify-between gap-2 mb-1.5">
-                    <span class="font-semibold t1 text-[13px]">${formatDayLabel(d.date)}${d.date === todayStr ? '<span class="chip chip-accent ml-2" style="height:18px;padding:0 7px;font-size:10.5px">今日</span>' : ''}</span>
-                    <span class="tabular-nums t1 font-semibold text-[13px]">${formatSecondsToHoursMinutes(d.total)}</span>
-                </div>
-                <div class="leading-6">${items}</div>
-                ${d.breakdown.length > 0 ? `<button type="button" data-goto="records" class="link-accent mt-2 text-xs">この日の記録を見る <i class="fa-solid fa-arrow-right"></i></button>` : ''}
-            `;
+            el.innerHTML = empty
+                ? emptyStateHTML('fa-solid fa-chart-column', 'この7日間の記録はまだありません', '記録すると、ここに毎日の勉強時間のグラフが表示されます')
+                : '';
         }
 
         function renderSubjectStats() {
@@ -3184,6 +3182,7 @@
                 if (!col) return;
                 selectDate(col.dataset.date);
                 renderAll();
+                switchTab('records');
             });
 
             // 下部タブ
