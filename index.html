@@ -922,6 +922,21 @@
             </div>
 
             <div>
+                <h3 class="settings-heading">同期</h3>
+                <div class="settings-group">
+                    <div class="settings-row">
+                        <span class="settings-icon ic-sky"><i class="fa-solid fa-cloud"></i></span>
+                        <span class="settings-label">端末間で同期</span>
+                        <span class="settings-value inline-flex items-center gap-1.5">
+                            <span id="syncStatusDot" class="w-2 h-2 rounded-full inline-block" style="background-color: var(--text-4)"></span>
+                            <span id="syncStatusText">準備中</span>
+                        </span>
+                    </div>
+                </div>
+                <p class="settings-note">このアプリを開いている端末どうしで、記録・科目・目標が自動で同期されます。オフラインのときは端末に保存し、つながったときに同期します。</p>
+            </div>
+
+            <div>
                 <h3 class="settings-heading">データ</h3>
                 <div class="settings-group">
                     <button data-action="export" class="settings-row">
@@ -937,7 +952,7 @@
                         <i class="fa-solid fa-chevron-right settings-chevron"></i>
                     </button>
                 </div>
-                <p class="settings-note">記録はこの端末のブラウザ内だけに保存されています。機種変更やブラウザのデータ削除に備えて、ときどき書き出しておくと安心です。</p>
+                <p class="settings-note">記録は端末とクラウドの両方に保存されています。念のため、ときどき書き出してバックアップしておくと安心です。読み込み（復元）をすると、同期している全端末の記録が置き換わります。</p>
                 <input type="file" id="importFileInput" accept="application/json,.json" class="hidden">
             </div>
 
@@ -1181,10 +1196,26 @@
             POMODORO: 'studylog_pomodoro_v1',
             THEME: 'studylog_theme_v1',
             TAB: 'studylog_tab_v1',
-            GOAL_CELEBRATED: 'studylog_goal_celebrated_v1'
+            GOAL_CELEBRATED: 'studylog_goal_celebrated_v1',
+            TOMBSTONES: 'studylog_tombstones_v1',
+            SETTINGS_UPDATED: 'studylog_settings_updated_v1'
         };
 
         const APP_TITLE = 'StudyLog - 勉強時間管理アプリ';
+
+        // --- 端末間の同期 (Firebase Realtime Database) ---
+        // この設定は公開されても問題ない識別情報。読み書きの制限はデータベースのルールで行う
+        const FIREBASE_CONFIG = {
+            apiKey: 'AIzaSyAO28tJ46bAMoHmZ8DzYUvz8fVXTRteTXU',
+            authDomain: 'studylog-926d5.firebaseapp.com',
+            databaseURL: 'https://studylog-926d5-default-rtdb.asia-southeast1.firebasedatabase.app',
+            projectId: 'studylog-926d5',
+            storageBucket: 'studylog-926d5.firebasestorage.app',
+            messagingSenderId: '335094224542',
+            appId: '1:335094224542:web:036a71aba121c0f1d2cd8f'
+        };
+        const FIREBASE_SDK_BASE = 'https://www.gstatic.com/firebasejs/10.14.1/';
+        const SYNC_PATH = 'studylog';
         const MAX_DAY_SECONDS = 24 * 3600;
         const WEEKDAYS = ['日', '月', '火', '水', '木', '金', '土'];
 
@@ -1497,6 +1528,14 @@
                     state.subjects.push({ ...DEFAULT_SUBJECTS[0], id: generateId('sub') });
                 }
                 ensureSubjectIcons();
+                // 同期用: 更新日時がない記録 (同期を入れる前のデータ) は「とても古い」扱いにする
+                state.logs.forEach(l => { if (!Number.isFinite(l.updatedAt)) l.updatedAt = 1; });
+                state.subjects.forEach(s => { if (!Number.isFinite(s.updatedAt)) s.updatedAt = 1; });
+                const savedTombs = JSON.parse(localStorage.getItem(STORAGE_KEYS.TOMBSTONES) || 'null');
+                if (savedTombs && typeof savedTombs === 'object') {
+                    sync.tombstones = { logs: savedTombs.logs || {}, subjects: savedTombs.subjects || {} };
+                }
+                sync.settingsUpdatedAt = parseInt(localStorage.getItem(STORAGE_KEYS.SETTINGS_UPDATED), 10) || 1;
                 const goal = savedGoal ? parseInt(savedGoal, 10) : 120;
                 state.dailyGoalMinutes = Number.isFinite(goal) ? goal : 120;
                 if (savedPomodoro) {
@@ -1508,20 +1547,27 @@
                 if (!savedLogs && state.logs.length === 0) {
                     seedSampleData();
                 }
+                sync.prev = snapshotRecords();
             } catch (e) {
                 console.error('データの読み込みに失敗しました', e);
                 state.subjects = [...DEFAULT_SUBJECTS];
             }
         }
 
-        function saveData() {
+        // opts.fromRemote: 同期で受け取ったデータを保存するとき (更新日時を付け直さない・送り返さない)
+        function saveData(opts = {}) {
+            if (opts.fromRemote) sync.prev = snapshotRecords();
+            else stampChanges();
             try {
                 localStorage.setItem(STORAGE_KEYS.LOGS, JSON.stringify(state.logs));
                 localStorage.setItem(STORAGE_KEYS.SUBJECTS, JSON.stringify(state.subjects));
                 localStorage.setItem(STORAGE_KEYS.GOAL, state.dailyGoalMinutes.toString());
+                localStorage.setItem(STORAGE_KEYS.TOMBSTONES, JSON.stringify(sync.tombstones));
+                localStorage.setItem(STORAGE_KEYS.SETTINGS_UPDATED, String(sync.settingsUpdatedAt));
             } catch (e) {
                 showToast('データの保存に失敗しました', 'error');
             }
+            if (!opts.fromRemote) schedulePush();
         }
 
         function sanitizePomodoro(p) {
@@ -1538,12 +1584,13 @@
             };
         }
 
-        function savePomodoroSettings() {
+        function savePomodoroSettings(opts = {}) {
             try {
                 localStorage.setItem(STORAGE_KEYS.POMODORO, JSON.stringify(state.pomodoro));
             } catch (e) {
                 showToast('設定の保存に失敗しました', 'error');
             }
+            if (!opts.fromRemote) saveData(); // 設定の更新日時を付けて同期する
         }
 
         function saveTimerState() {
@@ -1584,9 +1631,11 @@
             twoDaysAgo.setDate(today.getDate() - 2);
 
             state.logs = [
-                { id: 'sample_1', date: formatDateToISO(twoDaysAgo), subjectId: 'sub_1', durationSeconds: 3600, memo: 'リスニング教材 Chapter 1', timestamp: twoDaysAgo.getTime() },
-                { id: 'sample_2', date: formatDateToISO(yesterday), subjectId: 'sub_3', durationSeconds: 5400, memo: 'Webアプリ開発の基礎学習', timestamp: yesterday.getTime() }
+                { id: 'sample_1', date: formatDateToISO(twoDaysAgo), subjectId: 'sub_1', durationSeconds: 3600, memo: 'リスニング教材 Chapter 1', timestamp: twoDaysAgo.getTime(), updatedAt: 1 },
+                { id: 'sample_2', date: formatDateToISO(yesterday), subjectId: 'sub_3', durationSeconds: 5400, memo: 'Webアプリ開発の基礎学習', timestamp: yesterday.getTime(), updatedAt: 1 }
             ];
+            // サンプルは「とても古い」扱いにして、クラウド側で削除済みならそちらを優先する
+            sync.prev = snapshotRecords();
             saveData();
         }
 
@@ -1607,6 +1656,293 @@
         function removeLogById(logId) {
             state.logs = state.logs.filter(l => l.id !== logId);
             saveData();
+        }
+
+        /* =========================================================
+           端末間の同期
+           - 記録・科目は1件ずつ { ...内容, updatedAt } で保存し、新しい方を採用する
+           - 削除したものは { deleted: true, updatedAt } の印を残して、復活を防ぐ
+           - 端末の localStorage が常に元データ。クラウドとは差分だけをやり取りする
+           ========================================================= */
+        const sync = {
+            prev: null,                          // 前回保存時の内容 (変更検出用)
+            tombstones: { logs: {}, subjects: {} }, // 削除の印 { id: 削除した時刻 }
+            settingsUpdatedAt: 1,
+            remote: null,                        // 最後に受け取ったクラウドのデータ (null = まだ受け取っていない)
+            ref: null,
+            started: false,
+            attached: false,
+            connected: false,
+            status: 'idle',                      // idle | connecting | synced | offline | error
+            lastSyncedAt: null,
+            applyingRemote: false,
+            pushTimer: null
+        };
+
+        function stableStringify(v) {
+            if (Array.isArray(v)) return '[' + v.map(stableStringify).join(',') + ']';
+            if (v && typeof v === 'object') {
+                return '{' + Object.keys(v).sort().map(k => JSON.stringify(k) + ':' + stableStringify(v[k])).join(',') + '}';
+            }
+            return JSON.stringify(v);
+        }
+
+        function contentKey(rec, extra = {}) {
+            const { updatedAt, ...rest } = rec;
+            return stableStringify({ ...rest, ...extra });
+        }
+
+        function settingsContent() {
+            return stableStringify({ dailyGoalMinutes: state.dailyGoalMinutes, pomodoro: state.pomodoro });
+        }
+
+        function snapshotRecords() {
+            return {
+                logs: Object.fromEntries(state.logs.map(l => [l.id, contentKey(l)])),
+                subjects: Object.fromEntries(state.subjects.map((s, i) => [s.id, contentKey(s, { order: i })])),
+                settings: settingsContent()
+            };
+        }
+
+        // 前回の保存から変わった記録・科目・設定に更新日時を付け、消えたものに削除の印を付ける
+        function stampChanges() {
+            if (!sync.prev) {
+                sync.prev = snapshotRecords();
+                return;
+            }
+            const now = Date.now();
+            const stamp = (items, prevMap, tombs, keyOf) => {
+                const seen = new Set();
+                items.forEach((item, i) => {
+                    seen.add(item.id);
+                    if (prevMap[item.id] !== keyOf(item, i) || !Number.isFinite(item.updatedAt)) {
+                        item.updatedAt = now;
+                        delete tombs[item.id];
+                    }
+                });
+                Object.keys(prevMap).forEach(id => {
+                    if (!seen.has(id)) tombs[id] = now;
+                });
+            };
+            stamp(state.logs, sync.prev.logs, sync.tombstones.logs, l => contentKey(l));
+            stamp(state.subjects, sync.prev.subjects, sync.tombstones.subjects, (s, i) => contentKey(s, { order: i }));
+            if (sync.prev.settings !== settingsContent()) sync.settingsUpdatedAt = now;
+            sync.prev = snapshotRecords();
+        }
+
+        // クラウドから来たデータは誰でも書き込める場所なので、形を確かめてから使う
+        const VALID_KEY = /^[^.#$\[\]\/]{1,200}$/;
+        function sanitizeRemoteLog(id, v) {
+            if (!v || typeof v !== 'object' || !VALID_KEY.test(id)) return null;
+            const updatedAt = Number(v.updatedAt) || 0;
+            if (v.deleted) return { id, deleted: true, updatedAt };
+            const dur = Math.floor(Number(v.durationSeconds));
+            if (typeof v.date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(v.date) || typeof v.subjectId !== 'string'
+                || !Number.isFinite(dur) || dur <= 0) return null;
+            return {
+                id, date: v.date, subjectId: v.subjectId,
+                durationSeconds: Math.min(dur, MAX_DAY_SECONDS),
+                memo: typeof v.memo === 'string' ? v.memo.slice(0, 200) : '',
+                timestamp: Number(v.timestamp) || 0,
+                updatedAt
+            };
+        }
+        function sanitizeRemoteSubject(id, v) {
+            if (!v || typeof v !== 'object' || !VALID_KEY.test(id)) return null;
+            const updatedAt = Number(v.updatedAt) || 0;
+            if (v.deleted) return { id, deleted: true, updatedAt };
+            if (typeof v.name !== 'string' || !v.name.trim()) return null;
+            return {
+                id, name: v.name.slice(0, 30), color: safeColor(v.color), icon: safeIcon(v.icon),
+                ...(v.archived ? { archived: true } : {}),
+                order: Number(v.order) || 0,
+                updatedAt
+            };
+        }
+
+        // 端末側とクラウド側を突き合わせ、記録ごとに新しい方を残す
+        function mergeCollection(localItems, tombs, remoteObj, sanitize) {
+            const localMap = new Map(localItems.map(x => [x.id, x]));
+            const ids = new Set([...localMap.keys(), ...Object.keys(tombs), ...Object.keys(remoteObj || {})]);
+            const items = [];
+            const newTombs = {};
+            let changed = false;
+            ids.forEach(id => {
+                const local = localMap.get(id) || (tombs[id] ? { id, deleted: true, updatedAt: tombs[id] } : null);
+                const remote = remoteObj && remoteObj[id] ? sanitize(id, remoteObj[id]) : null;
+                let win = local;
+                // 新しい方を採用。同期を入れる前のデータ同士 (どちらも更新日時 1) なら、先にクラウドにあった方を採用
+                const preSyncTie = local && local.updatedAt === 1 && remote && remote.updatedAt === 1
+                    && contentKey(local, { order: 0 }) !== contentKey(remote, { order: 0 });
+                if (remote && (!local || remote.updatedAt > (local.updatedAt || 0) || preSyncTie)) {
+                    win = remote;
+                    changed = true;
+                }
+                if (!win) return;
+                if (win.deleted) newTombs[id] = win.updatedAt;
+                else items.push(win);
+            });
+            return { items, tombs: newTombs, changed };
+        }
+
+        // 初回起動時の見本 (手を加えていないもの) は端末だけのもので、クラウドには送らない
+        const isUntouchedSample = l => typeof l.id === 'string' && l.id.startsWith('sample_') && l.updatedAt === 1;
+
+        function applyRemote(data) {
+            sync.remote = data;
+            // クラウドにすでに記録があるなら、この端末の見本は片付ける
+            if (data.logs && Object.keys(data.logs).length > 0) {
+                const before = state.logs.length;
+                state.logs = state.logs.filter(l => !(isUntouchedSample(l) && !(l.id in data.logs)));
+                if (state.logs.length !== before) {
+                    saveData({ fromRemote: true });
+                    renderAll();
+                }
+            }
+            const localSubjects = state.subjects.map((s, i) => ({ ...s, order: i }));
+            const logs = mergeCollection(state.logs, sync.tombstones.logs, data.logs, sanitizeRemoteLog);
+            const subjects = mergeCollection(localSubjects, sync.tombstones.subjects, data.subjects, sanitizeRemoteSubject);
+            let changed = logs.changed || subjects.changed;
+
+            let settingsChanged = false;
+            const rs = data.settings;
+            const remoteSettingsAt = rs && typeof rs === 'object' ? (Number(rs.updatedAt) || 0) : 0;
+            const settingsPreSyncTie = remoteSettingsAt === 1 && sync.settingsUpdatedAt === 1
+                && stableStringify({ dailyGoalMinutes: parseInt(rs.dailyGoalMinutes, 10), pomodoro: sanitizePomodoro(rs.pomodoro || {}) }) !== settingsContent();
+            if (rs && typeof rs === 'object' && (remoteSettingsAt > sync.settingsUpdatedAt || settingsPreSyncTie)) {
+                const goal = parseInt(rs.dailyGoalMinutes, 10);
+                if (Number.isFinite(goal) && goal >= 0 && goal <= 24 * 60) state.dailyGoalMinutes = goal;
+                if (rs.pomodoro && typeof rs.pomodoro === 'object') state.pomodoro = sanitizePomodoro(rs.pomodoro);
+                sync.settingsUpdatedAt = Number(rs.updatedAt);
+                settingsChanged = true;
+                changed = true;
+            }
+
+            if (changed) {
+                state.logs = logs.items.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                const mergedSubjects = subjects.items.sort((a, b) => a.order - b.order).map(({ order, ...s }) => s);
+                // 科目が1つもなくなる壊れたデータは受け取らない
+                if (mergedSubjects.some(s => !s.archived)) state.subjects = mergedSubjects;
+                sync.tombstones = { logs: logs.tombs, subjects: subjects.tombs };
+                sync.applyingRemote = true;
+                saveData({ fromRemote: true });
+                if (settingsChanged) savePomodoroSettings({ fromRemote: true });
+                renderAll();
+                sync.applyingRemote = false;
+            }
+            // 端末側の方が新しいもの (オフライン中の記録など) をクラウドに送る
+            pushChanges();
+            sync.lastSyncedAt = Date.now();
+            updateSyncStatus();
+        }
+
+        function schedulePush() {
+            clearTimeout(sync.pushTimer);
+            sync.pushTimer = setTimeout(pushChanges, 300);
+        }
+
+        function cleanForDb(obj) {
+            return JSON.parse(JSON.stringify(obj)); // undefined を取り除く
+        }
+
+        function pushChanges() {
+            if (!sync.ref || sync.remote === null) return;
+            const R = sync.remote || {};
+            const updates = {};
+            const newer = (remote, t) => !remote || (Number(remote.updatedAt) || 0) < t;
+            state.logs.forEach(l => {
+                if (isUntouchedSample(l)) return;
+                if (VALID_KEY.test(l.id) && newer(R.logs && R.logs[l.id], l.updatedAt)) updates[`logs/${l.id}`] = cleanForDb(l);
+            });
+            Object.entries(sync.tombstones.logs).forEach(([id, t]) => {
+                if (VALID_KEY.test(id) && newer(R.logs && R.logs[id], t)) updates[`logs/${id}`] = { deleted: true, updatedAt: t };
+            });
+            state.subjects.forEach((s, i) => {
+                if (VALID_KEY.test(s.id) && newer(R.subjects && R.subjects[s.id], s.updatedAt)) updates[`subjects/${s.id}`] = cleanForDb({ ...s, order: i });
+            });
+            Object.entries(sync.tombstones.subjects).forEach(([id, t]) => {
+                if (VALID_KEY.test(id) && newer(R.subjects && R.subjects[id], t)) updates[`subjects/${id}`] = { deleted: true, updatedAt: t };
+            });
+            if (newer(R.settings, sync.settingsUpdatedAt)) {
+                updates.settings = cleanForDb({ dailyGoalMinutes: state.dailyGoalMinutes, pomodoro: state.pomodoro, updatedAt: sync.settingsUpdatedAt });
+            }
+            if (Object.keys(updates).length === 0) return;
+            sync.ref.update(updates)
+                .then(() => { sync.lastSyncedAt = Date.now(); updateSyncStatus(); })
+                .catch(() => { sync.status = 'error'; renderSyncStatus(); });
+        }
+
+        function loadScript(src) {
+            return new Promise((resolve, reject) => {
+                const el = document.createElement('script');
+                el.src = src;
+                el.onload = resolve;
+                el.onerror = reject;
+                document.head.appendChild(el);
+            });
+        }
+
+        async function initSync() {
+            if (sync.started) return;
+            sync.started = true;
+            sync.status = 'connecting';
+            renderSyncStatus();
+            try {
+                if (!window.firebase || !window.firebase.database) {
+                    await loadScript(FIREBASE_SDK_BASE + 'firebase-app-compat.js');
+                    await loadScript(FIREBASE_SDK_BASE + 'firebase-auth-compat.js');
+                    await loadScript(FIREBASE_SDK_BASE + 'firebase-database-compat.js');
+                }
+                if (!firebase.apps.length) firebase.initializeApp(FIREBASE_CONFIG);
+                firebase.auth().onAuthStateChanged(user => { if (user) attachSync(); });
+                if (!firebase.auth().currentUser) await firebase.auth().signInAnonymously();
+            } catch (e) {
+                sync.started = false;
+                sync.status = navigator.onLine ? 'error' : 'offline';
+                renderSyncStatus();
+            }
+        }
+
+        function attachSync() {
+            if (sync.attached) return;
+            sync.attached = true;
+            const db = firebase.database();
+            sync.ref = db.ref(SYNC_PATH);
+            db.ref('.info/connected').on('value', snap => {
+                sync.connected = !!snap.val();
+                if (sync.connected) pushChanges();
+                updateSyncStatus();
+            });
+            sync.ref.on('value', snap => applyRemote(snap.val() || {}), () => {
+                sync.status = 'error';
+                renderSyncStatus();
+            });
+        }
+
+        function updateSyncStatus() {
+            if (sync.status === 'error' && sync.remote === null) return renderSyncStatus();
+            if (sync.remote === null) sync.status = 'connecting';
+            else sync.status = sync.connected ? 'synced' : 'offline';
+            renderSyncStatus();
+        }
+
+        function renderSyncStatus() {
+            const text = document.getElementById('syncStatusText');
+            const dot = document.getElementById('syncStatusDot');
+            if (!text || !dot) return;
+            const time = sync.lastSyncedAt
+                ? new Date(sync.lastSyncedAt).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })
+                : '';
+            const map = {
+                idle: ['準備中', 'var(--text-4)'],
+                connecting: ['接続中…', '#f59e0b'],
+                synced: [`同期済み${time ? ' · ' + time : ''}`, 'var(--success)'],
+                offline: ['オフライン（端末に保存中）', 'var(--text-4)'],
+                error: ['同期できません', 'var(--danger)']
+            };
+            const [label, color] = map[sync.status] || map.idle;
+            text.textContent = label;
+            dot.style.backgroundColor = color;
         }
 
         // --- データの書き出し / 読み込み (バックアップ) ---
@@ -1670,7 +2006,7 @@
                         throw new Error('no subjects');
                     }
 
-                    const ok = confirm(`記録 ${logs.length} 件・科目 ${subjects.length} 件を読み込みます。\n今のデータは上書きされます。よろしいですか？`);
+                    const ok = confirm(`記録 ${logs.length} 件・科目 ${subjects.length} 件を読み込みます。\n今のデータは上書きされ、同期している全端末の記録も置き換わります。よろしいですか？`);
                     if (!ok) return;
 
                     state.logs = logs;
@@ -2180,7 +2516,7 @@
                 try { celebrated = localStorage.getItem(STORAGE_KEYS.GOAL_CELEBRATED); } catch (e) {}
                 if (celebrated !== todayStr) {
                     try { localStorage.setItem(STORAGE_KEYS.GOAL_CELEBRATED, todayStr); } catch (e) {}
-                    if (state.appReady) celebrateGoal();
+                    if (state.appReady && !sync.applyingRemote) celebrateGoal();
                 }
             }
 
@@ -3160,6 +3496,9 @@
             renderAll();
             updateTimerDisplay();
             state.appReady = true;
+            renderSyncStatus();
+            initSync();
+            window.addEventListener('online', () => { if (!sync.started) initSync(); });
 
             // リロード前に計測中だった場合は再開する
             if (state.timer.isRunning) {
