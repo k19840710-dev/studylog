@@ -386,7 +386,7 @@
         }
 
         /* 円形ゲージ (タイマーの進み具合) */
-        .timer-ring { position: relative; width: 168px; height: 168px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .timer-ring { position: relative; width: 184px; height: 184px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         @media (min-width: 640px) { .timer-stage { padding: 12px 0; } .timer-ring { width: 240px; height: 240px; } }
         .timer-ring > svg { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
         .ring-track { fill: none; stroke: var(--surface-3); stroke-width: 10; }
@@ -397,12 +397,12 @@
         .timer-card .timer-stage.is-running:not(.is-break) .timer-sub::before { background: var(--subj, var(--accent)); }
         .timer-stage.is-break .ring-fill { stroke: var(--success); }
         .ring-fill.is-done { stroke: var(--success); }
-        .timer-ring .timer-digits { font-size: 38px; font-weight: 600; letter-spacing: -0.02em; margin: 0; position: relative; }
-        .timer-ring .timer-digits.has-hours { font-size: 30px; }
+        .timer-ring .timer-digits { font-size: 46px; letter-spacing: -0.02em; margin: 0; position: relative; }
+        .timer-ring .timer-digits.has-hours { font-size: 36px; }
         @media (min-width: 640px) { .timer-ring .timer-digits { font-size: 56px; } .timer-ring .timer-digits.has-hours { font-size: 44px; } }
-        .ring-caption { position: relative; margin-top: 6px; font-size: 13.5px; font-weight: 500; color: var(--text-label); font-variant-numeric: tabular-nums; }
+        .ring-caption { position: relative; margin-top: 4px; font-size: 12px; font-weight: 500; color: var(--text-label); font-variant-numeric: tabular-nums; }
         .ring-caption.is-done { color: var(--success); font-weight: 600; }
-        .timer-ring .timer-sub { position: relative; margin-top: 2px; font-size: 12.5px; color: var(--text-label); }
+        .timer-ring .timer-sub { position: relative; margin-top: 2px; font-size: 11px; color: var(--text-label); }
 
         /* 今日の勉強時間 (1行のコンパクトなカード) */
         /* 今日の勉強時間 (分析タブの「今月の勉強時間」と同じ形) */
@@ -412,10 +412,10 @@
         .today-foot .progress { flex: 1; height: 5px; }
         .today-goal { font-size: 12.5px; font-weight: 500; color: var(--text-label); white-space: nowrap; }
         .today-goal:hover { color: var(--text-1); }
-        /* 円の中の「集中タイム 1/4」とポモドーロ設定ボタン */
+        /* 円の上の「集中タイム 1/4」とポモドーロ設定ボタン (通常タイマーのときは中身が隠れて高さ 0) */
         .badge-row { position: relative; display: flex; align-items: center; justify-content: center; gap: 4px; }
-        .badge-row .chip { height: 20px; padding: 0 8px; font-size: 11px; margin-bottom: 4px; }
-        .badge-row .btn-icon { width: 22px !important; height: 22px !important; margin-bottom: 4px; }
+        .badge-row .chip { margin-bottom: 6px; }
+        .badge-row .btn-icon { margin-bottom: 6px; }
         /* リセットボタン */
         .reset-btn {
             display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: 10px;
@@ -776,6 +776,12 @@
 
                 <!-- タイマー表示部 -->
                 <div id="timerStage" class="timer-stage mb-3">
+                    <div class="badge-row">
+                        <span id="pomodoroStatusBadge" class="chip chip-focus hidden">集中タイム</span>
+                        <button id="openPomodoroSettingsBtn" class="btn-icon ghost sm hidden" title="ポモドーロ設定" style="width: 26px; height: 26px;">
+                            <i class="fa-solid fa-sliders text-[12px]"></i>
+                        </button>
+                    </div>
                     <!-- 円形ゲージ: 通常タイマーは今日の目標、ポモドーロは現在のフェーズの進み具合 -->
                     <div class="timer-ring">
                         <svg viewBox="0 0 256 256" aria-hidden="true">
@@ -790,12 +796,6 @@
                             <circle class="ring-track" cx="128" cy="128" r="112" />
                             <circle id="timerRingFill" class="ring-fill" cx="128" cy="128" r="112" stroke-dasharray="703.72" stroke-dashoffset="703.72" />
                         </svg>
-                        <div class="badge-row">
-                            <span id="pomodoroStatusBadge" class="chip chip-focus hidden">集中タイム</span>
-                            <button id="openPomodoroSettingsBtn" class="btn-icon ghost sm hidden" title="ポモドーロ設定">
-                                <i class="fa-solid fa-sliders text-[12px]"></i>
-                            </button>
-                        </div>
                         <div id="timerDisplay" class="timer-digits">00:00</div>
                         <div id="timerRingCaption" class="ring-caption"></div>
                         <p id="timerSubtext" class="timer-sub hidden"></p>
