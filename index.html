@@ -316,6 +316,8 @@
         /* 線のアイコン (Lucide) */
         .lc { width: 1.15em; height: 1.15em; display: inline-block; vertical-align: -0.2em; flex-shrink: 0; }
         .tab-icon .lc { width: 21px; height: 21px; }
+        .month-title { cursor: pointer; user-select: none; }
+        .month-title:active { opacity: 0.6; }
         .settings-icon .lc { width: 16px; height: 16px; }
         .tile .lc { width: 26px; height: 26px; }
         .es-ic .lc { width: 24px; height: 24px; }
@@ -384,11 +386,15 @@
         }
 
         /* 円形ゲージ (タイマーの進み具合) */
-        .timer-ring { position: relative; width: 196px; height: 196px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .timer-ring { position: relative; width: 184px; height: 184px; margin: 0 auto; display: flex; flex-direction: column; align-items: center; justify-content: center; }
         @media (min-width: 640px) { .timer-stage { padding: 12px 0; } .timer-ring { width: 240px; height: 240px; } }
         .timer-ring svg { position: absolute; inset: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
         .ring-track { fill: none; stroke: var(--surface-3); stroke-width: 10; }
-        .ring-fill { fill: none; stroke: var(--accent); stroke-width: 10; stroke-linecap: round; transition: stroke-dashoffset 0.4s linear, opacity 0.3s ease; }
+        .ring-fill { fill: none; stroke: var(--accent); stroke-width: 10; stroke-linecap: round; transition: stroke-dashoffset 0.4s linear, opacity 0.3s ease, stroke 0.3s ease; }
+        /* タイマーの円・スタートボタンは、選んでいる科目の色にする (休憩中と目標達成後は緑) */
+        .timer-card .ring-fill:not(.is-done) { stroke: var(--subj, var(--accent)); }
+        .timer-card #startPauseBtn:not(.is-running) { background: var(--subj, var(--grad-accent)); }
+        .timer-card .timer-stage.is-running:not(.is-break) .timer-sub::before { background: var(--subj, var(--accent)); }
         .timer-stage.is-break .ring-fill { stroke: var(--success); }
         .ring-fill.is-done { stroke: var(--success); }
         .timer-ring .timer-digits { font-size: 46px; letter-spacing: -0.02em; margin: 0; position: relative; }
@@ -403,9 +409,9 @@
         @media (min-width: 640px) { .today-slim { padding: 16px 20px; } }
         .slim-ic { width: 34px; height: 34px; flex-shrink: 0; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: var(--accent-soft); color: var(--accent-text); }
         .slim-ic .lc { width: 18px; height: 18px; }
-        .slim-t { font-size: 14px; font-weight: 500; color: var(--text-label); }
-        .slim-v { font-size: 24px; font-weight: 700; color: var(--text-1); font-variant-numeric: tabular-nums; line-height: 1.3; white-space: nowrap; }
-        .slim-v .u { font-size: 0.62em; }
+        .slim-t { font-size: 13px; font-weight: 500; color: var(--text-label); }
+        .slim-v { font-size: 32px; font-weight: 700; color: var(--text-1); font-variant-numeric: tabular-nums; line-height: 1.15; white-space: nowrap; }
+        .slim-v .u { font-size: 0.55em; }
         .slim-goal { font-size: 13.5px; font-weight: 500; color: var(--text-label); margin-left: 4px; }
         .slim-goal:hover { color: var(--text-1); }
         .today-slim .progress { height: 4px; margin-top: 10px; }
@@ -707,7 +713,6 @@
             <div id="todayCard" class="card today-slim">
                 <div class="flex items-center justify-between gap-3">
                     <div class="flex items-center gap-3 min-w-0">
-                        <div class="slim-ic"><i class="fa-solid fa-clock"></i></div>
                         <div class="min-w-0">
                             <p class="slim-t">今日の勉強時間</p>
                             <p class="slim-v"><span id="todayTotalDisplay">0時間 0分</span><button id="openGoalModalBtn" class="slim-goal hit" title="目標を変更">/ 目標 <span id="dailyGoalText" class="tabular-nums">2時間 0分</span></button></p>
@@ -722,7 +727,7 @@
             </div>
 
             <!-- タイマーカード -->
-            <div class="card p-3.5 sm:p-6">
+            <div class="timer-card card p-3.5 sm:p-6">
                 <!-- モード切替タブ -->
                 <div class="segmented mb-3 sm:mb-5">
                     <button id="modeStopwatchBtn" class="seg-item is-active">
@@ -797,9 +802,6 @@
                 </div>
             </div>
 
-            <button type="button" data-goto="records" data-goto-today="1" class="link-accent self-center px-3 py-2">
-                今日の記録を見る <i class="fa-solid fa-arrow-right"></i>
-            </button>
         </section>
 
         <!-- ===== タブ2: 記録 ===== -->
@@ -808,13 +810,12 @@
             <!-- カレンダーカード -->
             <div class="lg:col-span-7 card p-5 sm:p-6">
                 <div class="flex items-center justify-between mb-4">
-                    <div class="section-title section-title-lg"><i class="fa-solid fa-calendar-days"></i><h3 id="calendarMonthYear" class="tabular-nums"></h3></div>
+                    <div id="monthTitle" class="month-title section-title section-title-lg" role="button" tabindex="0" title="今月に戻る"><i class="fa-solid fa-calendar-days"></i><h3 id="calendarMonthYear" class="tabular-nums"></h3></div>
                     <div class="flex items-center gap-1.5">
-                        <button id="prevMonthBtn" class="btn-icon ghost sm" title="前月 (←)">
+                        <button id="prevMonthBtn" class="btn-icon ghost sm" style="width: 30px; height: 30px;" title="前月 (←)">
                             <i class="fa-solid fa-chevron-left"></i>
                         </button>
-                        <button id="todayBtn" class="btn btn-secondary btn-sm" title="今日 (T)">今日</button>
-                        <button id="nextMonthBtn" class="btn-icon ghost sm" title="翌月 (→)">
+                        <button id="nextMonthBtn" class="btn-icon ghost sm" style="width: 30px; height: 30px;" title="翌月 (→)">
                             <i class="fa-solid fa-chevron-right"></i>
                         </button>
                     </div>
@@ -2224,6 +2225,15 @@
             fill.classList.toggle('is-done', done);
         }
 
+        // タイマーの円とスタートボタンを、計測中の科目 (計測前は選んでいる科目) の色にする
+        function applySubjectColor() {
+            const card = document.querySelector('.timer-card');
+            const select = document.getElementById('subjectSelect');
+            if (!card || !select) return;
+            const id = state.timer.subjectId || select.value;
+            card.style.setProperty('--subj', safeColor(getSubject(id).color));
+        }
+
         function updateTimerControls() {
             const t = state.timer;
             const startPauseBtn = document.getElementById('startPauseBtn');
@@ -2233,6 +2243,7 @@
             const onBreak = isBreak();
 
             startPauseBtn.classList.toggle('is-running', t.isRunning);
+            applySubjectColor();
             const stage = document.getElementById('timerStage');
             stage.classList.toggle('is-running', t.isRunning);
             stage.classList.toggle('is-break', onBreak);
@@ -3267,7 +3278,27 @@
             document.getElementById('nextMonthBtn').addEventListener('click', () => changeMonth(1));
             document.getElementById('statsPrevMonthBtn').addEventListener('click', () => changeMonth(-1));
             document.getElementById('statsNextMonthBtn').addEventListener('click', () => changeMonth(1));
-            document.getElementById('todayBtn').addEventListener('click', goToday);
+            // 年月の文字を押すと今月に戻る
+            const monthTitle = document.getElementById('monthTitle');
+            monthTitle.addEventListener('click', goToday);
+            monthTitle.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); goToday(); } });
+            // カレンダーを左右にスワイプして月を切り替える
+            const calCard = document.getElementById('calendarGrid');
+            let touchStart = null;
+            calCard.addEventListener('touchstart', (e) => {
+                const t0 = e.touches[0];
+                touchStart = { x: t0.clientX, y: t0.clientY };
+            }, { passive: true });
+            calCard.addEventListener('touchend', (e) => {
+                if (!touchStart) return;
+                const t1 = e.changedTouches[0];
+                const dx = t1.clientX - touchStart.x;
+                const dy = t1.clientY - touchStart.y;
+                touchStart = null;
+                if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.5) changeMonth(dx < 0 ? 1 : -1);
+            }, { passive: true });
+            // 科目を選び直したら、タイマーの色も変える
+            document.getElementById('subjectSelect').addEventListener('change', applySubjectColor);
 
             // モーダル開閉共通 (×ボタン・キャンセル・背景クリック)
             document.querySelectorAll('.closeModalBtn').forEach(btn => btn.addEventListener('click', closeModals));
