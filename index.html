@@ -1375,7 +1375,7 @@
             const h = Math.floor(totalMinutes / 60);
             const m = totalMinutes % 60;
             if (h === 0 && m === 0 && totalSeconds > 0) {
-                return `1分未満 (${totalSeconds}秒)`;
+                return '1分未満';
             }
             return `${h}時間 ${m}分`;
         }
@@ -1384,7 +1384,7 @@
         function formatDurationHTML(totalSeconds) {
             const totalMinutes = Math.floor(totalSeconds / 60);
             if (totalMinutes === 0 && totalSeconds > 0) {
-                return `${totalSeconds}<span class="u">秒</span>`;
+                return `1<span class="u">分未満</span>`;
             }
             return `${Math.floor(totalMinutes / 60)}<span class="u">時間</span>${totalMinutes % 60}<span class="u">分</span>`;
         }
@@ -1396,6 +1396,7 @@
             if (h > 0) {
                 return m > 0 ? `${h}h${m}m` : `${h}h`;
             }
+            if (totalSeconds > 0 && totalMinutes === 0) return '<1m'; // 1分未満 (HTML に入れるときは escapeHTML を通す)
             return `${m}m`;
         }
 
@@ -2455,6 +2456,8 @@
             }
             const seconds = getRecordableSeconds();
             if (seconds === 0) return;
+            // 誤ってスタートした分が残らないよう、1分未満は確認する
+            if (seconds < 60 && !confirm('1分未満の記録です。記録しますか？')) return;
 
             const t = state.timer;
             const memoInput = document.getElementById('timerMemoInput');
@@ -2680,7 +2683,7 @@
                 const aria = `${formatDayLabel(d.date)} 合計 ${formatSecondsToHoursMinutes(d.total)}`;
                 return `
                     <button type="button" class="week-col flex-1 min-w-0 flex flex-col items-center justify-end h-full" data-date="${d.date}" aria-label="${escapeHTML(aria)}" title="${escapeHTML(aria)}">
-                        <span class="week-val">${d.total > 0 ? formatSecondsToShort(d.total) : '0'}</span>
+                        <span class="week-val">${d.total > 0 ? escapeHTML(formatSecondsToShort(d.total)) : '0'}</span>
                         <span class="week-bar ${barClass}" style="height:${h}px"></span>
                         <span class="week-day${isToday ? ' is-today' : ''}">${isToday ? '今日' : WEEKDAYS[date.getDay()]}</span>
                     </button>
@@ -2785,7 +2788,7 @@
                 cell.className = `cal-cell heat-${heat}${isToday ? ' is-today' : ''}${isSelected ? ' is-selected' : ''}`;
                 cell.innerHTML = `
                     <span class="cal-day">${day}</span>
-                    ${totalSec > 0 ? `<span class="cal-time">${formatSecondsToShort(totalSec)}</span>` : ''}
+                    ${totalSec > 0 ? `<span class="cal-time">${escapeHTML(formatSecondsToShort(totalSec))}</span>` : ''}
                 `;
                 cell.addEventListener('click', () => {
                     state.selectedDateStr = dateStr;
