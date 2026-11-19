@@ -367,7 +367,6 @@
             transition: border-color 0.4s ease, box-shadow 0.4s ease;
         }
         .timer-stage.is-running { border-color: var(--accent-ring); }
-        .timer-stage.is-break { background: var(--surface-2); }
         .timer-stage.is-break.is-running { border-color: var(--success); }
         .timer-digits {
             font-size: clamp(52px, 15vw, 72px); font-weight: 700; line-height: 1; letter-spacing: -0.03em;
@@ -414,8 +413,11 @@
         .today-goal:hover { color: var(--text-1); }
         /* 円の上の「集中タイム 1/4」とポモドーロ設定ボタン (通常タイマーのときは中身が隠れて高さ 0) */
         .badge-row { position: relative; display: flex; align-items: center; justify-content: center; gap: 4px; }
-        .badge-row .chip { margin-bottom: 6px; }
-        .badge-row .btn-icon { margin-bottom: 6px; }
+        /* 切り替えボタンの中のポモドーロの状態 (集中中は赤、休憩中は緑の点) */
+        .pomo-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin: 0 4px 1px 6px; vertical-align: middle; }
+        .pomo-dot.is-focus { background: var(--danger); }
+        .pomo-dot.is-break { background: var(--success); }
+        .pomo-set { font-variant-numeric: tabular-nums; }
         /* リセットボタン */
         .reset-btn {
             display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 12px; border-radius: 10px;
@@ -776,12 +778,6 @@
 
                 <!-- タイマー表示部 -->
                 <div id="timerStage" class="timer-stage mb-3">
-                    <div class="badge-row">
-                        <span id="pomodoroStatusBadge" class="chip chip-focus hidden">集中タイム</span>
-                        <button id="openPomodoroSettingsBtn" class="btn-icon ghost sm hidden" title="ポモドーロ設定" style="width: 26px; height: 26px;">
-                            <i class="fa-solid fa-sliders text-[12px]"></i>
-                        </button>
-                    </div>
                     <!-- 円形ゲージ: 通常タイマーは今日の目標、ポモドーロは現在のフェーズの進み具合 -->
                     <div class="timer-ring">
                         <svg viewBox="0 0 256 256" aria-hidden="true">
@@ -2296,29 +2292,26 @@
             updatePomodoroBadge();
         }
 
+        // ポモドーロの状態は、切り替えボタンの中に「ポモドーロ ● 1/4」「ポモドーロ ● 休憩」と表示する
         function updatePomodoroBadge() {
             const t = state.timer;
             const p = state.pomodoro;
-            const badge = document.getElementById('pomodoroStatusBadge');
-            const gear = document.getElementById('openPomodoroSettingsBtn');
-            document.getElementById('pomodoroTabLabel').textContent = `ポモドーロ (${p.focusMin}分)`;
-
+            const label = document.getElementById('pomodoroTabLabel');
+            const btn = document.getElementById('modePomodoroBtn');
             if (t.mode !== 'pomodoro') {
-                badge.classList.add('hidden');
-                gear.classList.add('hidden');
+                label.textContent = `ポモドーロ (${p.focusMin}分)`;
+                btn.title = 'ポモドーロに切り替え';
                 return;
             }
-            badge.classList.remove('hidden');
-            gear.classList.remove('hidden');
-            badge.classList.remove('chip-focus', 'chip-break');
             if (t.phase === 'focus') {
                 const setNo = (t.completedFocus % p.longBreakEvery) + 1;
-                badge.textContent = `集中タイム ${setNo}/${p.longBreakEvery}`;
-                badge.classList.add('chip-focus');
+                label.innerHTML = `ポモドーロ<span class="pomo-dot is-focus"></span><span class="pomo-set">${setNo}/${p.longBreakEvery}</span>`;
+                btn.title = `集中タイム ${setNo}/${p.longBreakEvery}（${p.focusMin}分）`;
             } else {
-                badge.textContent = t.breakKind === 'long' ? `長い休憩 (${p.longBreakMin}分)` : `休憩 (${p.shortBreakMin}分)`;
-                badge.classList.add('chip-break');
+                label.innerHTML = 'ポモドーロ<span class="pomo-dot is-break"></span>休憩';
+                btn.title = t.breakKind === 'long' ? `長い休憩（${p.longBreakMin}分）` : `休憩（${p.shortBreakMin}分）`;
             }
+            btn.setAttribute('aria-label', btn.title);
         }
 
         function updateModeTabs() {
@@ -3215,7 +3208,6 @@
             document.getElementById('finishSaveBtn').addEventListener('click', saveTimerRecord);
             document.getElementById('modeStopwatchBtn').addEventListener('click', () => switchTimerMode('stopwatch'));
             document.getElementById('modePomodoroBtn').addEventListener('click', () => switchTimerMode('pomodoro'));
-            document.getElementById('openPomodoroSettingsBtn').addEventListener('click', openPomodoroSettings);
 
             // 記録の編集・削除 (イベント委譲)
             document.getElementById('dayLogsList').addEventListener('click', (e) => {
