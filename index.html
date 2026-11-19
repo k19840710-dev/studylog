@@ -335,7 +335,8 @@
         }
         .app-title { font-size: 18px; font-weight: 800; letter-spacing: -0.02em; color: var(--text-1); }
 
-        #tabBar { border-top: 1px solid var(--hairline); }
+        #tabBar { border-top: 1px solid #e2e8f0; }
+        html.dark #tabBar { border-top-color: #232733; }
         .tab-btn { height: 58px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; color: var(--text-3); }
         .tab-btn:not(:disabled):active { transform: none; }
         .tab-btn:hover { color: var(--text-2); }
@@ -414,6 +415,16 @@
         .tile-green { background: var(--success-soft); color: var(--success); }
         .tile-orange { background: rgba(234, 88, 12, 0.10); color: #ea580c; }
         html.dark .tile-orange { background: rgba(251, 146, 60, 0.16); color: #fdba74; }
+
+        /* 分析タブの数字カード: スマホ・タブレットでは上に大きく1枚、下に2列 (PC は3列) */
+        @media (max-width: 1023px) {
+            .kpi > .card:first-child { grid-column: 1 / -1; }
+            .kpi > .card:not(:first-child) { flex-direction: column; align-items: flex-start; gap: 10px; padding: 14px 16px; }
+            .kpi > .card:not(:first-child) .tile { width: 38px; height: 38px; border-radius: 12px; }
+            .kpi > .card:not(:first-child) .tile .lc { width: 20px; height: 20px; }
+            .kpi > .card:not(:first-child) .eyebrow { font-size: 13px; }
+            .kpi > .card:not(:first-child) .stat-value { font-size: 28px; }
+        }
 
         /* 週グラフ (1色の太い棒 + 上に数字) */
         .week-val { font-size: 11px; font-weight: 800; letter-spacing: -0.02em; color: var(--text-1); margin-bottom: 6px; font-variant-numeric: tabular-nums; white-space: nowrap; }
@@ -847,7 +858,7 @@
         <!-- ===== タブ3: 分析 ===== -->
         <section data-tab-panel="stats" hidden class="tab-panel grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 items-start" aria-label="分析">
 
-            <div class="lg:col-span-2 grid grid-cols-1 lg:grid-cols-3 gap-3 sm:gap-4">
+            <div class="kpi lg:col-span-2 grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                 <!-- 表示中の月の勉強時間 -->
                 <div class="card p-5 flex items-center gap-4">
                     <div class="tile tile-indigo"><i class="fa-solid fa-clock"></i></div>
