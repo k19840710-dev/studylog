@@ -419,21 +419,30 @@
         .mode-tabs .seg-item { padding: 0 4px; }
         @media (max-width: 430px) { .mode-tabs .seg-item { font-size: 12.5px; gap: 0; } .mode-tabs .seg-item .lc { display: none; } }
 
-        /* 科目のチップ (横にスクロール) */
-        .subject-chips { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding: 2px; margin: -2px; }
-        .subject-chips::-webkit-scrollbar { display: none; }
-        .subject-chip {
-            flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px 0 8px;
-            border-radius: 999px; font-size: 13.5px; font-weight: 500; color: var(--text-2);
-            background: var(--surface-2); border: 1px solid var(--border);
+        /* 科目のボタン (メモ欄の左) と一覧 */
+        .subj-row { position: relative; display: flex; gap: 8px; }
+        .subj-row .field { flex: 1; min-width: 0; }
+        .subj-btn {
+            flex-shrink: 0; max-width: 58%; display: inline-flex; align-items: center; gap: 6px; height: 44px; padding: 0 10px 0 12px;
+            border-radius: 12px; font-size: 14px; font-weight: 700; color: var(--text-1);
+            border: 1px solid var(--c); background: color-mix(in srgb, var(--c) 10%, var(--surface));
         }
-        .subject-chip .lc { width: 15px; height: 15px; color: var(--c); }
-        .subject-chip.is-active {
-            color: var(--text-1); font-weight: 700; border-color: var(--c);
-            background: color-mix(in srgb, var(--c) 12%, var(--surface));
+        .subj-btn .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .subj-btn .ic { width: 16px; height: 16px; color: var(--c); }
+        .subj-btn .chev { width: 14px; height: 14px; color: var(--text-3); transform: rotate(90deg); }
+        .subj-btn:disabled { cursor: not-allowed; }
+        .subj-btn:disabled .chev { display: none; }
+        .subj-picker {
+            position: absolute; left: 0; bottom: calc(100% + 6px); width: 240px; max-height: 300px; overflow-y: auto; z-index: 25;
+            background: var(--surface); border: 1px solid var(--border-strong); border-radius: 14px; box-shadow: var(--shadow-pop); padding: 6px;
         }
-        .subject-chip:disabled { opacity: 0.45; cursor: not-allowed; }
-        .subject-chip.is-active:disabled { opacity: 1; }
+        .subj-pick { display: flex; align-items: center; gap: 10px; width: 100%; padding: 8px 10px; border-radius: 10px; font-size: 14px; color: var(--text-1); text-align: left; }
+        .subj-pick:hover { background: var(--surface-2); }
+        .subj-pick.is-active { background: var(--surface-2); font-weight: 700; }
+        .subj-pick .subj-icon { width: 28px; height: 28px; border-radius: 8px; font-size: 12px; }
+        .subj-pick .subj-icon .lc { width: 14px; height: 14px; }
+        .subj-pick .ck { margin-left: auto; width: 16px; height: 16px; color: var(--accent-text); }
+        .subj-pick .nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
         /* 時間を選ぶチップ (タイマー・ポモドーロ) */
         .duration-chips { display: flex; justify-content: center; gap: 6px; margin: 0 0 10px; }
@@ -797,12 +806,6 @@
                     </button>
                 </div>
 
-                <!-- 科目選択 -->
-                <div class="mb-2.5 sm:mb-4">
-                                        <!-- 実際の選択値は隠したセレクトに持たせ、画面にはチップを並べる -->
-                    <select id="subjectSelect" class="hidden" aria-hidden="true" tabindex="-1"></select>
-                    <div id="subjectChips" class="subject-chips" role="radiogroup" aria-label="学習する科目"></div>
-                </div>
 
                 <!-- タイマー表示部 -->
                 <div id="timerStage" class="timer-stage mb-1.5">
@@ -841,9 +844,13 @@
                     </button>
                 </div>
 
-                <!-- タイマー記録用メモ (スタートボタンが1画面に収まるよう、ボタンの下に置く) -->
-                <div class="mt-3">
-                    <input type="text" id="timerMemoInput" maxlength="100" placeholder="メモ (任意)  例: 英単語帳 P.10〜30" class="field">
+                <!-- 科目とメモ (スタートボタンが1画面に収まるよう、ボタンの下に置く) -->
+                <div class="subj-row mt-3">
+                    <!-- 実際の選択値は隠したセレクトに持たせ、画面には今の科目のボタンを出す -->
+                    <select id="subjectSelect" class="hidden" aria-hidden="true" tabindex="-1"></select>
+                    <button type="button" id="subjectBtn" class="subj-btn" aria-haspopup="listbox" aria-expanded="false" title="科目を選ぶ"></button>
+                    <div id="subjectPicker" class="subj-picker hidden" role="listbox" aria-label="学習する科目"></div>
+                    <input type="text" id="timerMemoInput" maxlength="100" placeholder="メモ (任意)" class="field">
                 </div>
                 <div class="mt-3 flex items-center justify-between">
                     <span class="hidden sm:inline-flex items-center gap-1.5 meta"><kbd>Space</kbd> で開始 / 停止</span>
@@ -2362,25 +2369,38 @@
             updatePomodoroBadge();
         }
 
-        // --- 科目のチップ ---
+        // --- 科目のボタン (メモ欄の左) と一覧 ---
         function renderSubjectChips() {
-            const wrap = document.getElementById('subjectChips');
+            const btn = document.getElementById('subjectBtn');
             const select = document.getElementById('subjectSelect');
-            if (!wrap) return;
-            const options = [...select.options];
-            wrap.innerHTML = options.map(o => {
+            if (!btn) return;
+            const sub = getSubject(select.value);
+            btn.style.setProperty('--c', safeColor(sub.color));
+            btn.innerHTML = `<i class="fa-solid ${safeIcon(sub.icon)} ic"></i><span class="nm">${escapeHTML(sub.name)}</span><i class="fa-solid fa-chevron-right chev"></i>`;
+            btn.disabled = select.disabled;
+            btn.title = select.disabled ? '計測中は科目を変更できません (リセットまたは記録後に変更できます)' : '科目を選ぶ';
+            btn.setAttribute('aria-label', `科目: ${sub.name}`);
+            if (select.disabled) closeSubjectPicker();
+        }
+
+        function openSubjectPicker() {
+            const select = document.getElementById('subjectSelect');
+            if (select.disabled) return;
+            const picker = document.getElementById('subjectPicker');
+            picker.innerHTML = [...select.options].map(o => {
                 const sub = getSubject(o.value);
                 const active = o.value === select.value;
-                return `<button type="button" class="subject-chip${active ? ' is-active' : ''}" data-subject="${escapeHTML(o.value)}" role="radio" aria-checked="${active}" ${select.disabled ? 'disabled' : ''} style="--c:${safeColor(sub.color)}"><i class="fa-solid ${safeIcon(sub.icon)}"></i>${escapeHTML(o.textContent)}</button>`;
+                return `<button type="button" class="subj-pick${active ? ' is-active' : ''}" data-subject="${escapeHTML(o.value)}" role="option" aria-selected="${active}">${subjectIconHTML(sub)}<span class="nm">${escapeHTML(o.textContent)}</span>${active ? '<i class="fa-solid fa-check ck"></i>' : ''}</button>`;
             }).join('');
-            if (select.disabled) wrap.title = '計測中は科目を変更できません (リセットまたは記録後に変更できます)';
-            else wrap.removeAttribute('title');
-            // 選んでいる科目が見えるようにスクロール
-            const activeChip = wrap.querySelector('.is-active');
-            if (activeChip && wrap.scrollWidth > wrap.clientWidth) {
-                const l = activeChip.offsetLeft - wrap.offsetLeft;
-                if (l < wrap.scrollLeft || l + activeChip.offsetWidth > wrap.scrollLeft + wrap.clientWidth) wrap.scrollLeft = l - 8;
-            }
+            picker.classList.remove('hidden');
+            document.getElementById('subjectBtn').setAttribute('aria-expanded', 'true');
+        }
+
+        function closeSubjectPicker() {
+            const picker = document.getElementById('subjectPicker');
+            if (!picker || picker.classList.contains('hidden')) return;
+            picker.classList.add('hidden');
+            document.getElementById('subjectBtn').setAttribute('aria-expanded', 'false');
         }
 
         // --- 時間を選ぶチップ (タイマー: 15/30/45/60分、ポモドーロ: 25/50分、その他) ---
@@ -3327,13 +3347,23 @@
             document.getElementById('modeStopwatchBtn').addEventListener('click', () => switchTimerMode('stopwatch'));
             document.getElementById('modePomodoroBtn').addEventListener('click', () => switchTimerMode('pomodoro'));
             document.getElementById('modeCountdownBtn').addEventListener('click', () => switchTimerMode('countdown'));
-            document.getElementById('subjectChips').addEventListener('click', (e) => {
-                const chip = e.target.closest('.subject-chip');
+            document.getElementById('subjectBtn').addEventListener('click', (e) => {
+                e.stopPropagation();
+                const picker = document.getElementById('subjectPicker');
+                if (picker.classList.contains('hidden')) openSubjectPicker(); else closeSubjectPicker();
+            });
+            document.getElementById('subjectPicker').addEventListener('click', (e) => {
+                const item = e.target.closest('.subj-pick');
                 const select = document.getElementById('subjectSelect');
-                if (!chip || select.disabled) return;
-                select.value = chip.dataset.subject;
+                if (!item || select.disabled) return;
+                select.value = item.dataset.subject;
+                closeSubjectPicker();
                 applySubjectColor();
                 renderSubjectChips();
+            });
+            // 一覧の外を押したら閉じる
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('#subjectPicker') && !e.target.closest('#subjectBtn')) closeSubjectPicker();
             });
             document.getElementById('durationChips').addEventListener('click', (e) => {
                 const chip = e.target.closest('.duration-chip');
@@ -3624,6 +3654,7 @@
             // キーボードショートカット
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape') {
+                    closeSubjectPicker();
                     closeModals();
                     return;
                 }
