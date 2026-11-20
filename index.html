@@ -405,14 +405,46 @@
 
         /* 今日の勉強時間 (1行のコンパクトなカード) */
         /* 今日の勉強時間 (分析タブの「今月の勉強時間」と同じ形) */
-        .today-card { padding: 16px 18px; }
+        .today-card { padding: 12px 18px 14px; }
+        .today-card .tile { width: 48px; height: 48px; border-radius: 14px; }
+        .today-card .tile .lc { width: 24px; height: 24px; }
         @media (min-width: 640px) { .today-card { padding: 20px 24px; } }
-        .today-foot { display: flex; align-items: center; gap: 10px; margin-top: 12px; }
+        .today-foot { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
         .today-foot .progress { flex: 1; height: 5px; }
         .today-goal { font-size: 12.5px; font-weight: 500; color: var(--text-label); white-space: nowrap; }
         .today-goal:hover { color: var(--text-1); }
         /* 円の上の「集中タイム 1/4」とポモドーロ設定ボタン (通常タイマーのときは中身が隠れて高さ 0) */
         .badge-row { position: relative; display: flex; align-items: center; justify-content: center; gap: 4px; }
+        /* 3つのモードの切り替え (狭い画面ではアイコンを省いて文字を少し小さく) */
+        .mode-tabs .seg-item { padding: 0 4px; }
+        @media (max-width: 430px) { .mode-tabs .seg-item { font-size: 12.5px; gap: 0; } .mode-tabs .seg-item .lc { display: none; } }
+
+        /* 科目のチップ (横にスクロール) */
+        .subject-chips { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding: 2px; margin: -2px; }
+        .subject-chips::-webkit-scrollbar { display: none; }
+        .subject-chip {
+            flex-shrink: 0; display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px 0 8px;
+            border-radius: 999px; font-size: 13.5px; font-weight: 500; color: var(--text-2);
+            background: var(--surface-2); border: 1px solid var(--border);
+        }
+        .subject-chip .lc { width: 15px; height: 15px; color: var(--c); }
+        .subject-chip.is-active {
+            color: var(--text-1); font-weight: 700; border-color: var(--c);
+            background: color-mix(in srgb, var(--c) 12%, var(--surface));
+        }
+        .subject-chip:disabled { opacity: 0.45; cursor: not-allowed; }
+        .subject-chip.is-active:disabled { opacity: 1; }
+
+        /* 時間を選ぶチップ (タイマー・ポモドーロ) */
+        .duration-chips { display: flex; justify-content: center; gap: 6px; margin: 0 0 10px; }
+        .duration-chip {
+            height: 30px; padding: 0 12px; border-radius: 999px; font-size: 13px; font-weight: 600;
+            color: var(--text-2); background: var(--surface-2); border: 1px solid var(--border); font-variant-numeric: tabular-nums;
+        }
+        .duration-chip.is-active { color: #fff; background: var(--subj, var(--accent)); border-color: transparent; }
+        .duration-chip:disabled { opacity: 0.4; cursor: not-allowed; }
+        .duration-chip.is-active:disabled { opacity: 0.75; }
+
         /* 切り替えボタンの中のポモドーロの状態 (集中中は赤、休憩中は緑の点) */
         .pomo-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin: 0 4px 1px 6px; vertical-align: middle; }
         .pomo-dot.is-focus { background: var(--danger); }
@@ -753,31 +785,27 @@
             <!-- タイマーカード -->
             <div class="timer-card card p-3.5 sm:p-6">
                 <!-- モード切替タブ -->
-                <div class="segmented mb-3 sm:mb-5">
-                    <button id="modeStopwatchBtn" class="seg-item is-active">
-                        <i class="fa-solid fa-stopwatch"></i>通常タイマー
+                <div class="segmented mode-tabs mb-3 sm:mb-5">
+                    <button id="modeStopwatchBtn" class="seg-item is-active" title="時間を決めずに計る">
+                        <i class="fa-solid fa-stopwatch"></i>ストップウォッチ
+                    </button>
+                    <button id="modeCountdownBtn" class="seg-item" title="時間を決めて計る">
+                        <i class="fa-solid fa-hourglass"></i>タイマー
                     </button>
                     <button id="modePomodoroBtn" class="seg-item">
-                        <i class="fa-solid fa-clock"></i><span id="pomodoroTabLabel">ポモドーロ (25分)</span>
+                        <i class="fa-solid fa-clock"></i><span id="pomodoroTabLabel">ポモドーロ</span>
                     </button>
                 </div>
 
                 <!-- 科目選択 -->
                 <div class="mb-2.5 sm:mb-4">
-                    <label for="subjectSelect" class="sr-only">学習する科目</label>
-                    <div class="flex gap-2">
-                        <select id="subjectSelect" class="field flex-grow min-w-0"></select>
-                        <button id="addSubjectBtn" title="新しい科目を追加" class="btn-icon" style="width: 44px; height: 44px;">
-                            <i class="fa-solid fa-plus"></i>
-                        </button>
-                        <button id="manageSubjectsBtn" title="科目の管理 (名前・色の変更、削除)" class="btn-icon" style="width: 44px; height: 44px;">
-                            <i class="fa-solid fa-pen text-[13px]"></i>
-                        </button>
-                    </div>
+                                        <!-- 実際の選択値は隠したセレクトに持たせ、画面にはチップを並べる -->
+                    <select id="subjectSelect" class="hidden" aria-hidden="true" tabindex="-1"></select>
+                    <div id="subjectChips" class="subject-chips" role="radiogroup" aria-label="学習する科目"></div>
                 </div>
 
                 <!-- タイマー表示部 -->
-                <div id="timerStage" class="timer-stage mb-3">
+                <div id="timerStage" class="timer-stage mb-1.5">
                     <!-- 円形ゲージ: 通常タイマーは今日の目標、ポモドーロは現在のフェーズの進み具合 -->
                     <div class="timer-ring">
                         <svg viewBox="0 0 256 256" aria-hidden="true">
@@ -797,6 +825,9 @@
                         <p id="timerSubtext" class="timer-sub hidden"></p>
                     </div>
                 </div>
+
+                <!-- 時間を選ぶ (タイマー・ポモドーロのとき) -->
+                <div id="durationChips" class="duration-chips hidden"></div>
 
                 <!-- コントロールボタン -->
                 <div class="grid grid-cols-2 gap-3">
@@ -1249,7 +1280,7 @@
            アイコン: 画面に追加された Font Awesome 形式の指定 (<i class="fa-solid fa-xxx">) を
            Lucide の線のアイコン (SVG) に自動で差し替える。保存データの科目アイコン名 (fa-xxx) はそのまま使える
            ========================================================= */
-        const LUCIDE_ICONS = {"chevron-right":"<path d=\"m9 18 6-6-6-6\" />","xmark":"<path d=\"M18 6 6 18\" /> <path d=\"m6 6 12 12\" />","plus":"<path d=\"M5 12h14\" /> <path d=\"M12 5v14\" />","stopwatch":"<line x1=\"10\" x2=\"14\" y1=\"2\" y2=\"2\" /> <line x1=\"12\" x2=\"15\" y1=\"14\" y2=\"11\" /> <circle cx=\"12\" cy=\"14\" r=\"8\" />","play":"<polygon points=\"6 3 20 12 6 21 6 3\" />","check":"<path d=\"M20 6 9 17l-5-5\" />","book":"<path d=\"M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20\" />","trash-can":"<path d=\"M3 6h18\" /> <path d=\"M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6\" /> <path d=\"M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2\" /> <line x1=\"10\" x2=\"10\" y1=\"11\" y2=\"17\" /> <line x1=\"14\" x2=\"14\" y1=\"11\" y2=\"17\" />","pen":"<path d=\"M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z\" /> <path d=\"m15 5 4 4\" />","language":"<path d=\"m5 8 6 6\" /> <path d=\"m4 14 6-6 2-3\" /> <path d=\"M2 5h12\" /> <path d=\"M7 2h1\" /> <path d=\"m22 22-5-10-5 10\" /> <path d=\"M14 18h6\" />","code":"<polyline points=\"16 18 22 12 16 6\" /> <polyline points=\"8 6 2 12 8 18\" />","clock":"<circle cx=\"12\" cy=\"12\" r=\"10\" /> <polyline points=\"12 6 12 12 16 14\" />","circle-question":"<circle cx=\"12\" cy=\"12\" r=\"10\" /> <path d=\"M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3\" /> <path d=\"M12 17h.01\" />","chevron-left":"<path d=\"m15 18-6-6 6-6\" />","chart-pie":"<path d=\"M21 12c.552 0 1.005-.449.95-.998a10 10 0 0 0-8.953-8.951c-.55-.055-.998.398-.998.95v8a1 1 0 0 0 1 1z\" /> <path d=\"M21.21 15.89A10 10 0 1 1 8 2.83\" />","chart-column":"<path d=\"M3 3v16a2 2 0 0 0 2 2h16\" /> <path d=\"M18 17V9\" /> <path d=\"M13 17V5\" /> <path d=\"M8 17v-3\" />","calendar-days":"<path d=\"M8 2v4\" /> <path d=\"M16 2v4\" /> <rect width=\"18\" height=\"18\" x=\"3\" y=\"4\" rx=\"2\" /> <path d=\"M3 10h18\" /> <path d=\"M8 14h.01\" /> <path d=\"M12 14h.01\" /> <path d=\"M16 14h.01\" /> <path d=\"M8 18h.01\" /> <path d=\"M12 18h.01\" /> <path d=\"M16 18h.01\" />","calculator":"<rect width=\"16\" height=\"20\" x=\"4\" y=\"2\" rx=\"2\" /> <line x1=\"8\" x2=\"16\" y1=\"6\" y2=\"6\" /> <line x1=\"16\" x2=\"16\" y1=\"14\" y2=\"18\" /> <path d=\"M16 10h.01\" /> <path d=\"M12 10h.01\" /> <path d=\"M8 10h.01\" /> <path d=\"M12 14h.01\" /> <path d=\"M8 14h.01\" /> <path d=\"M12 18h.01\" /> <path d=\"M8 18h.01\" />","bullseye":"<circle cx=\"12\" cy=\"12\" r=\"10\" /> <circle cx=\"12\" cy=\"12\" r=\"6\" /> <circle cx=\"12\" cy=\"12\" r=\"2\" />","arrow-right":"<path d=\"M5 12h14\" /> <path d=\"m12 5 7 7-7 7\" />","trophy":"<path d=\"M6 9H4.5a2.5 2.5 0 0 1 0-5H6\" /> <path d=\"M18 9h1.5a2.5 2.5 0 0 0 0-5H18\" /> <path d=\"M4 22h16\" /> <path d=\"M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22\" /> <path d=\"M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22\" /> <path d=\"M18 2H6v7a6 6 0 0 0 12 0V2Z\" />","tags":"<path d=\"m15 5 6.3 6.3a2.4 2.4 0 0 1 0 3.4L17 19\" /> <path d=\"M9.586 5.586A2 2 0 0 0 8.172 5H3a1 1 0 0 0-1 1v5.172a2 2 0 0 0 .586 1.414L8.29 18.29a2.426 2.426 0 0 0 3.42 0l3.58-3.58a2.426 2.426 0 0 0 0-3.42z\" /> <circle cx=\"6.5\" cy=\"9.5\" r=\".5\" fill=\"currentColor\" />","sliders":"<line x1=\"21\" x2=\"14\" y1=\"4\" y2=\"4\" /> <line x1=\"10\" x2=\"3\" y1=\"4\" y2=\"4\" /> <line x1=\"21\" x2=\"12\" y1=\"12\" y2=\"12\" /> <line x1=\"8\" x2=\"3\" y1=\"12\" y2=\"12\" /> <line x1=\"21\" x2=\"16\" y1=\"20\" y2=\"20\" /> <line x1=\"12\" x2=\"3\" y1=\"20\" y2=\"20\" /> <line x1=\"14\" x2=\"14\" y1=\"2\" y2=\"6\" /> <line x1=\"8\" x2=\"8\" y1=\"10\" y2=\"14\" /> <line x1=\"16\" x2=\"16\" y1=\"18\" y2=\"22\" />","pen-nib":"<path d=\"M15.707 21.293a1 1 0 0 1-1.414 0l-1.586-1.586a1 1 0 0 1 0-1.414l5.586-5.586a1 1 0 0 1 1.414 0l1.586 1.586a1 1 0 0 1 0 1.414z\" /> <path d=\"m18 13-1.375-6.874a1 1 0 0 0-.746-.776L3.235 2.028a1 1 0 0 0-1.207 1.207L5.35 15.879a1 1 0 0 0 .776.746L13 18\" /> <path d=\"m2.3 2.3 7.286 7.286\" /> <circle cx=\"11\" cy=\"11\" r=\"2\" />","pause":"<rect x=\"14\" y=\"4\" width=\"4\" height=\"16\" rx=\"1\" /> <rect x=\"6\" y=\"4\" width=\"4\" height=\"16\" rx=\"1\" />","palette":"<circle cx=\"13.5\" cy=\"6.5\" r=\".5\" fill=\"currentColor\" /> <circle cx=\"17.5\" cy=\"10.5\" r=\".5\" fill=\"currentColor\" /> <circle cx=\"8.5\" cy=\"7.5\" r=\".5\" fill=\"currentColor\" /> <circle cx=\"6.5\" cy=\"12.5\" r=\".5\" fill=\"currentColor\" /> <path d=\"M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z\" />","music":"<path d=\"M9 18V5l12-2v13\" /> <circle cx=\"6\" cy=\"18\" r=\"3\" /> <circle cx=\"18\" cy=\"16\" r=\"3\" />","microscope":"<path d=\"M6 18h8\" /> <path d=\"M3 22h18\" /> <path d=\"M14 22a7 7 0 1 0 0-14h-1\" /> <path d=\"M9 14h2\" /> <path d=\"M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Z\" /> <path d=\"M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3\" />","list-check":"<path d=\"m3 17 2 2 4-4\" /> <path d=\"m3 7 2 2 4-4\" /> <path d=\"M13 6h8\" /> <path d=\"M13 12h8\" /> <path d=\"M13 18h8\" />","laptop":"<path d=\"M20 16V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9m16 0H4m16 0 1.28 2.55a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45L4 16\" />","landmark":"<line x1=\"3\" x2=\"21\" y1=\"22\" y2=\"22\" /> <line x1=\"6\" x2=\"6\" y1=\"18\" y2=\"11\" /> <line x1=\"10\" x2=\"10\" y1=\"18\" y2=\"11\" /> <line x1=\"14\" x2=\"14\" y1=\"18\" y2=\"11\" /> <line x1=\"18\" x2=\"18\" y1=\"18\" y2=\"11\" /> <polygon points=\"12 2 20 7 4 7\" />","keyboard":"<path d=\"M10 8h.01\" /> <path d=\"M12 12h.01\" /> <path d=\"M14 8h.01\" /> <path d=\"M16 12h.01\" /> <path d=\"M18 8h.01\" /> <path d=\"M6 8h.01\" /> <path d=\"M7 16h10\" /> <path d=\"M8 12h.01\" /> <rect width=\"20\" height=\"16\" x=\"2\" y=\"4\" rx=\"2\" />","gear":"<path d=\"M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z\" /> <circle cx=\"12\" cy=\"12\" r=\"3\" />","forward":"<polygon points=\"5 4 15 12 5 20 5 4\" /> <line x1=\"19\" x2=\"19\" y1=\"5\" y2=\"19\" />","flask":"<path d=\"M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2\" /> <path d=\"M8.5 2h7\" /> <path d=\"M7 16h10\" />","fire":"<path d=\"M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z\" />","earth-asia":"<path d=\"M21.54 15H17a2 2 0 0 0-2 2v4.54\" /> <path d=\"M7 3.34V5a3 3 0 0 0 3 3a2 2 0 0 1 2 2c0 1.1.9 2 2 2a2 2 0 0 0 2-2c0-1.1.9-2 2-2h3.17\" /> <path d=\"M11 21.95V18a2 2 0 0 0-2-2a2 2 0 0 1-2-2v-1a2 2 0 0 0-2-2H2.05\" /> <circle cx=\"12\" cy=\"12\" r=\"10\" />","dumbbell":"<path d=\"M14.4 14.4 9.6 9.6\" /> <path d=\"M18.657 21.485a2 2 0 1 1-2.829-2.828l-1.767 1.768a2 2 0 1 1-2.829-2.829l6.364-6.364a2 2 0 1 1 2.829 2.829l-1.768 1.767a2 2 0 1 1 2.828 2.829z\" /> <path d=\"m21.5 21.5-1.4-1.4\" /> <path d=\"M3.9 3.9 2.5 2.5\" /> <path d=\"M6.404 12.768a2 2 0 1 1-2.829-2.829l1.768-1.767a2 2 0 1 1-2.828-2.829l2.828-2.828a2 2 0 1 1 2.829 2.828l1.767-1.768a2 2 0 1 1 2.829 2.829z\" />","cloud":"<path d=\"M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z\" />","circle-info":"<circle cx=\"12\" cy=\"12\" r=\"10\" /> <path d=\"M12 16v-4\" /> <path d=\"M12 8h.01\" />","circle-half-stroke":"<path d=\"M12 8a2.83 2.83 0 0 0 4 4 4 4 0 1 1-4-4\" /> <path d=\"M12 2v2\" /> <path d=\"M12 20v2\" /> <path d=\"m4.9 4.9 1.4 1.4\" /> <path d=\"m17.7 17.7 1.4 1.4\" /> <path d=\"M2 12h2\" /> <path d=\"M20 12h2\" /> <path d=\"m6.3 17.7-1.4 1.4\" /> <path d=\"m19.1 4.9-1.4 1.4\" />","circle-exclamation":"<circle cx=\"12\" cy=\"12\" r=\"10\" /> <line x1=\"12\" x2=\"12\" y1=\"8\" y2=\"12\" /> <line x1=\"12\" x2=\"12.01\" y1=\"16\" y2=\"16\" />","circle-check":"<circle cx=\"12\" cy=\"12\" r=\"10\" /> <path d=\"m9 12 2 2 4-4\" />","chart-simple":"<line x1=\"18\" x2=\"18\" y1=\"20\" y2=\"10\" /> <line x1=\"12\" x2=\"12\" y1=\"20\" y2=\"4\" /> <line x1=\"6\" x2=\"6\" y1=\"20\" y2=\"14\" />","chart-line":"<path d=\"M3 3v16a2 2 0 0 0 2 2h16\" /> <path d=\"m19 9-5 5-4-4-3 3\" />","calendar-plus":"<path d=\"M8 2v4\" /> <path d=\"M16 2v4\" /> <path d=\"M21 13V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h8\" /> <path d=\"M3 10h18\" /> <path d=\"M16 19h6\" /> <path d=\"M19 16v6\" />","calendar-check":"<path d=\"M8 2v4\" /> <path d=\"M16 2v4\" /> <rect width=\"18\" height=\"18\" x=\"3\" y=\"4\" rx=\"2\" /> <path d=\"M3 10h18\" /> <path d=\"m9 16 2 2 4-4\" />","briefcase":"<path d=\"M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16\" /> <rect width=\"20\" height=\"14\" x=\"2\" y=\"6\" rx=\"2\" />","brain":"<path d=\"M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z\" /> <path d=\"M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z\" /> <path d=\"M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4\" /> <path d=\"M17.599 6.5a3 3 0 0 0 .399-1.375\" /> <path d=\"M6.003 5.125A3 3 0 0 0 6.401 6.5\" /> <path d=\"M3.477 10.896a4 4 0 0 1 .585-.396\" /> <path d=\"M19.938 10.5a4 4 0 0 1 .585.396\" /> <path d=\"M6 18a4 4 0 0 1-1.967-.516\" /> <path d=\"M19.967 17.484A4 4 0 0 1 18 18\" />","book-open":"<path d=\"M12 7v14\" /> <path d=\"M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z\" />","arrow-up":"<path d=\"m5 12 7-7 7 7\" /> <path d=\"M12 19V5\" />","arrow-down":"<path d=\"M12 5v14\" /> <path d=\"m19 12-7 7-7-7\" />","rotate-left":"<path d=\"M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8\" /> <path d=\"M3 3v5h5\" />","calendar":"<path d=\"M8 2v4\" /> <path d=\"M16 2v4\" /> <rect width=\"18\" height=\"18\" x=\"3\" y=\"4\" rx=\"2\" /> <path d=\"M3 10h18\" />","chart-bar":"<path d=\"M3 3v16a2 2 0 0 0 2 2h16\" /> <path d=\"M18 17V9\" /> <path d=\"M13 17V5\" /> <path d=\"M8 17v-3\" />"};
+        const LUCIDE_ICONS = {"chevron-right":"<path d=\"m9 18 6-6-6-6\" />","xmark":"<path d=\"M18 6 6 18\" /> <path d=\"m6 6 12 12\" />","plus":"<path d=\"M5 12h14\" /> <path d=\"M12 5v14\" />","stopwatch":"<line x1=\"10\" x2=\"14\" y1=\"2\" y2=\"2\" /> <line x1=\"12\" x2=\"15\" y1=\"14\" y2=\"11\" /> <circle cx=\"12\" cy=\"14\" r=\"8\" />","play":"<polygon points=\"6 3 20 12 6 21 6 3\" />","check":"<path d=\"M20 6 9 17l-5-5\" />","book":"<path d=\"M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H19a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H6.5a1 1 0 0 1 0-5H20\" />","trash-can":"<path d=\"M3 6h18\" /> <path d=\"M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6\" /> <path d=\"M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2\" /> <line x1=\"10\" x2=\"10\" y1=\"11\" y2=\"17\" /> <line x1=\"14\" x2=\"14\" y1=\"11\" y2=\"17\" />","pen":"<path d=\"M21.174 6.812a1 1 0 0 0-3.986-3.987L3.842 16.174a2 2 0 0 0-.5.83l-1.321 4.352a.5.5 0 0 0 .623.622l4.353-1.32a2 2 0 0 0 .83-.497z\" /> <path d=\"m15 5 4 4\" />","language":"<path d=\"m5 8 6 6\" /> <path d=\"m4 14 6-6 2-3\" /> <path d=\"M2 5h12\" /> <path d=\"M7 2h1\" /> <path d=\"m22 22-5-10-5 10\" /> <path d=\"M14 18h6\" />","code":"<polyline points=\"16 18 22 12 16 6\" /> <polyline points=\"8 6 2 12 8 18\" />","clock":"<circle cx=\"12\" cy=\"12\" r=\"10\" /> <polyline points=\"12 6 12 12 16 14\" />","circle-question":"<circle cx=\"12\" cy=\"12\" r=\"10\" /> <path d=\"M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3\" /> <path d=\"M12 17h.01\" />","chevron-left":"<path d=\"m15 18-6-6 6-6\" />","chart-pie":"<path d=\"M21 12c.552 0 1.005-.449.95-.998a10 10 0 0 0-8.953-8.951c-.55-.055-.998.398-.998.95v8a1 1 0 0 0 1 1z\" /> <path d=\"M21.21 15.89A10 10 0 1 1 8 2.83\" />","chart-column":"<path d=\"M3 3v16a2 2 0 0 0 2 2h16\" /> <path d=\"M18 17V9\" /> <path d=\"M13 17V5\" /> <path d=\"M8 17v-3\" />","calendar-days":"<path d=\"M8 2v4\" /> <path d=\"M16 2v4\" /> <rect width=\"18\" height=\"18\" x=\"3\" y=\"4\" rx=\"2\" /> <path d=\"M3 10h18\" /> <path d=\"M8 14h.01\" /> <path d=\"M12 14h.01\" /> <path d=\"M16 14h.01\" /> <path d=\"M8 18h.01\" /> <path d=\"M12 18h.01\" /> <path d=\"M16 18h.01\" />","calculator":"<rect width=\"16\" height=\"20\" x=\"4\" y=\"2\" rx=\"2\" /> <line x1=\"8\" x2=\"16\" y1=\"6\" y2=\"6\" /> <line x1=\"16\" x2=\"16\" y1=\"14\" y2=\"18\" /> <path d=\"M16 10h.01\" /> <path d=\"M12 10h.01\" /> <path d=\"M8 10h.01\" /> <path d=\"M12 14h.01\" /> <path d=\"M8 14h.01\" /> <path d=\"M12 18h.01\" /> <path d=\"M8 18h.01\" />","bullseye":"<circle cx=\"12\" cy=\"12\" r=\"10\" /> <circle cx=\"12\" cy=\"12\" r=\"6\" /> <circle cx=\"12\" cy=\"12\" r=\"2\" />","arrow-right":"<path d=\"M5 12h14\" /> <path d=\"m12 5 7 7-7 7\" />","trophy":"<path d=\"M6 9H4.5a2.5 2.5 0 0 1 0-5H6\" /> <path d=\"M18 9h1.5a2.5 2.5 0 0 0 0-5H18\" /> <path d=\"M4 22h16\" /> <path d=\"M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22\" /> <path d=\"M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22\" /> <path d=\"M18 2H6v7a6 6 0 0 0 12 0V2Z\" />","tags":"<path d=\"m15 5 6.3 6.3a2.4 2.4 0 0 1 0 3.4L17 19\" /> <path d=\"M9.586 5.586A2 2 0 0 0 8.172 5H3a1 1 0 0 0-1 1v5.172a2 2 0 0 0 .586 1.414L8.29 18.29a2.426 2.426 0 0 0 3.42 0l3.58-3.58a2.426 2.426 0 0 0 0-3.42z\" /> <circle cx=\"6.5\" cy=\"9.5\" r=\".5\" fill=\"currentColor\" />","sliders":"<line x1=\"21\" x2=\"14\" y1=\"4\" y2=\"4\" /> <line x1=\"10\" x2=\"3\" y1=\"4\" y2=\"4\" /> <line x1=\"21\" x2=\"12\" y1=\"12\" y2=\"12\" /> <line x1=\"8\" x2=\"3\" y1=\"12\" y2=\"12\" /> <line x1=\"21\" x2=\"16\" y1=\"20\" y2=\"20\" /> <line x1=\"12\" x2=\"3\" y1=\"20\" y2=\"20\" /> <line x1=\"14\" x2=\"14\" y1=\"2\" y2=\"6\" /> <line x1=\"8\" x2=\"8\" y1=\"10\" y2=\"14\" /> <line x1=\"16\" x2=\"16\" y1=\"18\" y2=\"22\" />","pen-nib":"<path d=\"M15.707 21.293a1 1 0 0 1-1.414 0l-1.586-1.586a1 1 0 0 1 0-1.414l5.586-5.586a1 1 0 0 1 1.414 0l1.586 1.586a1 1 0 0 1 0 1.414z\" /> <path d=\"m18 13-1.375-6.874a1 1 0 0 0-.746-.776L3.235 2.028a1 1 0 0 0-1.207 1.207L5.35 15.879a1 1 0 0 0 .776.746L13 18\" /> <path d=\"m2.3 2.3 7.286 7.286\" /> <circle cx=\"11\" cy=\"11\" r=\"2\" />","pause":"<rect x=\"14\" y=\"4\" width=\"4\" height=\"16\" rx=\"1\" /> <rect x=\"6\" y=\"4\" width=\"4\" height=\"16\" rx=\"1\" />","palette":"<circle cx=\"13.5\" cy=\"6.5\" r=\".5\" fill=\"currentColor\" /> <circle cx=\"17.5\" cy=\"10.5\" r=\".5\" fill=\"currentColor\" /> <circle cx=\"8.5\" cy=\"7.5\" r=\".5\" fill=\"currentColor\" /> <circle cx=\"6.5\" cy=\"12.5\" r=\".5\" fill=\"currentColor\" /> <path d=\"M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z\" />","music":"<path d=\"M9 18V5l12-2v13\" /> <circle cx=\"6\" cy=\"18\" r=\"3\" /> <circle cx=\"18\" cy=\"16\" r=\"3\" />","microscope":"<path d=\"M6 18h8\" /> <path d=\"M3 22h18\" /> <path d=\"M14 22a7 7 0 1 0 0-14h-1\" /> <path d=\"M9 14h2\" /> <path d=\"M9 12a2 2 0 0 1-2-2V6h6v4a2 2 0 0 1-2 2Z\" /> <path d=\"M12 6V3a1 1 0 0 0-1-1H9a1 1 0 0 0-1 1v3\" />","list-check":"<path d=\"m3 17 2 2 4-4\" /> <path d=\"m3 7 2 2 4-4\" /> <path d=\"M13 6h8\" /> <path d=\"M13 12h8\" /> <path d=\"M13 18h8\" />","laptop":"<path d=\"M20 16V7a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v9m16 0H4m16 0 1.28 2.55a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45L4 16\" />","landmark":"<line x1=\"3\" x2=\"21\" y1=\"22\" y2=\"22\" /> <line x1=\"6\" x2=\"6\" y1=\"18\" y2=\"11\" /> <line x1=\"10\" x2=\"10\" y1=\"18\" y2=\"11\" /> <line x1=\"14\" x2=\"14\" y1=\"18\" y2=\"11\" /> <line x1=\"18\" x2=\"18\" y1=\"18\" y2=\"11\" /> <polygon points=\"12 2 20 7 4 7\" />","keyboard":"<path d=\"M10 8h.01\" /> <path d=\"M12 12h.01\" /> <path d=\"M14 8h.01\" /> <path d=\"M16 12h.01\" /> <path d=\"M18 8h.01\" /> <path d=\"M6 8h.01\" /> <path d=\"M7 16h10\" /> <path d=\"M8 12h.01\" /> <rect width=\"20\" height=\"16\" x=\"2\" y=\"4\" rx=\"2\" />","gear":"<path d=\"M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z\" /> <circle cx=\"12\" cy=\"12\" r=\"3\" />","forward":"<polygon points=\"5 4 15 12 5 20 5 4\" /> <line x1=\"19\" x2=\"19\" y1=\"5\" y2=\"19\" />","flask":"<path d=\"M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2\" /> <path d=\"M8.5 2h7\" /> <path d=\"M7 16h10\" />","fire":"<path d=\"M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z\" />","earth-asia":"<path d=\"M21.54 15H17a2 2 0 0 0-2 2v4.54\" /> <path d=\"M7 3.34V5a3 3 0 0 0 3 3a2 2 0 0 1 2 2c0 1.1.9 2 2 2a2 2 0 0 0 2-2c0-1.1.9-2 2-2h3.17\" /> <path d=\"M11 21.95V18a2 2 0 0 0-2-2a2 2 0 0 1-2-2v-1a2 2 0 0 0-2-2H2.05\" /> <circle cx=\"12\" cy=\"12\" r=\"10\" />","dumbbell":"<path d=\"M14.4 14.4 9.6 9.6\" /> <path d=\"M18.657 21.485a2 2 0 1 1-2.829-2.828l-1.767 1.768a2 2 0 1 1-2.829-2.829l6.364-6.364a2 2 0 1 1 2.829 2.829l-1.768 1.767a2 2 0 1 1 2.828 2.829z\" /> <path d=\"m21.5 21.5-1.4-1.4\" /> <path d=\"M3.9 3.9 2.5 2.5\" /> <path d=\"M6.404 12.768a2 2 0 1 1-2.829-2.829l1.768-1.767a2 2 0 1 1-2.828-2.829l2.828-2.828a2 2 0 1 1 2.829 2.828l1.767-1.768a2 2 0 1 1 2.829 2.829z\" />","cloud":"<path d=\"M17.5 19H9a7 7 0 1 1 6.71-9h1.79a4.5 4.5 0 1 1 0 9Z\" />","circle-info":"<circle cx=\"12\" cy=\"12\" r=\"10\" /> <path d=\"M12 16v-4\" /> <path d=\"M12 8h.01\" />","circle-half-stroke":"<path d=\"M12 8a2.83 2.83 0 0 0 4 4 4 4 0 1 1-4-4\" /> <path d=\"M12 2v2\" /> <path d=\"M12 20v2\" /> <path d=\"m4.9 4.9 1.4 1.4\" /> <path d=\"m17.7 17.7 1.4 1.4\" /> <path d=\"M2 12h2\" /> <path d=\"M20 12h2\" /> <path d=\"m6.3 17.7-1.4 1.4\" /> <path d=\"m19.1 4.9-1.4 1.4\" />","circle-exclamation":"<circle cx=\"12\" cy=\"12\" r=\"10\" /> <line x1=\"12\" x2=\"12\" y1=\"8\" y2=\"12\" /> <line x1=\"12\" x2=\"12.01\" y1=\"16\" y2=\"16\" />","circle-check":"<circle cx=\"12\" cy=\"12\" r=\"10\" /> <path d=\"m9 12 2 2 4-4\" />","chart-simple":"<line x1=\"18\" x2=\"18\" y1=\"20\" y2=\"10\" /> <line x1=\"12\" x2=\"12\" y1=\"20\" y2=\"4\" /> <line x1=\"6\" x2=\"6\" y1=\"20\" y2=\"14\" />","chart-line":"<path d=\"M3 3v16a2 2 0 0 0 2 2h16\" /> <path d=\"m19 9-5 5-4-4-3 3\" />","calendar-plus":"<path d=\"M8 2v4\" /> <path d=\"M16 2v4\" /> <path d=\"M21 13V6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h8\" /> <path d=\"M3 10h18\" /> <path d=\"M16 19h6\" /> <path d=\"M19 16v6\" />","calendar-check":"<path d=\"M8 2v4\" /> <path d=\"M16 2v4\" /> <rect width=\"18\" height=\"18\" x=\"3\" y=\"4\" rx=\"2\" /> <path d=\"M3 10h18\" /> <path d=\"m9 16 2 2 4-4\" />","briefcase":"<path d=\"M16 20V4a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16\" /> <rect width=\"20\" height=\"14\" x=\"2\" y=\"6\" rx=\"2\" />","brain":"<path d=\"M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z\" /> <path d=\"M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z\" /> <path d=\"M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4\" /> <path d=\"M17.599 6.5a3 3 0 0 0 .399-1.375\" /> <path d=\"M6.003 5.125A3 3 0 0 0 6.401 6.5\" /> <path d=\"M3.477 10.896a4 4 0 0 1 .585-.396\" /> <path d=\"M19.938 10.5a4 4 0 0 1 .585.396\" /> <path d=\"M6 18a4 4 0 0 1-1.967-.516\" /> <path d=\"M19.967 17.484A4 4 0 0 1 18 18\" />","book-open":"<path d=\"M12 7v14\" /> <path d=\"M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z\" />","arrow-up":"<path d=\"m5 12 7-7 7 7\" /> <path d=\"M12 19V5\" />","arrow-down":"<path d=\"M12 5v14\" /> <path d=\"m19 12-7 7-7-7\" />","hourglass":"<path d=\"M5 22h14\" /> <path d=\"M5 2h14\" /> <path d=\"M17 22v-4.172a2 2 0 0 0-.586-1.414L12 12l-4.414 4.414A2 2 0 0 0 7 17.828V22\" /> <path d=\"M7 2v4.172a2 2 0 0 0 .586 1.414L12 12l4.414-4.414A2 2 0 0 0 17 6.172V2\" />","rotate-left":"<path d=\"M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8\" /> <path d=\"M3 3v5h5\" />","calendar":"<path d=\"M8 2v4\" /> <path d=\"M16 2v4\" /> <rect width=\"18\" height=\"18\" x=\"3\" y=\"4\" rx=\"2\" /> <path d=\"M3 10h18\" />","chart-bar":"<path d=\"M3 3v16a2 2 0 0 0 2 2h16\" /> <path d=\"M18 17V9\" /> <path d=\"M13 17V5\" /> <path d=\"M8 17v-3\" />"};
         const FILLED_ICONS = new Set(['play', 'pause', 'forward']);
         function lucideSvg(name, extraClass = '') {
             const inner = LUCIDE_ICONS[name] || LUCIDE_ICONS['circle-question'];
@@ -1288,6 +1319,7 @@
             GOAL: 'studylog_daily_goal_v1',
             TIMER: 'studylog_timer_v1',
             POMODORO: 'studylog_pomodoro_v1',
+            COUNTDOWN: 'studylog_countdown_v1',
             THEME: 'studylog_theme_v1',
             TAB: 'studylog_tab_v1',
             GOAL_CELEBRATED: 'studylog_goal_celebrated_v1',
@@ -1367,6 +1399,7 @@
             pomodoro: { ...DEFAULT_POMODORO },
             themePref: 'system',
             activeTab: 'timer',
+            countdownMin: 30, // タイマー (時間を決めて計る) の長さ
             appReady: false, // 起動処理が終わったら true (起動直後のお祝いを防ぐ)
 
             // カレンダー表示状態
@@ -1639,6 +1672,8 @@
                     state.pomodoro = sanitizePomodoro(JSON.parse(savedPomodoro));
                 }
                 state.themePref = localStorage.getItem(STORAGE_KEYS.THEME) || 'system';
+                const savedCountdown = parseInt(localStorage.getItem(STORAGE_KEYS.COUNTDOWN), 10);
+                if (Number.isFinite(savedCountdown) && savedCountdown >= 1 && savedCountdown <= 600) state.countdownMin = savedCountdown;
 
                 // 初回起動時にサンプルデータを少し入れて使い方を分かりやすくする
                 if (!savedLogs && state.logs.length === 0) {
@@ -1704,7 +1739,7 @@
                 if (!saved) return;
                 const t = JSON.parse(saved);
                 state.timer = {
-                    mode: t.mode === 'pomodoro' ? 'pomodoro' : 'stopwatch',
+                    mode: ['pomodoro', 'countdown'].includes(t.mode) ? t.mode : 'stopwatch',
                     phase: t.mode === 'pomodoro' && t.phase === 'break' ? 'break' : 'focus',
                     breakKind: t.breakKind === 'long' ? 'long' : 'short',
                     completedFocus: Math.max(0, parseInt(t.completedFocus, 10) || 0),
@@ -2153,6 +2188,7 @@
         function getPhaseDurationSeconds() {
             const t = state.timer;
             const p = state.pomodoro;
+            if (t.mode === 'countdown') return state.countdownMin * 60;
             if (t.mode !== 'pomodoro') return Infinity;
             if (t.phase === 'focus') return p.focusMin * 60;
             return (t.breakKind === 'long' ? p.longBreakMin : p.shortBreakMin) * 60;
@@ -2221,7 +2257,7 @@
             let text = '';
             let done = false;
 
-            if (state.timer.mode === 'pomodoro') {
+            if (state.timer.mode !== 'stopwatch') {
                 const duration = getPhaseDurationSeconds();
                 ratio = Math.min(1, elapsed / duration);
                 text = ''; // 残り時間は数字そのものなので、補足は出さない
@@ -2287,7 +2323,8 @@
             const hasSession = !onBreak && (t.isRunning || elapsed > 0);
             const select = document.getElementById('subjectSelect');
             select.disabled = hasSession;
-            select.title = hasSession ? '計測中は科目を変更できません (リセットまたは記録後に変更できます)' : '';
+            renderSubjectChips();
+            renderDurationChips();
 
             updatePomodoroBadge();
         }
@@ -2299,7 +2336,7 @@
             const label = document.getElementById('pomodoroTabLabel');
             const btn = document.getElementById('modePomodoroBtn');
             if (t.mode !== 'pomodoro') {
-                label.textContent = `ポモドーロ (${p.focusMin}分)`;
+                label.textContent = 'ポモドーロ';
                 btn.title = 'ポモドーロに切り替え';
                 return;
             }
@@ -2315,16 +2352,96 @@
         }
 
         function updateModeTabs() {
-            const swBtn = document.getElementById('modeStopwatchBtn');
-            const pomoBtn = document.getElementById('modePomodoroBtn');
-            const active = 'seg-item is-active';
-            const inactive = 'seg-item';
-            const isSw = state.timer.mode === 'stopwatch';
-            swBtn.className = isSw ? active : inactive;
-            pomoBtn.className = isSw ? inactive : active;
-            swBtn.setAttribute('aria-pressed', isSw ? 'true' : 'false');
-            pomoBtn.setAttribute('aria-pressed', isSw ? 'false' : 'true');
+            const map = { stopwatch: 'modeStopwatchBtn', countdown: 'modeCountdownBtn', pomodoro: 'modePomodoroBtn' };
+            Object.entries(map).forEach(([mode, id]) => {
+                const btn = document.getElementById(id);
+                const active = state.timer.mode === mode;
+                btn.className = active ? 'seg-item is-active' : 'seg-item';
+                btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+            });
             updatePomodoroBadge();
+        }
+
+        // --- 科目のチップ ---
+        function renderSubjectChips() {
+            const wrap = document.getElementById('subjectChips');
+            const select = document.getElementById('subjectSelect');
+            if (!wrap) return;
+            const options = [...select.options];
+            wrap.innerHTML = options.map(o => {
+                const sub = getSubject(o.value);
+                const active = o.value === select.value;
+                return `<button type="button" class="subject-chip${active ? ' is-active' : ''}" data-subject="${escapeHTML(o.value)}" role="radio" aria-checked="${active}" ${select.disabled ? 'disabled' : ''} style="--c:${safeColor(sub.color)}"><i class="fa-solid ${safeIcon(sub.icon)}"></i>${escapeHTML(o.textContent)}</button>`;
+            }).join('');
+            if (select.disabled) wrap.title = '計測中は科目を変更できません (リセットまたは記録後に変更できます)';
+            else wrap.removeAttribute('title');
+            // 選んでいる科目が見えるようにスクロール
+            const activeChip = wrap.querySelector('.is-active');
+            if (activeChip && wrap.scrollWidth > wrap.clientWidth) {
+                const l = activeChip.offsetLeft - wrap.offsetLeft;
+                if (l < wrap.scrollLeft || l + activeChip.offsetWidth > wrap.scrollLeft + wrap.clientWidth) wrap.scrollLeft = l - 8;
+            }
+        }
+
+        // --- 時間を選ぶチップ (タイマー: 15/30/45/60分、ポモドーロ: 25/50分、その他) ---
+        const DURATION_PRESETS = { countdown: [15, 30, 45, 60], pomodoro: [25, 50] };
+        function renderDurationChips() {
+            const wrap = document.getElementById('durationChips');
+            const t = state.timer;
+            const presets = DURATION_PRESETS[t.mode];
+            // ポモドーロの休憩中は、集中の時間を選ぶ場面ではないので隠す
+            if (!presets || isBreak()) {
+                wrap.classList.add('hidden');
+                return;
+            }
+            wrap.classList.remove('hidden');
+            const current = t.mode === 'countdown' ? state.countdownMin : state.pomodoro.focusMin;
+            const locked = t.isRunning || getElapsedSeconds() > 0;
+            const custom = !presets.includes(current);
+            wrap.innerHTML = presets.map(m =>
+                `<button type="button" class="duration-chip${m === current ? ' is-active' : ''}" data-min="${m}" ${locked ? 'disabled' : ''}>${m}分</button>`
+            ).join('') + `<button type="button" class="duration-chip${custom ? ' is-active' : ''}" data-min="custom" ${locked ? 'disabled' : ''}>${custom ? current + '分' : 'その他'}</button>`;
+            wrap.title = locked ? '計測中は時間を変更できません' : '';
+        }
+
+        function setDuration(min) {
+            const t = state.timer;
+            if (t.isRunning || getElapsedSeconds() > 0) return;
+            if (t.mode === 'countdown') {
+                state.countdownMin = min;
+                try { localStorage.setItem(STORAGE_KEYS.COUNTDOWN, String(min)); } catch (e) {}
+            } else if (t.mode === 'pomodoro') {
+                state.pomodoro.focusMin = min;
+                savePomodoroSettings();
+                renderSettings();
+            }
+            updateTimerControls();
+            updateTimerDisplay();
+        }
+
+        // タイマー (時間を決めて計る) が 0 になったら、その時間を自動で記録する
+        function handleCountdownEnd() {
+            const t = state.timer;
+            if (t.mode !== 'countdown' || !t.isRunning) return false;
+            const duration = getPhaseDurationSeconds();
+            if (getElapsedMs() < duration * 1000) return false;
+            const memoInput = document.getElementById('timerMemoInput');
+            const log = addLog({
+                date: formatDateToISO(new Date(t.sessionStartedAt || Date.now())),
+                subjectId: t.subjectId || document.getElementById('subjectSelect').value,
+                seconds: duration,
+                memo: memoInput.value.trim() || 'タイマーで学習'
+            });
+            memoInput.value = '';
+            clearCurrentPhase();
+            saveTimerState();
+            notify('タイマー終了 🎉', `${state.countdownMin}分を記録しました。`);
+            showToast(`${state.countdownMin}分を記録しました！`, 'success', {
+                label: '記録を取り消す',
+                onClick: () => { removeLogById(log.id); renderAll(); }
+            });
+            selectDate(log.date);
+            return true;
         }
 
         /**
@@ -2392,7 +2509,7 @@
         function tick() {
             let changed = false;
             // 時間が大きく進んでいた場合に備えて、区切りがなくなるまで処理する
-            for (let i = 0; i < 4 && handlePomodoroBoundary(); i++) {
+            for (let i = 0; i < 4 && (handlePomodoroBoundary() || handleCountdownEnd()); i++) {
                 changed = true;
             }
             if (changed) {
@@ -2410,7 +2527,7 @@
         function startTimer() {
             ensureAudioContext(); // ユーザー操作のタイミングで音声を有効化しておく
             const t = state.timer;
-            if (t.mode === 'pomodoro') requestNotificationPermission();
+            if (t.mode !== 'stopwatch') requestNotificationPermission();
             const now = Date.now();
             if (!isBreak() && !t.sessionStartedAt) {
                 t.sessionStartedAt = now;
@@ -2565,6 +2682,7 @@
                 }
                 timerSelect.value = t.subjectId;
             }
+            renderSubjectChips();
         }
 
         // 目標達成のお祝い: 少なめの紙吹雪 + お知らせ
@@ -3208,6 +3326,32 @@
             document.getElementById('finishSaveBtn').addEventListener('click', saveTimerRecord);
             document.getElementById('modeStopwatchBtn').addEventListener('click', () => switchTimerMode('stopwatch'));
             document.getElementById('modePomodoroBtn').addEventListener('click', () => switchTimerMode('pomodoro'));
+            document.getElementById('modeCountdownBtn').addEventListener('click', () => switchTimerMode('countdown'));
+            document.getElementById('subjectChips').addEventListener('click', (e) => {
+                const chip = e.target.closest('.subject-chip');
+                const select = document.getElementById('subjectSelect');
+                if (!chip || select.disabled) return;
+                select.value = chip.dataset.subject;
+                applySubjectColor();
+                renderSubjectChips();
+            });
+            document.getElementById('durationChips').addEventListener('click', (e) => {
+                const chip = e.target.closest('.duration-chip');
+                if (!chip || chip.disabled) return;
+                if (chip.dataset.min === 'custom') {
+                    const max = state.timer.mode === 'countdown' ? 600 : 180;
+                    const input = prompt(`何分にしますか？（1〜${max}分）`, '');
+                    if (input === null) return;
+                    const n = parseInt(input, 10);
+                    if (!Number.isFinite(n) || n < 1 || n > max) {
+                        showToast(`1〜${max}分の数字で入力してください`, 'error');
+                        return;
+                    }
+                    setDuration(n);
+                } else {
+                    setDuration(parseInt(chip.dataset.min, 10));
+                }
+            });
 
             // 記録の編集・削除 (イベント委譲)
             document.getElementById('dayLogsList').addEventListener('click', (e) => {
@@ -3380,7 +3524,6 @@
             });
 
             // 科目追加
-            document.getElementById('addSubjectBtn').addEventListener('click', openAddSubject);
             document.getElementById('manageAddSubjectBtn').addEventListener('click', openAddSubject);
             document.getElementById('addSubjectForm').addEventListener('submit', (e) => {
                 e.preventDefault();
@@ -3406,7 +3549,6 @@
             });
 
             // 科目の管理
-            document.getElementById('manageSubjectsBtn').addEventListener('click', openManageSubjects);
             const manageList = document.getElementById('manageSubjectsList');
             manageList.addEventListener('change', (e) => {
                 const row = e.target.closest('[data-subject-id]');
