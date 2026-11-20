@@ -1,7 +1,7 @@
 // StudyLog Service Worker
 // アプリ本体はネットワーク優先 (更新をすぐ反映)、CDN の CSS / フォント / スクリプトはキャッシュ優先で
 // オフラインでも開けるようにする。
-const CACHE_NAME = 'studylog-v32';
+const CACHE_NAME = 'studylog-v33';
 const APP_SHELL = [
   './',
   './index.html',
@@ -63,6 +63,30 @@ self.addEventListener('fetch', (event) => {
         })
         .catch(() => cached);
       return cached || network;
+    })
+  );
+});
+
+// ---------- タイマー終了のプッシュ通知 ----------
+self.addEventListener('push', (event) => {
+  let data = {};
+  try { data = event.data ? event.data.json() : {}; } catch (e) {}
+  const title = typeof data.title === 'string' ? data.title : 'StudyLog';
+  const body = typeof data.body === 'string' ? data.body : 'タイマーが終わりました';
+  event.waitUntil(self.registration.showNotification(title, {
+    body,
+    icon: './icon-192.png',
+    badge: './icon-192.png',
+    tag: 'studylog-timer'
+  }));
+});
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
+      for (const c of list) { if ('focus' in c) return c.focus(); }
+      return self.clients.openWindow('./');
     })
   );
 });
