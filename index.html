@@ -218,7 +218,7 @@
             border: 1px solid transparent; user-select: none;
         }
         .btn-sm { height: 32px; padding: 0 12px; border-radius: 10px; font-size: 13px; }
-        .btn-lg { height: 50px; border-radius: 16px; font-size: 15px; }
+        .btn-lg { height: 48px; border-radius: 16px; font-size: 15px; }
         @media (min-width: 640px) { .btn-lg { height: 54px; } }
         .btn-primary { background: var(--grad-accent); color: #fff; box-shadow: var(--shadow-btn); }
         .btn-primary:hover { filter: brightness(0.92); }
@@ -423,12 +423,12 @@
         .subj-row { position: relative; display: flex; gap: 8px; }
         .subj-row .field { flex: 1; min-width: 0; }
         .subj-btn {
-            flex-shrink: 0; max-width: 58%; display: inline-flex; align-items: center; gap: 6px; height: 44px; padding: 0 10px 0 12px;
-            border-radius: 12px; font-size: 14px; font-weight: 700; color: var(--text-1);
+            flex-shrink: 0; max-width: 58%; display: inline-flex; align-items: center; gap: 5px; height: 36px; padding: 0 8px 0 10px;
+            border-radius: 10px; font-size: 13px; font-weight: 700; color: var(--text-1);
             border: 1px solid var(--c); background: color-mix(in srgb, var(--c) 10%, var(--surface));
         }
         .subj-btn .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .subj-btn .ic { width: 16px; height: 16px; color: var(--c); }
+        .subj-btn .ic { width: 15px; height: 15px; color: var(--c); }
         .subj-btn .chev { width: 14px; height: 14px; color: var(--text-3); transform: rotate(90deg); }
         .subj-btn:disabled { cursor: not-allowed; }
         .subj-btn:disabled .chev { display: none; }
@@ -445,7 +445,7 @@
         .subj-pick .nm { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
         /* 時間を選ぶチップ (タイマー・ポモドーロ) */
-        .duration-chips { display: flex; justify-content: center; gap: 6px; margin: 0 0 10px; }
+        .duration-chips { display: flex; justify-content: center; gap: 6px; margin: 0 0 8px; }
         .duration-chip {
             height: 30px; padding: 0 12px; border-radius: 999px; font-size: 13px; font-weight: 600;
             color: var(--text-2); background: var(--surface-2); border: 1px solid var(--border); font-variant-numeric: tabular-nums;
@@ -808,7 +808,7 @@
 
 
                 <!-- タイマー表示部 -->
-                <div id="timerStage" class="timer-stage mb-1.5">
+                <div id="timerStage" class="timer-stage mb-1">
                     <!-- 円形ゲージ: 通常タイマーは今日の目標、ポモドーロは現在のフェーズの進み具合 -->
                     <div class="timer-ring">
                         <svg viewBox="0 0 256 256" aria-hidden="true">
@@ -832,7 +832,16 @@
                 <!-- 時間を選ぶ (タイマー・ポモドーロのとき) -->
                 <div id="durationChips" class="duration-chips hidden"></div>
 
-                <!-- コントロールボタン -->
+                <!-- 科目とメモ (スタート・完了のボタンの上) -->
+                <div class="subj-row mb-2">
+                    <!-- 実際の選択値は隠したセレクトに持たせ、画面には今の科目のボタンを出す -->
+                    <select id="subjectSelect" class="hidden" aria-hidden="true" tabindex="-1"></select>
+                    <button type="button" id="subjectBtn" class="subj-btn" aria-haspopup="listbox" aria-expanded="false" title="科目を選ぶ"></button>
+                    <div id="subjectPicker" class="subj-picker hidden" role="listbox" aria-label="学習する科目"></div>
+                    <input type="text" id="timerMemoInput" maxlength="100" placeholder="メモ (任意)" class="field field-sm">
+                </div>
+
+                <!-- コントロールボタン (いちばん下) -->
                 <div class="grid grid-cols-2 gap-3">
                     <button id="startPauseBtn" class="btn btn-primary btn-lg">
                         <i class="fa-solid fa-play"></i>
@@ -844,14 +853,6 @@
                     </button>
                 </div>
 
-                <!-- 科目とメモ (スタートボタンが1画面に収まるよう、ボタンの下に置く) -->
-                <div class="subj-row mt-3">
-                    <!-- 実際の選択値は隠したセレクトに持たせ、画面には今の科目のボタンを出す -->
-                    <select id="subjectSelect" class="hidden" aria-hidden="true" tabindex="-1"></select>
-                    <button type="button" id="subjectBtn" class="subj-btn" aria-haspopup="listbox" aria-expanded="false" title="科目を選ぶ"></button>
-                    <div id="subjectPicker" class="subj-picker hidden" role="listbox" aria-label="学習する科目"></div>
-                    <input type="text" id="timerMemoInput" maxlength="100" placeholder="メモ (任意)" class="field">
-                </div>
                 <div class="mt-3 flex items-center justify-between">
                     <span class="hidden sm:inline-flex items-center gap-1.5 meta"><kbd>Space</kbd> で開始 / 停止</span>
                     <button id="resetTimerBtn" class="reset-btn ml-auto"><i class="fa-solid fa-rotate-left"></i>リセット</button>
@@ -2417,10 +2418,12 @@
             wrap.classList.remove('hidden');
             const current = t.mode === 'countdown' ? state.countdownMin : state.pomodoro.focusMin;
             const locked = t.isRunning || getElapsedSeconds() > 0;
-            const custom = !presets.includes(current);
+            // ポモドーロは 25/50分のみ (ほかの長さは設定タブで変える)。タイマーは「その他」で自由に入力できる
+            const allowCustom = t.mode === 'countdown';
+            const custom = allowCustom && !presets.includes(current);
             wrap.innerHTML = presets.map(m =>
                 `<button type="button" class="duration-chip${m === current ? ' is-active' : ''}" data-min="${m}" ${locked ? 'disabled' : ''}>${m}分</button>`
-            ).join('') + `<button type="button" class="duration-chip${custom ? ' is-active' : ''}" data-min="custom" ${locked ? 'disabled' : ''}>${custom ? current + '分' : 'その他'}</button>`;
+            ).join('') + (allowCustom ? `<button type="button" class="duration-chip${custom ? ' is-active' : ''}" data-min="custom" ${locked ? 'disabled' : ''}>${custom ? current + '分' : 'その他'}</button>` : '');
             wrap.title = locked ? '計測中は時間を変更できません' : '';
         }
 
